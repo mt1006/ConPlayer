@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\audio.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\avDecode.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\drawFrame.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\error.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\help.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\queue.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\threads.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils.c">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\conplayer.h">
+      <Filter>src</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
