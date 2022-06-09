@@ -2,4 +2,6 @@
 Release/
 Debug/
 x64/
+
 cp/test/
+packed/

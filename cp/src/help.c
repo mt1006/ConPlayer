@@ -3,8 +3,7 @@
 void showHelp()
 {
 	puts(
-		"ConPlayer - Help\n"
-		"Usage: conpl [options] [filename] [hash / filename / filenames...]\n\n"
+		"ConPlayer - Help\n\n"
 		"List of options:\n"
 		" [none] / -i         Just input file - audio or video.\n"
 		"                     Examples:\n"
@@ -21,7 +20,7 @@ void showHelp()
 		" -c (--colors)       Colors (by default - 16, with \"-cstd\" - 256).\n"
 		"                     On older Windows versions colors with \"-cstd\" may not work properly!\n"
 		" -f  (--fill)        Fills entire available area, without keeping ratio.\n"
-		" -int [divisor]      Uses interlacing to draw frames.\n"
+		" -int [divisor]      Uses interlacing to draw frames (works only with \"-cstd\").\n"
 		"  (--interlaced)     The larger the divisor, fewer scanlines there are per frame.\n"
 		"                     When divisor is equal to 1, then interlacing is disabled.\n"
 		"                     Examples:\n"
@@ -30,7 +29,11 @@ void showHelp()
 		" -inf(--information) Information about ConPlayer.\n"
 		" -fi (--full-info)   Full info about ConPlayer.\n"
 		" -v  (--version)     Information about ConPlayer version.\n"
-		" -h / -? (--help)    Displays this help message.");
+		" -h / -? (--help)    Displays this help message.\n\n"
+		"Keyboard control:\n"
+		" Space - Pause/Play\n"
+		" \"[\" / \"]\" - Go back/Skip forward\n"
+		" ESC - Exit");
 }
 
 void showInformations()
