@@ -7,18 +7,17 @@ extern int mainFreezed;
 
 const double CONSOLE_REFRESH_PERIOD = 0.2;
 
-enum AVPixelFormat destFormat;
-AVFormatContext* formatContext;
-struct SwsContext* swsContext = NULL;
-uint8_t* scaledFrameBuffer = NULL;
-Stream videoStream = { -1 };
-Stream audioStream = { -1 };
-double fps = 0;
-int lastW = -1, lastH = -1;
-enum AVPixelFormat lastPixelFormat = AV_PIX_FMT_NONE;
-int lastFrame = -1;
-int useAVSeek = 0;
-int64_t seekTimestamp = 0;
+static enum AVPixelFormat destFormat;
+static AVFormatContext* formatContext;
+static struct SwsContext* swsContext = NULL;
+static uint8_t* scaledFrameBuffer = NULL;
+static Stream videoStream = { -1 };
+static Stream audioStream = { -1 };
+static int lastW = -1, lastH = -1;
+static enum AVPixelFormat lastPixelFormat = AV_PIX_FMT_NONE;
+static int lastFrame = -1;
+static int useAVSeek = 0;
+static int64_t seekTimestamp = 0;
 
 void setFrameSize(int inputW, int inputH, enum AVPixelFormat inputFormat,
 	int outputW, int outputH, enum AVPixelFormat outputFormat, AVFrame* outFrame);

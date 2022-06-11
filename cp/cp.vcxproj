@@ -130,7 +130,6 @@
     <ClCompile Include="src\audio.c" />
     <ClCompile Include="src\avDecode.c" />
     <ClCompile Include="src\drawFrame.c" />
-    <ClCompile Include="src\error.c" />
     <ClCompile Include="src\help.c" />
     <ClCompile Include="src\main.c" />
     <ClCompile Include="src\queue.c" />

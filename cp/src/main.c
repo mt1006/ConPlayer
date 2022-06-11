@@ -14,10 +14,10 @@ double volume = 0.5;
 double fps;
 int decodeEnd = 0;
 
-char* inputFile = NULL;
-int usedInputOption = 0;
-int volumeSet = 0;
-int interlacingSet = 0;
+static char* inputFile = NULL;
+static int usedInputOption = 0;
+static int volumeSet = 0;
+static int interlacingSet = 0;
 
 Option getOption(char* str, int strLen)
 {

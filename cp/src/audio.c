@@ -4,16 +4,16 @@
 // to change SAMPLE_SIZE value and modify "for loop"
 // in playAudio function responsible for changing volume,
 // which is hardcoded to 16 bits / 2 channels
-const enum AVSampleFormat SAMPLE_FORMAT = AV_SAMPLE_FMT_S16;
-const int SAMPLE_BITS = 16;
-const int CHANNELS = 2;
-const int SAMPLE_SIZE = 4; // (16 bits * 2 channels) / 8 bits
-const int SAMPLE_RATE = 48000;
+static const enum AVSampleFormat SAMPLE_FORMAT = AV_SAMPLE_FMT_S16;
+static const int SAMPLE_BITS = 16;
+static const int CHANNELS = 2;
+static const int SAMPLE_SIZE = 4; // (16 bits * 2 channels) / 8 bits
+static const int SAMPLE_RATE = 48000;
 
-int initialized = 0;
-ao_sample_format aoSampleFormat;
-ao_device* aoDevice = NULL;
-SwrContext* resampleContext = NULL;
+static int initialized = 0;
+static ao_sample_format aoSampleFormat;
+static ao_device* aoDevice = NULL;
+static SwrContext* resampleContext = NULL;
 
 void initAudio(Stream* audioStream)
 {

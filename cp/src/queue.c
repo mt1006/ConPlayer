@@ -1,7 +1,7 @@
 #include "conplayer.h"
 
-const int TIME_TO_WAIT = 16;
-Queue queue;
+static const int TIME_TO_WAIT = 16;
+static Queue queue;
 
 static Frame* queueNextElement(int currentPos);
 

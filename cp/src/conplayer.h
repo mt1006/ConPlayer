@@ -124,38 +124,44 @@ extern double volume;
 extern double fps;
 extern int decodeEnd;
 
+//avDecode.c
 extern void initAV(const char* file, Stream** outAudioStream);
 extern void readFrames();
 extern void avSeek(int64_t timestamp);
 extern void unload();
 
+//audio.c
 extern void initAudio(Stream* audioStream);
 extern void addAudio(AVFrame* frame);
 extern void playAudio(Frame* frame);
 extern void deinitAudio();
 
+//drawFrame.c
 extern void initConsole();
 extern void processFrame(Frame* frame);
 extern void drawFrame(void* output, int fw, int fh);
 extern void refreshSize();
 
+//threads.c
 extern void beginThreads();
 extern void resetTimer();
 
+//queue.c
 extern void initQueue();
 extern Frame* dequeueFrame(Stage fromStage);
 extern void enqueueFrame(Stage toStage);
 
+//help.c
+extern void showHelp();
+extern void showInformations();
+extern void showFullInfo();
+extern void showVersion();
+
+//utils.c
 extern double getTime();
 extern void clearScreen(HANDLE handle);
 extern uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b);
 extern int utf8ArraySize(unichar* input, int inputSize);
 extern void unicharArrayToUTF8(unichar* input, char* output, int inputSize);
 extern char* toUTF8(unichar* input, int inputLen);
-
-extern void showHelp();
-extern void showInformations();
-extern void showFullInfo();
-extern void showVersion();
-
 extern void error(const char* description, const char* fileName, int line);

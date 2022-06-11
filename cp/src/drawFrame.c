@@ -3,9 +3,9 @@
 //char* symbolSet = " .-+*?#M&%@";
 char* symbolSet = " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B$@";
 
-int symbolSetSize;
-HANDLE outputHandle;
-const uint8_t WIN_CMD_COLORS[16][3] =
+static int symbolSetSize;
+static HANDLE outputHandle;
+static const uint8_t WIN_CMD_COLORS[16][3] =
 {
 	{0,0,0},{0,32,192},{16,160,16},{32,160,192},
 	{192,16,32},{128,16,144},{192,144,0},{192,192,192},
@@ -118,7 +118,7 @@ void drawFrame(void* output, int fw, int fh)
 
 	if (!useCStdOut)
 	{
-		static lastFW = 0, lastFH = 0;
+		static int lastFW = 0, lastFH = 0;
 		if (lastFW != fw || lastFH != fh)
 		{
 			lastFW = fw;

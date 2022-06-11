@@ -16,9 +16,6 @@
     <ClCompile Include="src\drawFrame.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\error.c">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\help.c">
       <Filter>src</Filter>
     </ClCompile>

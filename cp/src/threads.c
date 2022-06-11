@@ -1,20 +1,20 @@
 #include "conplayer.h"
 
-const double TIME_TO_RESET_TIMER = 0.5;
 const int SLEEP_ON_FREEZE = 4;
-
-uintptr_t procThreadID = 0;
-uintptr_t drawThreadID = 0;
-uintptr_t keyboardThreadID = 0;
-double startTime;
-int frameCounter;
-int64_t drawFrameTime = 0;
-int paused = 0;
-
 int freezeThreads = 0;
 int mainFreezed = 0;
 int procFreezed = 0;
 int drawFreezed = 0;
+
+static const double TIME_TO_RESET_TIMER = 0.5;
+
+static uintptr_t procThreadID = 0;
+static uintptr_t drawThreadID = 0;
+static uintptr_t keyboardThreadID = 0;
+static double startTime;
+static int frameCounter;
+static int64_t drawFrameTime = 0;
+static int paused = 0;
 
 static void __cdecl procThread(void* ptr);
 static void __cdecl drawThread(void* ptr);

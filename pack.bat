@@ -11,14 +11,14 @@ del conpl_win_x86_64.zip
 cd Release
 copy %EXEC_NAME% conpl.exe
 7z a -tzip conpl_win_x86_32.zip conpl.exe -ir!*.dll ..\LICENSE.txt
-del Release\conpl.exe
+del conpl.exe
 cd ..
 move Release\conpl_win_x86_32.zip packed
 
 cd x64\Release
 copy %EXEC_NAME% conpl.exe
 7z a -tzip conpl_win_x86_64.zip conpl.exe -ir!*.dll ..\..\LICENSE.txt
-del x64\Release\conpl.exe
+del conpl.exe
 cd ..\..
 move x64\Release\conpl_win_x86_64.zip packed
 
