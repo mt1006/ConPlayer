@@ -60,7 +60,7 @@ Btw by using "-c" option you get by default only 16 colors. To get 256 colors us
 ```
 
 # Compiling
-To compile it you need Visual Studio 2022 or newer. First you need to install vcpkg and integrate it with Visual Studio. Here is how to do it: https://vcpkg.io/en/getting-started.html. Then you need to install libav (ffmpeg's library) and libao.
+To compile it you need Visual Studio. First you need to install vcpkg and integrate it with Visual Studio. Here is how to do it: https://vcpkg.io/en/getting-started.html. Then you need to install libav (ffmpeg's library) and libao.
 ```
 vcpkg install ffmpeg:x64-windows
 vcpkg install libao:x64-windows
