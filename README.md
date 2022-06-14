@@ -12,6 +12,8 @@ Plans for future:
 - better audio/video sync (maybe I'll switch from libao to PortAudio)
 - more options
 
+[Download Version 1.0](https://github.com/mt1006/ConPlayer/releases/tag/ConPlayer-1.0)
+
 # Examples
 
 "Bad Apple!!" in cmd
