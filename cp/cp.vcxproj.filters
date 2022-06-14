@@ -34,6 +34,9 @@
     <ClCompile Include="src\processFrame.c">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\argParser.c">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\conplayer.h">

@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\argParser.c" />
     <ClCompile Include="src\audio.c" />
     <ClCompile Include="src\decodeFrame.c" />
     <ClCompile Include="src\drawFrame.c" />
