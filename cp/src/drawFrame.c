@@ -3,15 +3,17 @@
 //char* symbolSet = " .-+*?#M&%@";
 char* symbolSet = " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B$@";
 
-static int symbolSetSize;
-static HANDLE outputHandle;
+// https://devblogs.microsoft.com/commandline/updating-the-windows-console-colors/
 static const uint8_t WIN_CMD_COLORS[16][3] =
 {
-	{0,0,0},{0,32,192},{16,160,16},{32,160,192},
-	{192,16,32},{128,16,144},{192,144,0},{192,192,192},
-	{128,128,128},{64,128,255},{16,192,16},{96,192,192},
-	{192,64,96},{192,0,160},{255,255,160},{255,255,255}
+	{12,12,12},{0,55,218},{19,161,14},{58,150,221},
+	{197,15,31},{136,23,152},{193,156,0},{204,204,204},
+	{118,118,118},{59,120,255},{22,198,12},{97,214,214},
+	{231,72,86},{180,0,158},{249,241,165},{242,242,242}
 };
+
+static int symbolSetSize;
+static HANDLE outputHandle;
 
 static void processForWinAPI(Frame* frame);
 static void drawWithWinAPI(CHAR_INFO* output, int fw, int fh);
