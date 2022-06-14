@@ -109,7 +109,7 @@ Option argumentParser(int argc, unichar** argv)
 			}
 			else if (option == OP_USE_CSTD_OUT)
 			{
-				colorMode = CM_CSTD_16;
+				colorMode = CM_CSTD_256;
 			}
 			else if (option == OP_WITH_COLORS)
 			{
