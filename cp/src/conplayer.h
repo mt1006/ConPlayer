@@ -153,7 +153,7 @@ extern void enqueueFrame(Stage toStage);
 
 //help.c
 extern void showHelp(void);
-extern void showInformations(void);
+extern void showInformation(void);
 extern void showFullInfo(void);
 extern void showVersion(void);
 

@@ -5,7 +5,7 @@ extern const int SLEEP_ON_FREEZE;
 extern int freezeThreads;
 extern int mainFreezed;
 
-const double CONSOLE_REFRESH_PERIOD = 0.2;
+static const double CONSOLE_REFRESH_PERIOD = 0.2;
 
 static enum AVPixelFormat destFormat;
 static AVFormatContext* formatContext;

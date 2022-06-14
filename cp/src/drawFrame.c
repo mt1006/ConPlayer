@@ -52,7 +52,6 @@ void processFrame(Frame* frame)
 		{
 			for (int j = 0; j < frame->frameW; j++)
 			{
-				showHelp(1);
 				uint8_t valR = frame->videoFrame[(j * 3) + (i * frame->videoLinesize)];
 				uint8_t valG = frame->videoFrame[(j * 3) + (i * frame->videoLinesize) + 1];
 				uint8_t valB = frame->videoFrame[(j * 3) + (i * frame->videoLinesize) + 2];

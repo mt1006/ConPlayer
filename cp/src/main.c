@@ -172,7 +172,7 @@ void executeOperation(Option operation)
 		load();
 		break;
 	case OP_INFORMATION:
-		showInformations();
+		showInfo();
 		break;
 	case OP_FULL_INFO:
 		showFullInfo();
@@ -201,7 +201,7 @@ int main(int argc, char** argv)
 		#ifdef _WIN32
 		uc_argv = CommandLineToArgvW(GetCommandLineW(), &uc_argc);
 		#else
-		programError("main.c", __LINE__);
+		error("USE_WCHAR defined but it isn't Windows!", "main.c", __LINE__);
 		#endif
 	}
 	else
