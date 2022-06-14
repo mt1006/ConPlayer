@@ -26,12 +26,23 @@ int decodeAudioPacket(AVPacket* packet, AVFrame* frame);
 
 void initAV(const char* file, Stream** outAudioStream)
 {
-	if (withColors == 1) { destFormat = AV_PIX_FMT_RGB24; }
-	else { destFormat = AV_PIX_FMT_GRAY8; }
+	if (colorMode==CM_CSTD_16 ||
+		colorMode == CM_CSTD_256||
+		colorMode == CM_CSTD_RGB||
+		colorMode == CM_WINAPI_16)
+	{
+		destFormat = AV_PIX_FMT_RGB24;
+	}
+	else
+	{
+		destFormat = AV_PIX_FMT_GRAY8;
+	}
+
 	formatContext = avformat_alloc_context();
 	if (!formatContext) { error("Failed to allocate format context", "avDecode.c", __LINE__); }
 	if (avformat_open_input(&formatContext, file, NULL, NULL)) { error("Failed to open file!", "avDecode.c", __LINE__); }
 	if (avformat_find_stream_info(formatContext, NULL) < 0) { error("Failed to find stream", "avDecode.c", __LINE__); }
+
 	for (int i = 0; i < (int)formatContext->nb_streams; i++)
 	{
 		AVCodecParameters* codecParameters = NULL;
@@ -54,11 +65,13 @@ void initAV(const char* file, Stream** outAudioStream)
 			if (audioStream.index == -1)
 			{
 				audioStream.index = i;
+				audioStream.stream = formatContext->streams[i];
 				audioStream.codec = codec;
 				audioStream.codecParameters = codecParameters;
 			}
 		}
 	}
+
 	if (videoStream.index != -1)
 	{
 		videoStream.codecContext = avcodec_alloc_context3(videoStream.codec);
@@ -75,6 +88,7 @@ void initAV(const char* file, Stream** outAudioStream)
 		vidH = videoStream.stream->codec->height;
 		fps = (double)videoStream.stream->r_frame_rate.num / (double)videoStream.stream->r_frame_rate.den;
 	}
+
 	if (audioStream.index != -1)
 	{
 		audioStream.codecContext = avcodec_alloc_context3(audioStream.codec);
@@ -88,6 +102,7 @@ void initAV(const char* file, Stream** outAudioStream)
 			error("Failed to open audio codec", "avDecode.c", __LINE__);
 		}
 	}
+
 	*outAudioStream = &audioStream;
 }
 
@@ -186,19 +201,13 @@ static int decodeVideoPacket(AVPacket* packet, AVFrame* frame, AVFrame* scaledFr
 		{
 			if (queueFrame->videoFrame) { free(queueFrame->videoFrame); }
 			if (queueFrame->output) { free(queueFrame->output); }
+			if (queueFrame->outputLineOffsets) { free(queueFrame->outputLineOffsets); }
 			queueFrame->frameW = w;
 			queueFrame->frameH = h;
 			queueFrame->videoLinesize = scaledFrame->linesize[0];
 			queueFrame->videoFrame = malloc(scaledFrame->linesize[0] * h);
-			if (useCStdOut)
-			{
-				if (withColors) { queueFrame->output = malloc(((w * h * ANSI_CODE_LEN) + h) * sizeof(char)); }
-				else { queueFrame->output = malloc((w + 1) * h * sizeof(char)); }
-			}
-			else
-			{
-				queueFrame->output = malloc(w * h * sizeof(CHAR_INFO));
-			}
+			queueFrame->output = malloc(getOutputArraySize());
+			queueFrame->outputLineOffsets = malloc((h + 1) * sizeof(int));
 		}
 		memcpy(queueFrame->videoFrame, scaledFrame->data[0],
 			scaledFrame->linesize[0] * h);

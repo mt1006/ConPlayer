@@ -86,7 +86,7 @@ static void __cdecl drawThread(void* ptr)
 				double timeToSleep = ((frameCounter + 1) / fps) - curTime;
 				Sleep((DWORD)(timeToSleep * 1000.0));
 			}
-			drawFrame(frame->output, frame->frameW, frame->frameH);
+			drawFrame(frame->output, frame->outputLineOffsets, frame->frameW, frame->frameH);
 			frameCounter++;
 		}
 		enqueueFrame(STAGE_FREE);
@@ -122,7 +122,6 @@ static void __cdecl keyboardThread(void* ptr)
 			timeToSet -= (int64_t)(SEEK_SECONDS * AV_TIME_BASE);
 			if (timeToSet < 0) { timeToSet = 0; }
 			seek(timeToSet);
-			Sleep(KEYBOARD_DELAY);
 			break;
 		case ']':
 			paused = 0;
@@ -130,7 +129,6 @@ static void __cdecl keyboardThread(void* ptr)
 			timeToSet += (int64_t)(SEEK_SECONDS * AV_TIME_BASE);
 			if (timeToSet < 0) { timeToSet = 0; }
 			seek(timeToSet);
-			Sleep(KEYBOARD_DELAY);
 			break;
 		}
 	}

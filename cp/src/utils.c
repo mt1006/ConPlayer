@@ -34,6 +34,28 @@ void clearScreen(HANDLE handle)
 	SetConsoleCursorPosition(handle, csbi.dwCursorPosition);
 }
 
+size_t getOutputArraySize(void)
+{
+	const int CSTD_16_CODE_LEN = 6;   // "\x1B[??m?"
+	const int CSTD_256_CODE_LEN = 12; // "\x1B[38;5;???m?"
+	const int CSTD_RGB_CODE_LEN = 20; // "\x1B[38;2;???;???;???m?"
+
+	switch (colorMode)
+	{
+	case CM_CSTD_GRAY:
+		return (w + 1) * h * sizeof(char);
+	case CM_CSTD_16:
+		return ((w * h * CSTD_16_CODE_LEN) + h) * sizeof(char);
+	case CM_CSTD_256:
+		return ((w * h * CSTD_256_CODE_LEN) + h) * sizeof(char);
+	case CM_CSTD_RGB:
+		return ((w * h * CSTD_RGB_CODE_LEN) + h) * sizeof(char);
+	case CM_WINAPI_GRAY:
+	case CM_WINAPI_16:
+		return w * h * sizeof(CHAR_INFO);
+	}
+}
+
 uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b)
 {
 	// https://stackoverflow.com/questions/15682537/ansi-color-specific-rgb-sequence-bash

@@ -10,7 +10,7 @@
     <ClCompile Include="src\audio.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\avDecode.c">
+    <ClCompile Include="src\decodeFrame.c">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\drawFrame.c">
@@ -29,6 +29,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\utils.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\processFrame.c">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

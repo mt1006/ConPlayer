@@ -128,10 +128,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\audio.c" />
-    <ClCompile Include="src\avDecode.c" />
+    <ClCompile Include="src\decodeFrame.c" />
     <ClCompile Include="src\drawFrame.c" />
     <ClCompile Include="src\help.c" />
     <ClCompile Include="src\main.c" />
+    <ClCompile Include="src\processFrame.c" />
     <ClCompile Include="src\queue.c" />
     <ClCompile Include="src\threads.c" />
     <ClCompile Include="src\utils.c" />

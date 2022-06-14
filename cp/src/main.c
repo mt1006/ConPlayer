@@ -1,14 +1,14 @@
 #include "conplayer.h"
 
 const int QUEUE_SIZE = 64;
-const int ANSI_CODE_LEN = 12;
 
 int w = -1, h = -1;
 int conW = -1, conH = -1;
 int fontW = -1, fontH = -1;
 int vidW = -1, vidH = -1;
 int argW = -1, argH = -1;
-int fillArea = 0, useCStdOut = 0, withColors = 0;
+int fillArea = 0;
+ColorMode colorMode = CM_WINAPI_GRAY;
 int interlacing = 1;
 double volume = 0.5;
 double fps;
@@ -109,11 +109,11 @@ Option argumentParser(int argc, unichar** argv)
 			}
 			else if (option == OP_USE_CSTD_OUT)
 			{
-				useCStdOut = 1;
+				colorMode = CM_CSTD_16;
 			}
 			else if (option == OP_WITH_COLORS)
 			{
-				withColors = 1;
+				if (colorMode == CM_WINAPI_GRAY) { colorMode = CM_WINAPI_16; }
 			}
 			else if (option == OP_SIZE)
 			{
@@ -156,7 +156,8 @@ void load(void)
 	puts("Loading...");
 
 	initAV(inputFile, &audioStream);
-	initConsole();
+	initDrawFrame();
+	initProcessFrame();
 	initQueue();
 	initAudio(audioStream);
 

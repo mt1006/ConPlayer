@@ -75,6 +75,16 @@ typedef enum
 
 typedef enum
 {
+	CM_CSTD_GRAY,
+	CM_CSTD_16,
+	CM_CSTD_256,
+	CM_CSTD_RGB,
+	CM_WINAPI_GRAY,
+	CM_WINAPI_16
+} ColorMode;
+
+typedef enum
+{
 	STAGE_FREE,
 	STAGE_LOADED_FRAME,
 	STAGE_PROCESSED_FRAME
@@ -89,6 +99,7 @@ typedef struct
 	uint8_t* audioFrame;
 	int videoLinesize;
 	void* output; // char* (video - C std) / CHAR_INFO* (video - WinAPI)
+	int* outputLineOffsets;
 	int audioFrameSize;
 	int frameW, frameH;
 	int64_t time;
@@ -111,36 +122,39 @@ typedef struct
 } Stream;
 
 extern const int QUEUE_SIZE;
-extern const int ANSI_CODE_LEN;
 
 extern int w, h;
 extern int conW, conH;
 extern int fontW, fontH;
 extern int vidW, vidH;
 extern int argW, argH;
-extern int fillArea, useCStdOut, withColors;
+extern int fillArea;
+extern ColorMode colorMode;
 extern int interlacing;
 extern double volume;
 extern double fps;
 extern int decodeEnd;
 
-//avDecode.c
+//decodeFrame.c
 extern void initAV(const char* file, Stream** outAudioStream);
 extern void readFrames(void);
 extern void avSeek(int64_t timestamp);
 extern void unload(void);
+
+//processFrame.c
+extern void initProcessFrame(void);
+extern void processFrame(Frame* frame);
+
+//drawFrame.c
+extern void initDrawFrame(void);
+extern void refreshSize(void);
+extern void drawFrame(void* output, int* lineOffsets, int fw, int fh);
 
 //audio.c
 extern void initAudio(Stream* audioStream);
 extern void addAudio(AVFrame* frame);
 extern void playAudio(Frame* frame);
 extern void deinitAudio(void);
-
-//drawFrame.c
-extern void initConsole(void);
-extern void processFrame(Frame* frame);
-extern void drawFrame(void* output, int fw, int fh);
-extern void refreshSize(void);
 
 //threads.c
 extern void beginThreads(void);
@@ -153,13 +167,14 @@ extern void enqueueFrame(Stage toStage);
 
 //help.c
 extern void showHelp(void);
-extern void showInformation(void);
+extern void showInfo(void);
 extern void showFullInfo(void);
 extern void showVersion(void);
 
 //utils.c
 extern double getTime(void);
 extern void clearScreen(HANDLE handle);
+extern size_t getOutputArraySize(void);
 extern uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b);
 extern int utf8ArraySize(unichar* input, int inputSize);
 extern void unicharArrayToUTF8(unichar* input, char* output, int inputSize);

@@ -36,6 +36,7 @@ void initQueue(void)
 		queue.array[i].audioFrame = NULL;
 		queue.array[i].videoLinesize = 0;
 		queue.array[i].output = NULL;
+		queue.array[i].outputLineOffsets = NULL;
 		queue.array[i].audioFrameSize = -1;
 		queue.array[i].frameW = -1;
 		queue.array[i].frameH = -1;
