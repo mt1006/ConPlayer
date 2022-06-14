@@ -1,6 +1,6 @@
 #include "conplayer.h"
 
-void showHelp()
+void showHelp(void)
 {
 	puts(
 		"ConPlayer - Help\n\n"
@@ -36,7 +36,7 @@ void showHelp()
 		" ESC - Exit");
 }
 
-void showInformations()
+void showInformations(void)
 {
 	puts(
 		"ConPlayer - Information\n"
@@ -46,7 +46,7 @@ void showInformations()
 		"Architecture: " CP_CPU);
 }
 
-void showFullInfo()
+void showFullInfo(void)
 {
 	puts(
 		"ConPlayer - Full info\n"
@@ -65,7 +65,7 @@ void showFullInfo()
 	#endif
 }
 
-void showVersion()
+void showVersion(void)
 {
 	puts("ConPlayer " CP_VERSION " [" CP_CPU "]");
 }

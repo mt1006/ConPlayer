@@ -19,7 +19,7 @@ static void processForWinAPI(Frame* frame);
 static void drawWithWinAPI(CHAR_INFO* output, int fw, int fh);
 static uint8_t procColor(uint8_t* r, uint8_t* g, uint8_t* b);
 
-void initConsole()
+void initConsole(void)
 {
 	if (vidW == -1 || vidH == -1) { return; }
 	symbolSetSize = (int)strlen(symbolSet);
@@ -52,6 +52,7 @@ void processFrame(Frame* frame)
 		{
 			for (int j = 0; j < frame->frameW; j++)
 			{
+				showHelp(1);
 				uint8_t valR = frame->videoFrame[(j * 3) + (i * frame->videoLinesize)];
 				uint8_t valG = frame->videoFrame[(j * 3) + (i * frame->videoLinesize) + 1];
 				uint8_t valB = frame->videoFrame[(j * 3) + (i * frame->videoLinesize) + 2];
@@ -171,7 +172,7 @@ void drawFrame(void* output, int fw, int fh)
 	}
 }
 
-void refreshSize()
+void refreshSize(void)
 {
 	static int firstCall = 1;
 	static int setNewSize = 0;

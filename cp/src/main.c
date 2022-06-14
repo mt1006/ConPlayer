@@ -148,7 +148,7 @@ Option argumentParser(int argc, unichar** argv)
 	return operation;
 }
 
-void load()
+void load(void)
 {
 	Stream* audioStream;
 	if (!inputFile) { error("Invalid syntax!", "main.c", __LINE__); };

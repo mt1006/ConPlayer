@@ -1,6 +1,6 @@
 #include "conplayer.h"
 
-double getTime()
+double getTime(void)
 {
 	return (double)clock() / (double)CLOCKS_PER_SEC;
 }

@@ -91,7 +91,7 @@ void initAV(const char* file, Stream** outAudioStream)
 	*outAudioStream = &audioStream;
 }
 
-void readFrames()
+void readFrames(void)
 {
 	double lastConRefresh = 0.0;
 
@@ -218,7 +218,7 @@ static int decodeAudioPacket(AVPacket* packet, AVFrame* frame)
 	return 0;
 }
 
-void unload()
+void unload(void)
 {
 	sws_freeContext(swsContext);
 	av_free(scaledFrameBuffer);

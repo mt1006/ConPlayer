@@ -5,7 +5,7 @@ static Queue queue;
 
 static Frame* queueNextElement(int currentPos);
 
-void initQueue()
+void initQueue(void)
 {
 	static int queueExists = 0;
 

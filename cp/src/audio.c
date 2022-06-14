@@ -71,7 +71,7 @@ void playAudio(Frame* frame)
 	ao_play(aoDevice, frame->audioFrame, frame->audioSamplesNum * SAMPLE_SIZE);
 }
 
-void deinitAudio()
+void deinitAudio(void)
 {
 	if (aoDevice) { ao_close(aoDevice); }
 	swr_free(&resampleContext);

@@ -21,14 +21,14 @@ static void __cdecl drawThread(void* ptr);
 static void __cdecl keyboardThread(void* ptr);
 static void seek(int64_t timestamp);
 
-void beginThreads()
+void beginThreads(void)
 {
 	procThreadID = _beginthread(&procThread, 0, NULL);
 	drawThreadID = _beginthread(&drawThread, 0, NULL);
 	keyboardThreadID = _beginthread(&keyboardThread, 0, NULL);
 }
 
-void resetTimer()
+void resetTimer(void)
 {
 	frameCounter = 0;
 }

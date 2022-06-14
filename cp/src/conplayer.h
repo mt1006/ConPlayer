@@ -126,39 +126,39 @@ extern int decodeEnd;
 
 //avDecode.c
 extern void initAV(const char* file, Stream** outAudioStream);
-extern void readFrames();
+extern void readFrames(void);
 extern void avSeek(int64_t timestamp);
-extern void unload();
+extern void unload(void);
 
 //audio.c
 extern void initAudio(Stream* audioStream);
 extern void addAudio(AVFrame* frame);
 extern void playAudio(Frame* frame);
-extern void deinitAudio();
+extern void deinitAudio(void);
 
 //drawFrame.c
-extern void initConsole();
+extern void initConsole(void);
 extern void processFrame(Frame* frame);
 extern void drawFrame(void* output, int fw, int fh);
-extern void refreshSize();
+extern void refreshSize(void);
 
 //threads.c
-extern void beginThreads();
-extern void resetTimer();
+extern void beginThreads(void);
+extern void resetTimer(void);
 
 //queue.c
-extern void initQueue();
+extern void initQueue(void);
 extern Frame* dequeueFrame(Stage fromStage);
 extern void enqueueFrame(Stage toStage);
 
 //help.c
-extern void showHelp();
-extern void showInformations();
-extern void showFullInfo();
-extern void showVersion();
+extern void showHelp(void);
+extern void showInformations(void);
+extern void showFullInfo(void);
+extern void showVersion(void);
 
 //utils.c
-extern double getTime();
+extern double getTime(void);
 extern void clearScreen(HANDLE handle);
 extern uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b);
 extern int utf8ArraySize(unichar* input, int inputSize);
