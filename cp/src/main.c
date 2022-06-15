@@ -17,7 +17,6 @@ int decodeEnd = 0;
 void load(char* inputFile)
 {
 	Stream* audioStream;
-	if (!inputFile) { error("Invalid syntax!", "main.c", __LINE__); };
 
 	puts("Loading...");
 
