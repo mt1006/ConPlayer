@@ -153,7 +153,7 @@ extern Frame* dequeueFrame(Stage fromStage);
 extern void enqueueFrame(Stage toStage);
 
 //help.c
-extern void showHelp(void);
+extern void showHelp(int basic, int advanced, int colorModes, int keyboard);
 extern void showInfo(void);
 extern void showFullInfo(void);
 extern void showVersion(void);

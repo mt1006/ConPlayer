@@ -159,19 +159,42 @@ static int opFill(int argc, char** argv)
 
 static int opInformation(int argc, char** argv)
 {
+	if (argc > 0) { invalidSyntax(__LINE__); }
 	showInfo();
 	return 0;
 }
 
 static int opVersion(int argc, char** argv)
 {
+	if (argc > 0) { invalidSyntax(__LINE__); }
 	showVersion();
 	return 0;
 }
 
 static int opHelp(int argc, char** argv)
 {
-	showHelp();
+	if (argc == 1 && argv[0][0] != '-')
+	{
+		for (int i = 0; i < strlen(argv[0]); i++)
+		{
+			argv[0][i] = (char)tolower((int)argv[0][i]);
+		}
+		if (!strcmp(argv[0], "basic")) { showHelp(1, 0, 0, 0); }
+		else if (!strcmp(argv[0], "advanced")) { showHelp(0, 1, 0, 0); }
+		else if (!strcmp(argv[0], "color-modes")) { showHelp(0, 0, 1, 0); }
+		else if (!strcmp(argv[0], "keyboard")) { showHelp(0, 0, 0, 1); }
+		else if (!strcmp(argv[0], "full")) { showHelp(1, 1, 1, 1); }
+		else { error("Invalid help topic!", "argParser.c", __LINE__); }
+		return 1;
+	}
+	else if (argc == 0)
+	{
+		showHelp(1, 0, 0, 1);
+	}
+	else
+	{
+		invalidSyntax(__LINE__);
+	}
 	return 0;
 }
 
@@ -185,6 +208,7 @@ static int opInterlaced(int argc, char** argv)
 
 static int opFullInfo(int argc, char** argv)
 {
+	if (argc > 0) { invalidSyntax(__LINE__); }
 	showFullInfo();
 	return 0;
 }

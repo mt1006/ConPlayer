@@ -5,11 +5,13 @@ static void helpAdvancedOptions(void);
 static void helpColorModes(void);
 static void helpKeyboard(void);
 
-void showHelp(void)
+void showHelp(int basic, int advanced, int colorModes, int keyboard)
 {
 	puts("ConPlayer - Help\n");
-	helpBasicOptions();
-	helpKeyboard();
+	if (basic) { helpBasicOptions(); }
+	if (advanced) { helpAdvancedOptions(); }
+	if (colorModes) { helpColorModes(); }
+	if (keyboard) { helpKeyboard(); }
 }
 
 void showInfo(void)
@@ -56,7 +58,7 @@ static void helpBasicOptions(void)
 		" -c <mode>           Sets color mode.\n"
 		"  (--colors)         Default color mode is \"winapi-gray\".\n"
 		"                     With \"-c\", with no mode specified, default is \"cstd-256\".\n"
-		"                     To get list of all avaible color modes use \"conpl -h color-modes\""
+		"                     To get list of all avaible color modes use \"conpl -h color-modes\"\n"
 		"                     Examples:\n"
 		"                      conpl video.mp4 -c\n"
 		"                      conpl video.mp4 -c winapi-16\n"
@@ -92,12 +94,12 @@ static void helpColorModes(void)
 {
 	puts(
 		"Color modes:\n"
-		">winapi-gray (default without \"-c\")\n"
-		">winapi-16\n"
-		">cstd-gray\n"
-		">cstd-16\n"
-		">cstd-256 (defaults to \"-c\")\n"
-		">cstd-rgb\n");
+		" >winapi-gray (default without \"-c\")\n"
+		" >winapi-16\n"
+		" >cstd-gray\n"
+		" >cstd-16\n"
+		" >cstd-256 (defaults to \"-c\")\n"
+		" >cstd-rgb\n");
 }
 
 static void helpKeyboard(void)
@@ -106,5 +108,5 @@ static void helpKeyboard(void)
 		"Keyboard control:\n"
 		" Space - Pause/Play\n"
 		" \"[\" / \"]\" - Go back/Skip forward\n"
-		" ESC - Exit");
+		" ESC - Exit\n");
 }
