@@ -111,6 +111,7 @@ static void __cdecl keyboardThread(void* ptr)
 		switch (key)
 		{
 		case VK_ESCAPE:
+			setDefaultColor();
 			exit(0);
 			break;
 		case VK_SPACE:

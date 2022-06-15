@@ -53,6 +53,9 @@ int main(int argc, char** argv)
 		uc_argv = (unichar**)argv;
 	}
 
-	load(argumentParser(uc_argc - 1, uc_argv + 1));
+	char* inputFile = argumentParser(uc_argc - 1, uc_argv + 1);
+	if (inputFile) { load(inputFile); }
+
+	setDefaultColor();
 	return 0;
 }

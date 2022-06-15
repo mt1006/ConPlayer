@@ -59,12 +59,12 @@ typedef char unichar;
 
 typedef enum
 {
+	CM_WINAPI_GRAY,
+	CM_WINAPI_16,
 	CM_CSTD_GRAY,
 	CM_CSTD_16,
 	CM_CSTD_256,
-	CM_CSTD_RGB,
-	CM_WINAPI_GRAY,
-	CM_WINAPI_16
+	CM_CSTD_RGB
 } ColorMode;
 
 typedef enum
@@ -161,6 +161,7 @@ extern void showVersion(void);
 //utils.c
 extern double getTime(void);
 extern void clearScreen(HANDLE handle);
+extern void setDefaultColor(void);
 extern size_t getOutputArraySize(void);
 extern uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b);
 extern ColorMode colorModeFromStr(char* str);

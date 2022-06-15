@@ -66,7 +66,7 @@ char* argumentParser(int argc, unichar** argv)
 					if (OPTIONS[j].isOperation)
 					{
 						if (i != argc - 1) { invalidSyntax(__LINE__); }
-						exit(0);
+						return NULL;
 					}
 
 					usedOptions[j] = 1;

@@ -1,2 +1,6 @@
+-Removed "-cstd". Replaced with color modes.
 -Drawing optimization for colors with cstd.
--"/?" now shows help menu.
+-Screen is now cleared on resize when using cstd.
+-Default console color is now reset on exit, when using colors with cstd.
+-Changes to the help message and splitting it.
+-"/?" now shows help message.

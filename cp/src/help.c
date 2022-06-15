@@ -53,11 +53,16 @@ static void helpBasicOptions(void)
 		" [none] / -i         Just input file - audio or video.\n"
 		"                     Examples:\n"
 		"                      conpl video.mp4\n"
-		" -c (--colors)       Colors (by default - 16, with \"-cstd\" - 256).\n"
-		"                     On older Windows versions colors with \"-cstd\" may not work properly!\n"
+		" -c <mode>           Sets color mode.\n"
+		"  (--colors)         Default color mode is \"winapi-gray\".\n"
+		"                     With \"-c\", with no mode specified, default is \"cstd-256\".\n"
+		"                     To get list of all avaible color modes use \"conpl -h color-modes\""
+		"                     Examples:\n"
+		"                      conpl video.mp4 -c\n"
+		"                      conpl video.mp4 -c winapi-16\n"
 		" -vol [volume]       Sets audio volume. By default \"0.5\".\n"
 		"  (--volume)         Examples:\n"
-		"                      conpl video.mp4 -v 0.2\n"
+		"                      conpl video.mp4 -vol 0.2\n"
 		" -s [w] [h]          Sets width and height of the drawn image.\n"
 		"  (--size)           By default size of entire window.\n"
 		"                     Using \"-s 0 0\" image size will be constant\n"
@@ -67,7 +72,8 @@ static void helpBasicOptions(void)
 		" -f  (--fill)        Fills entire available area, without keeping ratio.\n"
 		" -inf(--information) Information about ConPlayer.\n"
 		" -v  (--version)     Information about ConPlayer version.\n"
-		" -h / -? (--help)    Displays help message.\n");
+		" -h <topic>          Displays help message.\n"
+		"  (--help)           Topics: basic, advanced, color-modes, keyboard, full\n");
 }
 
 static void helpAdvancedOptions(void)
@@ -85,7 +91,13 @@ static void helpAdvancedOptions(void)
 static void helpColorModes(void)
 {
 	puts(
-		"Color modes:\n");
+		"Color modes:\n"
+		">winapi-gray (default without \"-c\")\n"
+		">winapi-16\n"
+		">cstd-gray\n"
+		">cstd-16\n"
+		">cstd-256 (defaults to \"-c\")\n"
+		">cstd-rgb\n");
 }
 
 static void helpKeyboard(void)
