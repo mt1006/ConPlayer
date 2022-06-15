@@ -1,1 +1,2 @@
--Drawing optimization.
+-Drawing optimization for colors with cstd.
+-"/?" now shows help menu.

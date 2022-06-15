@@ -65,7 +65,6 @@ static void helpBasicOptions(void)
 		"                     Examples:\n"
 		"                      conpl video.mp4 -s 120 50\n"
 		" -f  (--fill)        Fills entire available area, without keeping ratio.\n"
-		" -cstd (--c-std-out) Uses C std functions instead of WinAPI.\n" // to remove
 		" -inf(--information) Information about ConPlayer.\n"
 		" -v  (--version)     Information about ConPlayer version.\n"
 		" -h / -? (--help)    Displays help message.\n");

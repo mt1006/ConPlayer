@@ -59,22 +59,6 @@ typedef char unichar;
 
 typedef enum
 {
-	OP_NONE,
-	OP_INPUT,
-	OP_SIZE,
-	OP_VOLUME,
-	OP_FILL,
-	OP_INTERLACING,
-	OP_USE_CSTD_OUT,
-	OP_WITH_COLORS,
-	OP_INFORMATION,
-	OP_FULL_INFO,
-	OP_GET_VERSION,
-	OP_HELP
-} Option;
-
-typedef enum
-{
 	CM_CSTD_GRAY,
 	CM_CSTD_16,
 	CM_CSTD_256,
@@ -135,6 +119,9 @@ extern double volume;
 extern double fps;
 extern int decodeEnd;
 
+//argParser.c
+extern char* argumentParser(int argc, unichar** argv);
+
 //decodeFrame.c
 extern void initAV(const char* file, Stream** outAudioStream);
 extern void readFrames(void);
@@ -176,6 +163,7 @@ extern double getTime(void);
 extern void clearScreen(HANDLE handle);
 extern size_t getOutputArraySize(void);
 extern uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b);
+extern ColorMode colorModeFromStr(char* str);
 extern int utf8ArraySize(unichar* input, int inputSize);
 extern void unicharArrayToUTF8(unichar* input, char* output, int inputSize);
 extern char* toUTF8(unichar* input, int inputLen);

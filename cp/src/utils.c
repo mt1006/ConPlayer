@@ -72,6 +72,11 @@ uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b)
 		+ round((double)b / 255.0 * 5.0));
 }
 
+ColorMode colorModeFromStr(char* str)
+{
+	return CM_CSTD_RGB;
+}
+
 int utf8ArraySize(unichar* input, int inputSize)
 {
 	if (USE_WCHAR)
@@ -138,7 +143,9 @@ char* toUTF8(unichar* input, int inputLen)
 	}
 	else
 	{
-		return (char*)input;
+		char* output = (char*)malloc(inputLen * sizeof(char));
+		memcpy(output, input, inputLen);
+		return output;
 	}
 }
 
