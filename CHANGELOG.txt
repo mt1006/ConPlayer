@@ -4,3 +4,5 @@
 -Default console color is now reset on exit, when using colors with cstd.
 -Changes to the help message and splitting it.
 -"/?" now shows help message.
+-Height of scanline in interlaced mode can now be changed.
+-Fixed last part drawing instantly in interlaced mode.

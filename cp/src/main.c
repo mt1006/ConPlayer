@@ -9,7 +9,7 @@ int vidW = -1, vidH = -1;
 int argW = -1, argH = -1;
 int fillArea = 0;
 ColorMode colorMode = CM_WINAPI_GRAY;
-int interlacing = 1;
+int scanlineCount = 1, scanlineHeight = 1;
 double volume = 0.5;
 double fps;
 int decodeEnd = 0;

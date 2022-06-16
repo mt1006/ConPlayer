@@ -201,9 +201,20 @@ static int opHelp(int argc, char** argv)
 static int opInterlaced(int argc, char** argv)
 {
 	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
-	interlacing = atoi(argv[0]);
-	if (interlacing < 1) { error("Invalid interlacing!", "argParser.c", __LINE__); }
-	return 1;
+	if (argc > 1 && argv[1][0] != '-')
+	{
+		scanlineHeight = atoi(argv[1]);
+		if (scanlineHeight < 1) { error("Invalid scanline height!", "argParser.c", __LINE__); }
+		scanlineCount = atoi(argv[0]);
+		if (scanlineCount < 1) { error("Invalid interlacing!", "argParser.c", __LINE__); }
+		return 2;
+	}
+	else
+	{
+		scanlineCount = atoi(argv[0]);
+		if (scanlineCount < 1) { error("Invalid interlacing!", "argParser.c", __LINE__); }
+		return 1;
+	}
 }
 
 static int opFullInfo(int argc, char** argv)

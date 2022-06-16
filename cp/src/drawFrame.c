@@ -153,7 +153,7 @@ void refreshSize(void)
 
 void drawFrame(void* output, int* lineOffsets, int fw, int fh)
 {
-	static int part = 0;
+	static int scanline = 0;
 	static int lastFW = 0, lastFH = 0;
 	if (lastFW != fw || lastFH != fh)
 	{
@@ -168,7 +168,7 @@ void drawFrame(void* output, int* lineOffsets, int fw, int fh)
 		return;
 	}
 
-	if (interlacing == 1)
+	if (scanlineCount == 1)
 	{
 		COORD cursor = { 0,0 };
 		SetConsoleCursorPosition(outputHandle, cursor);
@@ -176,27 +176,20 @@ void drawFrame(void* output, int* lineOffsets, int fw, int fh)
 	}
 	else
 	{
-		int partSize = interlacing;
-		int partCount = interlacing;
-
-		for (int i = 0; i < fh; i += partSize)
+		for (int i = 0; i < fh; i += scanlineCount * scanlineHeight)
 		{
-			int ph = partSize;
-			if (partSize > (fh - i)) { ph = fh - i; }
+			int sy = i + (scanline * scanlineHeight);
+			int sh = scanlineHeight;
+			if (sy >= fh) { break; }
+			else if (sy + sh > fh) { sh = fh - sy; }
 
-			int y = ((ph / partCount) * part) + i;
-			int h = 0;
-
-			if (part == partCount - 1) { h = (ph + i) - y; }
-			else { h = ph / partCount; }
-
-			COORD cursor = { 0,y };
+			COORD cursor = { 0,sy };
 			SetConsoleCursorPosition(outputHandle, cursor);
-			fwrite((char*)output + lineOffsets[y], 1, lineOffsets[y + h] - lineOffsets[y], stdout);
+			fwrite((char*)output + lineOffsets[sy], 1, lineOffsets[sy + sh] - lineOffsets[sy], stdout);
 		}
 
-		part++;
-		if (part == partCount) { part = 0; }
+		scanline++;
+		if (scanline == scanlineCount) { scanline = 0; }
 	}
 }
 

@@ -114,7 +114,7 @@ extern int vidW, vidH;
 extern int argW, argH;
 extern int fillArea;
 extern ColorMode colorMode;
-extern int interlacing;
+extern int scanlineCount, scanlineHeight;
 extern double volume;
 extern double fps;
 extern int decodeEnd;

@@ -82,11 +82,13 @@ static void helpAdvancedOptions(void)
 {
 	puts(
 		"Advanced options:\n"
-		" -int [divisor]      Uses interlacing to draw frames (works only with \"-cstd\").\n"
-		"  (--interlaced)     The larger the divisor, fewer scanlines there are per frame.\n"
+		" -int [divisor]      Uses interlacing to draw frames.\n"
+		"      <height>       The larger the divisor, fewer scanlines there are per frame.\n"
+		"  (--interlaced)     Height is optional parameter and means scanline height - by default 1.\n"
 		"                     When divisor is equal to 1, then interlacing is disabled.\n"
 		"                     Examples:\n"
 		"                      conpl video.mp4 -int 2\n"
+		"                      conpl video.mp4 -int 4 3\n"
 		" -fi (--full-info)   Full info about ConPlayer.\n");
 }
 
