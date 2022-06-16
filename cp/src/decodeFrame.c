@@ -13,8 +13,6 @@ static struct SwsContext* swsContext = NULL;
 static uint8_t* scaledFrameBuffer = NULL;
 static Stream videoStream = { -1 };
 static Stream audioStream = { -1 };
-static int lastW = -1, lastH = -1;
-static enum AVPixelFormat lastPixelFormat = AV_PIX_FMT_NONE;
 static int lastFrame = -1;
 static int useAVSeek = 0;
 static int64_t seekTimestamp = 0;
@@ -172,6 +170,10 @@ static void setFrameSize(int inputW, int inputH, enum AVPixelFormat inputFormat,
 
 static int decodeVideoPacket(AVPacket* packet, AVFrame* frame, AVFrame* scaledFrame)
 {
+	static int lastFrameW = -1, lastFrameH = -1;
+	static int lastConsoleW = -1, lastConsoleH = -1;
+	static enum AVPixelFormat lastPixelFormat = AV_PIX_FMT_NONE;
+
 	int response = avcodec_send_packet(videoStream.codecContext, packet);
 	if (response < 0) { return response; }
 	while (response >= 0)
@@ -180,14 +182,16 @@ static int decodeVideoPacket(AVPacket* packet, AVFrame* frame, AVFrame* scaledFr
 		if (response < 0) { return 0; }
 		Frame* queueFrame = dequeueFrame(STAGE_FREE);
 		queueFrame->isAudio = 0;
-		if (lastW != frame->width ||
-			lastH != frame->height ||
+		if (lastFrameW != frame->width ||
+			lastFrameH != frame->height ||
 			lastPixelFormat != frame->format ||
-			queueFrame->frameW != w ||
-			queueFrame->frameH != h)
+			lastConsoleW != w ||
+			lastConsoleH != h)
 		{
-			lastW = frame->width;
-			lastH = frame->height;
+			lastFrameW = frame->width;
+			lastFrameH = frame->height;
+			lastConsoleW = w;
+			lastConsoleH = h;
 			lastPixelFormat = frame->format;
 			setFrameSize(frame->width, frame->height, frame->format,
 				w, h, destFormat, scaledFrame);
