@@ -52,7 +52,7 @@ To get colors add "-c" option. Also when playing with colors use Windows Termina
  -h <topic>          Displays help message.
   (--help)           Topics: basic, advanced, color-modes, keyboard, full
   
-  [To see full help use "conpl -h full"]
+[To see full help use "conpl -h full"]
  ```
 
 # Keyboard control
