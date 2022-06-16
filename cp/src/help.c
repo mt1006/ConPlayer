@@ -86,9 +86,17 @@ static void helpAdvancedOptions(void)
 		"      <height>       The larger the divisor, fewer scanlines there are per frame.\n"
 		"  (--interlaced)     Height is optional parameter and means scanline height - by default 1.\n"
 		"                     When divisor is equal to 1, then interlacing is disabled.\n"
+		"                     Note: in winapi mode instead of improve performance, it may degrade it.\n"
 		"                     Examples:\n"
 		"                      conpl video.mp4 -int 2\n"
 		"                      conpl video.mp4 -int 4 3\n"
+		" -cs [charset]       Sets character set used for drawing frames.\n"
+		"  (--charset)        Takes filename with charset or name of predefined charset.\n"
+		"                     Predefined charsets: #long, #short, #2, #blocks, #outline, #bold-outline.\n"
+		"                     Default charset is \"#long\"\n"
+		"                     Examples:\n"
+		"                      conpl video.mp4 -ch #blocks\n"
+		"                      conpl video.mp4 -ch my_charset.txt\n"
 		" -fi (--full-info)   Full info about ConPlayer.\n");
 }
 

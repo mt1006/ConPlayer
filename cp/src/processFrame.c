@@ -1,9 +1,5 @@
 #include "conplayer.h"
 
-//static char* symbolSet = " .-+*?#M&%@";
-static char* symbolSet = " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B$@";
-static int symbolSetSize;
-
 // https://devblogs.microsoft.com/commandline/updating-the-windows-console-colors/
 static const uint8_t CMD_COLORS_16[16][3] =
 {
@@ -19,7 +15,7 @@ static uint8_t findNearestColor16(uint8_t r, uint8_t g, uint8_t b);
 
 void initProcessFrame(void)
 {
-	symbolSetSize = (int)strlen(symbolSet);
+	return;
 }
 
 void processFrame(Frame* frame)
@@ -61,7 +57,7 @@ void processFrame(Frame* frame)
 
 					if (color == oldColor && !isFirstChar)
 					{
-						output[offset] = symbolSet[(val * symbolSetSize) / 256];
+						output[offset] = charset[(val * charsetSize) / 256];
 						offset++;
 						break;
 					}
@@ -72,7 +68,7 @@ void processFrame(Frame* frame)
 					output[offset + 2] = (char)(((color / 10) % 10) + 0x30);
 					output[offset + 3] = (char)((color % 10) + 0x30);
 					output[offset + 4] = 'm';
-					output[offset + 5] = symbolSet[(val * symbolSetSize) / 256];
+					output[offset + 5] = charset[(val * charsetSize) / 256];
 
 					offset += 6;
 					break;
@@ -82,7 +78,7 @@ void processFrame(Frame* frame)
 
 					if (color == oldColor && !isFirstChar)
 					{
-						output[offset] = symbolSet[(val * symbolSetSize) / 256];
+						output[offset] = charset[(val * charsetSize) / 256];
 						offset++;
 						break;
 					}
@@ -99,7 +95,7 @@ void processFrame(Frame* frame)
 					output[offset + 8] = (char)(((color / 10) % 10) + 0x30);
 					output[offset + 9] = (char)((color % 10) + 0x30);
 					output[offset + 10] = 'm';
-					output[offset + 11] = symbolSet[(val * symbolSetSize) / 256];
+					output[offset + 11] = charset[(val * charsetSize) / 256];
 
 					offset += 12;
 					break;
@@ -107,7 +103,7 @@ void processFrame(Frame* frame)
 				case CM_CSTD_RGB:
 					if (valR == oldR && valG == oldG && valB == oldB && !isFirstChar)
 					{
-						output[offset] = symbolSet[(val * symbolSetSize) / 256];
+						output[offset] = charset[(val * charsetSize) / 256];
 						offset++;
 						break;
 					}
@@ -134,7 +130,7 @@ void processFrame(Frame* frame)
 					output[offset + 16] = (char)(((valB / 10) % 10) + 0x30);
 					output[offset + 17] = (char)((valB % 10) + 0x30);
 					output[offset + 18] = 'm';
-					output[offset + 19] = symbolSet[(val * symbolSetSize) / 256];
+					output[offset + 19] = charset[(val * charsetSize) / 256];
 
 					offset += 20;
 					break;
@@ -158,7 +154,7 @@ void processFrame(Frame* frame)
 			for (int j = 0; j < frame->frameW; j++)
 			{
 				uint8_t val = frame->videoFrame[(i * frame->videoLinesize) + j];
-				output[(i * fullW) + j] = symbolSet[(val * symbolSetSize) / 256];
+				output[(i * fullW) + j] = charset[(val * charsetSize) / 256];
 			}
 			output[(i * fullW) + frame->frameW] = '\n';
 			frame->outputLineOffsets[i + 1] = ((i + 1) * fullW);
@@ -182,7 +178,7 @@ static void processForWinAPI(Frame* frame)
 
 				uint8_t val = procColor(&valR, &valG, &valB);
 
-				output[(i * frame->frameW) + j].Char.AsciiChar = symbolSet[(val * symbolSetSize) / 256];
+				output[(i * frame->frameW) + j].Char.AsciiChar = charset[(val * charsetSize) / 256];
 				output[(i * frame->frameW) + j].Attributes = findNearestColor16(valR, valG, valB);
 			}
 		}
@@ -194,7 +190,7 @@ static void processForWinAPI(Frame* frame)
 			for (int j = 0; j < frame->frameW; j++)
 			{
 				uint8_t val = frame->videoFrame[j + i * frame->videoLinesize];
-				output[(i * frame->frameW) + j].Char.AsciiChar = symbolSet[(val * symbolSetSize) / 256];
+				output[(i * frame->frameW) + j].Char.AsciiChar = charset[(val * charsetSize) / 256];
 				output[(i * frame->frameW) + j].Attributes = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
 			}
 		}

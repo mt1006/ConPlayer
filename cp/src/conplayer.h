@@ -118,6 +118,8 @@ extern int scanlineCount, scanlineHeight;
 extern double volume;
 extern double fps;
 extern int decodeEnd;
+extern char* charset;
+extern int charsetSize;
 
 //argParser.c
 extern char* argumentParser(int argc, unichar** argv);

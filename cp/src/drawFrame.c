@@ -195,8 +195,32 @@ void drawFrame(void* output, int* lineOffsets, int fw, int fh)
 
 static void drawWithWinAPI(CHAR_INFO* output, int fw, int fh)
 {
-	COORD charBufSize = { fw,fh };
-	COORD startCharPos = { 0,0 };
-	SMALL_RECT writeRect = { 0,0,fw,fh };
-	WriteConsoleOutputA(outputHandle, output, charBufSize, startCharPos, &writeRect);
+	static int scanline = 0;
+
+	if (scanlineCount == 1)
+	{
+		COORD charBufSize = { fw,fh };
+		COORD startCharPos = { 0,0 };
+		SMALL_RECT writeRect = { 0,0,fw,fh };
+		WriteConsoleOutputA(outputHandle, output, charBufSize, startCharPos, &writeRect);
+	}
+	else
+	{
+		for (int i = 0; i < fh; i += scanlineCount * scanlineHeight)
+		{
+			int sy = i + (scanline * scanlineHeight);
+			int sh = scanlineHeight;
+			if (sy >= fh) { break; }
+			else if (sy + sh > fh) { sh = fh - sy; }
+
+
+			COORD charBufSize = { fw,fh };
+			COORD startCharPos = { 0,sy };
+			SMALL_RECT writeRect = { 0,sy,fw,sy + sh };
+			WriteConsoleOutputA(outputHandle, output, charBufSize, startCharPos, &writeRect);
+		}
+
+		scanline++;
+		if (scanline == scanlineCount) { scanline = 0; }
+	}
 }

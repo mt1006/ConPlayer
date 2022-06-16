@@ -13,6 +13,8 @@ int scanlineCount = 1, scanlineHeight = 1;
 double volume = 0.5;
 double fps;
 int decodeEnd = 0;
+char* charset = NULL;
+int charsetSize = 0;
 
 void load(char* inputFile)
 {

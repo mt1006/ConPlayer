@@ -1,5 +1,12 @@
 #include "conplayer.h"
 
+static const char* CHARSET_LONG = " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B$@";
+static const char* CHARSET_SHORT = " .-+*?#M&%@";
+static const char* CHARSET_2 = " *";
+static const char* CHARSET_BLOCKS = " \xB0\xB1\xB2\xDB";
+static const char* CHARSET_OUTLINE = " @@@@@@@@@@@@@@@@ ";
+static const char* CHARSET_BOLD_OUTLINE = " @@@@@@@@@@@@@@@@.";
+
 typedef struct
 {
 	char* name;
@@ -17,6 +24,7 @@ static int opFill(int argc, char** argv);
 static int opInformation(int argc, char** argv);
 static int opVersion(int argc, char** argv);
 static int opInterlaced(int argc, char** argv);
+static int opCharset(int argc, char** argv);
 static int opFullInfo(int argc, char** argv);
 static void invalidSyntax(int line);
 
@@ -30,6 +38,7 @@ const Option OPTIONS[] = {
 	{"-inf","--information",&opInformation,1},
 	{"-v","--version",&opVersion,1},
 	{"-int","--interlaced",&opInterlaced,0},
+	{"-cs","--charset",&opCharset,0},
 	{"-fi","--full-info",&opFullInfo,1} };
 
 static int optionCount;
@@ -39,6 +48,9 @@ char* argumentParser(int argc, unichar** argv)
 {
 	optionCount = sizeof(OPTIONS) / sizeof(Option);
 	int* usedOptions = calloc(optionCount, sizeof(int));
+
+	charset = CHARSET_LONG;
+	charsetSize = (int)strlen(charset);
 
 	char** input = (char**)malloc(argc * sizeof(char*));
 	for (int i = 0; i < argc; i++)
@@ -215,6 +227,37 @@ static int opInterlaced(int argc, char** argv)
 		if (scanlineCount < 1) { error("Invalid interlacing!", "argParser.c", __LINE__); }
 		return 1;
 	}
+}
+
+static int opCharset(int argc, char** argv)
+{ 
+	const int CHARSET_MAX_SIZE = 256;
+
+	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
+	if (argv[0][0] == '#')
+	{
+		for (int i = 0; i < strlen(argv[0]); i++)
+		{
+			argv[0][i] = (char)tolower((int)argv[0][i]);
+		}
+		if (!strcmp(argv[0], "#long")) { charset = CHARSET_LONG; }
+		else if (!strcmp(argv[0], "#short")) { charset = CHARSET_SHORT; }
+		else if (!strcmp(argv[0], "#2")) { charset = CHARSET_2; }
+		else if (!strcmp(argv[0], "#blocks")) { charset = CHARSET_BLOCKS; }
+		else if (!strcmp(argv[0], "#outline")) { charset = CHARSET_OUTLINE; }
+		else if (!strcmp(argv[0], "#bold-outline")) { charset = CHARSET_BOLD_OUTLINE; }
+		else { error("Invalid predefined charset name!", "argParser.c", __LINE__); }
+		charsetSize = (int)strlen(charset);
+	}
+	else
+	{
+		FILE* charsetFile = fopen(argv[0], "rb");
+		if (!charsetFile) { error("Failed to open charset file!", "argParser.c", __LINE__); }
+		charset = (char*)malloc(CHARSET_MAX_SIZE * sizeof(char));
+		charsetSize = (int)fread(charset, sizeof(char), CHARSET_MAX_SIZE, charsetFile);
+		fclose(charsetFile);
+	}
+	return 1;
 }
 
 static int opFullInfo(int argc, char** argv)
