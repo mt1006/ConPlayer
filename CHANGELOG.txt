@@ -1,4 +1,6 @@
+===Version 1.1===
 -Removed "-cstd". Replaced with color modes.
+-Added "--charset" option.
 -Drawing optimization for colors with cstd.
 -Screen is now cleared on resize when using cstd.
 -Default console color is now reset on exit, when using colors with cstd.

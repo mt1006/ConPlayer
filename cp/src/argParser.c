@@ -202,6 +202,7 @@ static int opHelp(int argc, char** argv)
 	else if (argc == 0)
 	{
 		showHelp(1, 0, 0, 1);
+		puts("[To see full help use \"conpl -h full\"]");
 	}
 	else
 	{

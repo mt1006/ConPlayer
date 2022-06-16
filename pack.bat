@@ -23,3 +23,5 @@ cd ..\..
 move x64\Release\conpl_win_x86_64.zip packed
 
 ch -g "packed\conpl_win_x86_32.zip" "packed\conpl_win_x86_64.zip" >  packed\conpl_win_sha256.txt
+
+pause

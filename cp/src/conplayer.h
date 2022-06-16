@@ -31,7 +31,7 @@
 #define CP_CPU "[unknown]"
 #endif
 
-#define CP_VERSION "1.0"
+#define CP_VERSION "1.1"
 #define TO_STR(x) #x
 #define DEF_TO_STR(x) TO_STR(x)
 

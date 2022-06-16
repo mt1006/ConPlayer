@@ -91,7 +91,7 @@ static void helpAdvancedOptions(void)
 		"                      conpl video.mp4 -int 2\n"
 		"                      conpl video.mp4 -int 4 3\n"
 		" -cs [charset]       Sets character set used for drawing frames.\n"
-		"  (--charset)        Takes filename with charset or name of predefined charset.\n"
+		"  (--charset)        Takes name of file with charset or name of predefined charset.\n"
 		"                     Predefined charsets: #long, #short, #2, #blocks, #outline, #bold-outline.\n"
 		"                     Default charset is \"#long\"\n"
 		"                     Examples:\n"
