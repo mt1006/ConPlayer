@@ -12,7 +12,7 @@ Plans for future:
 - better audio/video sync (maybe I'll switch from libao to PortAudio)
 - more options
 
-[Download Version 1.0](https://github.com/mt1006/ConPlayer/releases/tag/ConPlayer-1.0)
+[Download Version 1.1](https://github.com/mt1006/ConPlayer/releases/tag/ConPlayer-1.1)
 
 # Examples
 
@@ -23,35 +23,36 @@ Plans for future:
 Some random 4K test video from yt with colors in Windows Terminal (https://www.youtube.com/watch?v=xcJtL7QggTI&t=96)
 
 ![Colors](screenshots/colors.png "Colors")
-Btw by using "-c" option you get by default only 16 colors. To get 256 colors use "-c" and "-cstd". Also when using colors with "-cstd" use Windows Terminal instead of cmd for better performance. You can also improve performance by using "-int" (check out list below).
+To get colors add "-c" option. Also when playing with colors use Windows Terminal instead of cmd for better performance. You can also improve performance by using interlacing ("-int"), to see full documentation use "-h full".
 
-# List of options
+# List of basic options
 ```
  [none] / -i         Just input file - audio or video.
                      Examples:
                       conpl video.mp4
+ -c <mode>           Sets color mode.
+  (--colors)         Default color mode is "winapi-gray".
+                     With "-c", with no mode specified, default is "cstd-256".
+                     To get list of all avaible color modes use "conpl -h color-modes"
+                     Examples:
+                      conpl video.mp4 -c
+                      conpl video.mp4 -c winapi-16
+ -vol [volume]       Sets audio volume. By default "0.5".
+  (--volume)         Examples:
+                      conpl video.mp4 -vol 0.2
  -s [w] [h]          Sets width and height of the drawn image.
   (--size)           By default size of entire window.
                      Using "-s 0 0" image size will be constant
                      (will not change with the console size change).
                      Examples:
                       conpl video.mp4 -s 120 50
- -vol [volume]       Sets audio volume. By default "0.5".
-  (--volume)         Examples:
-                      conpl video.mp4 -v 0.2
- -c (--colors)       Colors (by default - 16, with "-cstd" - 256).
-                     On older Windows versions colors with "-cstd" may not work properly!
  -f  (--fill)        Fills entire available area, without keeping ratio.
- -int [divisor]      Uses interlacing to draw frames (works only with "-cstd").
-  (--interlaced)     The larger the divisor, fewer scanlines there are per frame.
-                     When divisor is equal to 1, then interlacing is disabled.
-                     Examples:
-                      conpl video.mp4 -int 2
- -cstd (--c-std-out) Uses C std functions instead of WinAPI.
  -inf(--information) Information about ConPlayer.
- -fi (--full-info)   Full info about ConPlayer.
  -v  (--version)     Information about ConPlayer version.
- -h / -? (--help)    Displays this help message.
+ -h <topic>          Displays help message.
+  (--help)           Topics: basic, advanced, color-modes, keyboard, full
+  
+  [To see full help use "conpl -h full"]
  ```
 
 # Keyboard control
