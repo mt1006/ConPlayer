@@ -120,6 +120,8 @@ extern double fps;
 extern int decodeEnd;
 extern char* charset;
 extern int charsetSize;
+extern double constFontRatio;
+extern int disableKeyboard, disableSync, disableCLS;
 
 //argParser.c
 extern char* argumentParser(int argc, unichar** argv);

@@ -25,7 +25,10 @@ void beginThreads(void)
 {
 	procThreadID = _beginthread(&procThread, 0, NULL);
 	drawThreadID = _beginthread(&drawThread, 0, NULL);
-	keyboardThreadID = _beginthread(&keyboardThread, 0, NULL);
+	if (!disableKeyboard)
+	{
+		keyboardThreadID = _beginthread(&keyboardThread, 0, NULL);
+	}
 }
 
 void resetTimer(void)
@@ -96,6 +99,7 @@ static void __cdecl drawThread(void* ptr)
 static void __cdecl keyboardThread(void* ptr)
 {
 	const double SEEK_SECONDS = 10.0;
+	const double VOLUME_CHANGE = 0.05;
 	const double KEYBOARD_DELAY = 0.2;
 	static double keyTime = 0.0;
 
@@ -107,6 +111,8 @@ static void __cdecl keyboardThread(void* ptr)
 		double newKeyTime = getTime();
 		if (newKeyTime < keyTime + KEYBOARD_DELAY) { continue; }
 		keyTime = newKeyTime;
+
+		double newVolume = volume;
 
 		switch (key)
 		{
@@ -130,6 +136,16 @@ static void __cdecl keyboardThread(void* ptr)
 			timeToSet += (int64_t)(SEEK_SECONDS * AV_TIME_BASE);
 			if (timeToSet < 0) { timeToSet = 0; }
 			seek(timeToSet);
+			break;
+		case 'l':
+			newVolume -= VOLUME_CHANGE;
+			if (newVolume < 0.0) { newVolume = 0.0; }
+			volume = newVolume;
+			break;
+		case 'o':
+			newVolume += VOLUME_CHANGE;
+			if (newVolume > 1.0) { newVolume = 1.0; }
+			volume = newVolume;
 			break;
 		}
 	}

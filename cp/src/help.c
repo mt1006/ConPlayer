@@ -97,6 +97,17 @@ static void helpAdvancedOptions(void)
 		"                     Examples:\n"
 		"                      conpl video.mp4 -ch #blocks\n"
 		"                      conpl video.mp4 -ch my_charset.txt\n"
+		" -fr [ratio]         Sets constant font ratio (x/y).\n"
+		"  (--font-ratio)     By default font ratio is obtained using WinAPI.\n"
+		"                     If it's not posible, it's set to 8/18 (about 0.44).\n"
+		"                     Examples:\n"
+		"                      conpl video.mp4 -ft 0.5\n"
+		" -dcls               Disables clearing screen every new frame.\n"
+		"   (--disable-cls)   Uses new line instead. Useful for printing output to file.\n"
+		"                     Examples:\n"
+		"                      conpl video.mp4 -c cstd-gray -s 80 60 -fr 1.0 -dw -dcls > output.txt\n"
+		" -ds (--disable-sync)Disables synchronization - just prints the output as fast as possible."
+		" -dk (--disable-keys)Disables keyboard control.\n"
 		" -fi (--full-info)   Full info about ConPlayer.\n");
 }
 
@@ -118,5 +129,6 @@ static void helpKeyboard(void)
 		"Keyboard control:\n"
 		" Space - Pause/Play\n"
 		" \"[\" / \"]\" - Go back/Skip forward\n"
+		" \"L\" / \"O\" - Turn down/up the volume\n"
 		" ESC - Exit\n");
 }

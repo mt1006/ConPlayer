@@ -25,6 +25,7 @@ static int opInformation(int argc, char** argv);
 static int opVersion(int argc, char** argv);
 static int opInterlaced(int argc, char** argv);
 static int opCharset(int argc, char** argv);
+static int opDisableKeys(int argc, char** argv);
 static int opFullInfo(int argc, char** argv);
 static void invalidSyntax(int line);
 
@@ -39,6 +40,7 @@ const Option OPTIONS[] = {
 	{"-v","--version",&opVersion,1},
 	{"-int","--interlaced",&opInterlaced,0},
 	{"-cs","--charset",&opCharset,0},
+	{"-dk","--disable-keys",&opDisableKeys,0},
 	{"-fi","--full-info",&opFullInfo,1} };
 
 static int optionCount;
@@ -259,6 +261,12 @@ static int opCharset(int argc, char** argv)
 		fclose(charsetFile);
 	}
 	return 1;
+}
+
+static int opDisableKeys(int argc, char** argv)
+{
+	disableKeyboard = 1;
+	return 0;
 }
 
 static int opFullInfo(int argc, char** argv)

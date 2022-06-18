@@ -108,11 +108,11 @@ void refreshSize(void)
 			conH = newConH;
 			fontW = consoleFontInfo.dwFontSize.X;
 			fontH = consoleFontInfo.dwFontSize.Y;
-			int fullW = conW * fontW;
-			int fullH = conH * fontH;
+			double fullW = (double)conW * (double)fontW;
+			double fullH = (double)conH * (double)fontH;
 
 			double vidRatio = (double)vidW / (double)vidH;
-			double conRatio = (double)fullW / (double)fullH;
+			double conRatio = fullW / fullH;
 			if (vidRatio > conRatio)
 			{
 				newW = conW;

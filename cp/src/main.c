@@ -15,6 +15,8 @@ double fps;
 int decodeEnd = 0;
 char* charset = NULL;
 int charsetSize = 0;
+double constFontRatio = 0.0;
+int disableKeyboard = 0, disableSync = 0, disableCLS = 0;
 
 void load(char* inputFile)
 {
