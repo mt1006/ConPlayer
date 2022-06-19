@@ -4,7 +4,6 @@ const int QUEUE_SIZE = 64;
 
 int w = -1, h = -1;
 int conW = -1, conH = -1;
-int fontW = -1, fontH = -1;
 int vidW = -1, vidH = -1;
 int argW = -1, argH = -1;
 int fillArea = 0;

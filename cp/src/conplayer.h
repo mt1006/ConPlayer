@@ -109,7 +109,6 @@ extern const int QUEUE_SIZE;
 
 extern int w, h;
 extern int conW, conH;
-extern int fontW, fontH;
 extern int vidW, vidH;
 extern int argW, argH;
 extern int fillArea;

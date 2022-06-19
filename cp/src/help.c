@@ -104,9 +104,10 @@ static void helpAdvancedOptions(void)
 		"                      conpl video.mp4 -ft 0.5\n"
 		" -dcls               Disables clearing screen every new frame.\n"
 		"   (--disable-cls)   Uses new line instead. Useful for printing output to file.\n"
+		"                     Works properly only in \"cstd\" color mode and it breaks interlacing.\n"
 		"                     Examples:\n"
-		"                      conpl video.mp4 -c cstd-gray -s 80 60 -fr 1.0 -dw -dcls > output.txt\n"
-		" -ds (--disable-sync)Disables synchronization - just prints the output as fast as possible."
+		"                      conpl video.mp4 -c cstd-gray -s 80 60 -fr 1.0 -ds -dcls > output.txt\n"
+		" -ds (--disable-sync)Disables synchronization - just prints the output as fast as possible.\n"
 		" -dk (--disable-keys)Disables keyboard control.\n"
 		" -fi (--full-info)   Full info about ConPlayer.\n");
 }

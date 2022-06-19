@@ -25,6 +25,9 @@ static int opInformation(int argc, char** argv);
 static int opVersion(int argc, char** argv);
 static int opInterlaced(int argc, char** argv);
 static int opCharset(int argc, char** argv);
+static int opFontRatio(int argc, char** argv);
+static int opDisableCLS(int argc, char** argv);
+static int opDisableSync(int argc, char** argv);
 static int opDisableKeys(int argc, char** argv);
 static int opFullInfo(int argc, char** argv);
 static void invalidSyntax(int line);
@@ -40,6 +43,9 @@ const Option OPTIONS[] = {
 	{"-v","--version",&opVersion,1},
 	{"-int","--interlaced",&opInterlaced,0},
 	{"-cs","--charset",&opCharset,0},
+	{"-fr","--font-ratio",&opFontRatio,0},
+	{"-dcls","--disable-cls",&opDisableCLS,0},
+	{"-ds","--disable-sync",&opDisableSync,0},
 	{"-dk","--disable-keys",&opDisableKeys,0},
 	{"-fi","--full-info",&opFullInfo,1} };
 
@@ -261,6 +267,26 @@ static int opCharset(int argc, char** argv)
 		fclose(charsetFile);
 	}
 	return 1;
+}
+
+static int opFontRatio(int argc, char** argv)
+{
+	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
+	constFontRatio = atof(argv[0]);
+	if (constFontRatio <= 0.0) { error("Invalid font ratio!", "argParser.c", __LINE__); }
+	return 1;
+}
+
+static int opDisableCLS(int argc, char** argv)
+{
+	disableCLS = 1;
+	return 0;
+}
+
+static int opDisableSync(int argc, char** argv)
+{
+	disableSync = 1;
+	return 0;
 }
 
 static int opDisableKeys(int argc, char** argv)

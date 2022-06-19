@@ -26,6 +26,7 @@ void refreshSize(void)
 {
 	static int firstCall = 1;
 	static int setNewSize = 0;
+	static int fontW = -1, fontH = -1;
 	static int lastW = 0, lastH = 0;
 
 	CONSOLE_SCREEN_BUFFER_INFOEX consoleBufferInfo;
@@ -71,11 +72,21 @@ void refreshSize(void)
 		{
 			fontW = consoleFontInfo.dwFontSize.X;
 			fontH = consoleFontInfo.dwFontSize.Y;
-			int fullW = argW * fontW;
-			int fullH = argH * fontH;
+
+			double fullW, fullH;
+			if (constFontRatio == 0.0)
+			{
+				fullW = argW * fontW;
+				fullH = argH * fontH;
+			}
+			else
+			{
+				fullW = argW * constFontRatio;
+				fullH = argH;
+			}
 
 			double vidRatio = (double)vidW / (double)vidH;
-			double conRatio = (double)fullW / (double)fullH;
+			double conRatio = fullW / fullH;
 			if (vidRatio > conRatio)
 			{
 				newW = argW;
@@ -108,8 +119,18 @@ void refreshSize(void)
 			conH = newConH;
 			fontW = consoleFontInfo.dwFontSize.X;
 			fontH = consoleFontInfo.dwFontSize.Y;
-			double fullW = (double)conW * (double)fontW;
-			double fullH = (double)conH * (double)fontH;
+
+			double fullW, fullH;
+			if (constFontRatio == 0.0)
+			{
+				fullW = conW * fontW;
+				fullH = conH * fontH;
+			}
+			else
+			{
+				fullW = conW * constFontRatio;
+				fullH = conH;
+			}
 
 			double vidRatio = (double)vidW / (double)vidH;
 			double conRatio = fullW / fullH;
@@ -155,7 +176,7 @@ void drawFrame(void* output, int* lineOffsets, int fw, int fh)
 {
 	static int scanline = 0;
 	static int lastFW = 0, lastFH = 0;
-	if (lastFW != fw || lastFH != fh)
+	if ((lastFW != fw || lastFH != fh) && !disableCLS)
 	{
 		lastFW = fw;
 		lastFH = fh;
@@ -171,7 +192,7 @@ void drawFrame(void* output, int* lineOffsets, int fw, int fh)
 	if (scanlineCount == 1)
 	{
 		COORD cursor = { 0,0 };
-		SetConsoleCursorPosition(outputHandle, cursor);
+		if (!disableCLS) { SetConsoleCursorPosition(outputHandle, cursor); }
 		fwrite((char*)output, 1, lineOffsets[fh], stdout);
 	}
 	else
@@ -184,7 +205,7 @@ void drawFrame(void* output, int* lineOffsets, int fw, int fh)
 			else if (sy + sh > fh) { sh = fh - sy; }
 
 			COORD cursor = { 0,sy };
-			SetConsoleCursorPosition(outputHandle, cursor);
+			if (!disableCLS) { SetConsoleCursorPosition(outputHandle, cursor); }
 			fwrite((char*)output + lineOffsets[sy], 1, lineOffsets[sy + sh] - lineOffsets[sy], stdout);
 		}
 

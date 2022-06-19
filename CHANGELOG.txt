@@ -1,3 +1,6 @@
+-Added option to set constant font ratio.
+-Added option to disable clearing screen.
+-Added option to disable synchronization.
 -Added option to disable keyboard control.
 -Added keys for changing volume.
 -Fix: resizing too often could cause a crash

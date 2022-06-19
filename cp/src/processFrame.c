@@ -142,8 +142,12 @@ void processFrame(Frame* frame)
 			output[offset] = '\n';
 			frame->outputLineOffsets[i + 1] = offset + 1;
 		}
-		output[frame->outputLineOffsets[frame->frameH] - 1] = '\0';
-		frame->outputLineOffsets[frame->frameH]--;
+
+		if (!disableCLS)
+		{
+			output[frame->outputLineOffsets[frame->frameH] - 1] = '\0';
+			frame->outputLineOffsets[frame->frameH]--;
+		}
 	}
 	else
 	{
@@ -159,7 +163,12 @@ void processFrame(Frame* frame)
 			output[(i * fullW) + frame->frameW] = '\n';
 			frame->outputLineOffsets[i + 1] = ((i + 1) * fullW);
 		}
-		output[((frame->frameH - 1) * fullW) + frame->frameW] = '\0';
+
+		if (!disableCLS)
+		{
+			output[((frame->frameH - 1) * fullW) + frame->frameW] = '\0';
+			frame->outputLineOffsets[frame->frameH]--;
+		}
 	}
 }
 

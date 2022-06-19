@@ -74,23 +74,36 @@ static void __cdecl drawThread(void* ptr)
 		}
 
 		Frame* frame = dequeueFrame(STAGE_PROCESSED_FRAME);
-		if (frame->isAudio)
+		if (disableSync)
 		{
-			playAudio(frame);
+			if (!frame->isAudio)
+			{
+				drawFrameTime = frame->time;
+				drawFrame(frame->output, frame->outputLineOffsets,
+					frame->frameW, frame->frameH);
+			}
 		}
 		else
 		{
-			drawFrameTime = frame->time;
-			if (!frameCounter) { startTime = getTime(); }
-			double curTime = getTime() - startTime;
-			int curFrame = (int)(curTime * fps);
-			if (curFrame <= frameCounter)
+			if (frame->isAudio)
 			{
-				double timeToSleep = ((frameCounter + 1) / fps) - curTime;
-				Sleep((DWORD)(timeToSleep * 1000.0));
+				playAudio(frame);
 			}
-			drawFrame(frame->output, frame->outputLineOffsets, frame->frameW, frame->frameH);
-			frameCounter++;
+			else
+			{
+				drawFrameTime = frame->time;
+				if (!frameCounter) { startTime = getTime(); }
+				double curTime = getTime() - startTime;
+				int curFrame = (int)(curTime * fps);
+				if (curFrame <= frameCounter)
+				{
+					double timeToSleep = ((frameCounter + 1) / fps) - curTime;
+					Sleep((DWORD)(timeToSleep * 1000.0));
+				}
+				drawFrame(frame->output, frame->outputLineOffsets,
+					frame->frameW, frame->frameH);
+				frameCounter++;
+			}
 		}
 		enqueueFrame(STAGE_FREE);
 	}
