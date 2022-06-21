@@ -1,5 +1,5 @@
 ifeq ($(OS),Windows_NT)
-	$(error Makefile is to compile ConPlayer for Linux; to compile it for Windows, open .sln file with Visual Studio (check README.md))
+ $(error Makefile is to compile ConPlayer for Linux; to compile it for Windows, open .sln file with Visual Studio (check README.md))
 endif
 
 C_COMPILER = gcc
