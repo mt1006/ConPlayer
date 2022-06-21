@@ -40,7 +40,7 @@ void refreshSize(void)
 	static int lastW = 0, lastH = 0;
 	static double fontRatio = 0.0;
 
-	ConsoleInfo* consoleInfo;
+	ConsoleInfo consoleInfo;
 	getConsoleInfo(&consoleInfo);
 
 	int newW = lastW, newH = lastH;
@@ -49,8 +49,8 @@ void refreshSize(void)
 	{
 		if (argW == 0 && argH == 0)
 		{
-			argW = consoleInfo->conW;
-			argH = consoleInfo->conH;
+			argW = consoleInfo.conW;
+			argH = consoleInfo.conH;
 		}
 
 		if (fillArea)
@@ -61,9 +61,9 @@ void refreshSize(void)
 				newH = argH;
 			}
 		}
-		else if (fontRatio != consoleInfo->fontRatio)
+		else if (fontRatio != consoleInfo.fontRatio)
 		{
-			if (constFontRatio == 0.0) { fontRatio = consoleInfo->fontRatio; }
+			if (constFontRatio == 0.0) { fontRatio = consoleInfo.fontRatio; }
 			else { fontRatio = constFontRatio; }
 
 			double vidRatio = (double)vidW / (double)vidH;
@@ -85,21 +85,21 @@ void refreshSize(void)
 	{
 		if (fillArea)
 		{
-			if (conW != consoleInfo->conW || conH != consoleInfo->conH)
+			if (conW != consoleInfo.conW || conH != consoleInfo.conH)
 			{
-				conW = consoleInfo->conW;
-				conH = consoleInfo->conH;
-				newW = consoleInfo->conW;
-				newH = consoleInfo->conH;
+				conW = consoleInfo.conW;
+				conH = consoleInfo.conH;
+				newW = consoleInfo.conW;
+				newH = consoleInfo.conH;
 			}
 		}
-		else if (conW != consoleInfo->conW || conH != consoleInfo->conH ||
-			fontRatio != consoleInfo->fontRatio)
+		else if (conW != consoleInfo.conW || conH != consoleInfo.conH ||
+			fontRatio != consoleInfo.fontRatio)
 		{
-			conW = consoleInfo->conW;
-			conH = consoleInfo->conH;
+			conW = consoleInfo.conW;
+			conH = consoleInfo.conH;
 			
-			if (constFontRatio == 0.0) { fontRatio = consoleInfo->fontRatio; }
+			if (constFontRatio == 0.0) { fontRatio = consoleInfo.fontRatio; }
 			else { fontRatio = constFontRatio; }
 
 			double vidRatio = (double)vidW / (double)vidH;
