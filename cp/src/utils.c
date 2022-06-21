@@ -189,8 +189,8 @@ char* toUTF8(unichar* input, int inputLen)
 	}
 	else
 	{
-		char* output = (char*)malloc(inputLen * sizeof(char));
-		memcpy(output, input, inputLen);
+		char* output = (char*)malloc((inputLen + 1) * sizeof(char));
+		memcpy(output, input, (inputLen + 1));
 		return output;
 	}
 }
@@ -205,6 +205,9 @@ void error(const char* description, const char* fileName, int line)
 #ifndef _WIN32
 void Sleep(DWORD ms)
 {
-	usleep((useconds_t)(ms * 1000));
+	struct timespec timeSpec;
+	timeSpec.tv_sec = ms / 1000;
+	timeSpec.tv_nsec = (ms % 1000) * 1000000;
+	//nanosleep(&timeSpec, NULL);
 }
 #endif

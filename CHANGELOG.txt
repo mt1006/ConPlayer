@@ -1,3 +1,4 @@
+-Version for Linux
 -Added option to set constant font ratio.
 -Added option to disable clearing screen.
 -Added option to disable synchronization.
