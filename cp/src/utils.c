@@ -15,7 +15,7 @@ void clearScreen(HANDLE outputHandle)
 	COORD scrollTarget;
 	CHAR_INFO fill;
 
-	GetConsoleScreenBufferInfo(handle, &csbi);
+	GetConsoleScreenBufferInfo(outputHandle, &csbi);
 
 	scrollRect.Left = 0;
 	scrollRect.Top = 0;
@@ -28,12 +28,12 @@ void clearScreen(HANDLE outputHandle)
 	fill.Char.UnicodeChar = TEXT(' ');
 	fill.Attributes = csbi.wAttributes;
 
-	ScrollConsoleScreenBuffer(handle, &scrollRect, NULL, scrollTarget, &fill);
+	ScrollConsoleScreenBuffer(outputHandle, &scrollRect, NULL, scrollTarget, &fill);
 
 	csbi.dwCursorPosition.X = 0;
 	csbi.dwCursorPosition.Y = 0;
 
-	SetConsoleCursorPosition(handle, csbi.dwCursorPosition);
+	SetConsoleCursorPosition(outputHandle, csbi.dwCursorPosition);
 
 	#else
 

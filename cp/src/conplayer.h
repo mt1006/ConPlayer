@@ -191,6 +191,7 @@ extern ColorMode colorModeFromStr(char* str);
 extern int utf8ArraySize(unichar* input, int inputSize);
 extern void unicharArrayToUTF8(unichar* input, char* output, int inputSize);
 extern char* toUTF8(unichar* input, int inputLen);
+extern void error(const char* description, const char* fileName, int line);
 
 #ifndef _WIN32
 extern void Sleep(DWORD ms);
