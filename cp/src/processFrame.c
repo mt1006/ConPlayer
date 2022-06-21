@@ -174,6 +174,7 @@ void processFrame(Frame* frame)
 
 static void processForWinAPI(Frame* frame)
 {
+	#ifdef _WIN32
 	CHAR_INFO* output = (CHAR_INFO*)frame->output;
 	if (colorMode == CM_WINAPI_16)
 	{
@@ -204,6 +205,7 @@ static void processForWinAPI(Frame* frame)
 			}
 		}
 	}
+	#endif
 }
 
 static uint8_t procColor(uint8_t* r, uint8_t* g, uint8_t* b)

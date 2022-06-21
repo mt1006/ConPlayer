@@ -5,8 +5,10 @@ double getTime(void)
 	return (double)clock() / (double)CLOCKS_PER_SEC;
 }
 
-void clearScreen(HANDLE handle)
+void clearScreen(HANDLE outputHandle)
 {
+	#ifdef _WIN32
+
 	// https://docs.microsoft.com/en-us/windows/console/clearing-the-screen
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	SMALL_RECT scrollRect;
@@ -32,6 +34,12 @@ void clearScreen(HANDLE handle)
 	csbi.dwCursorPosition.Y = 0;
 
 	SetConsoleCursorPosition(handle, csbi.dwCursorPosition);
+
+	#else
+
+	fputs("\x1B[H\x1B[J", stdout);
+
+	#endif
 }
 
 void setDefaultColor(void)
@@ -42,6 +50,21 @@ void setDefaultColor(void)
 	{
 		fputs("\x1B[39m", stdout);
 	}
+}
+
+void setCursorPos(HANDLE outputHandle, int x, int y)
+{
+	#ifdef _WIN32
+
+	COORD cursor = { (SHORT)x,(SHORT)y };
+	if (!disableCLS) { SetConsoleCursorPosition(outputHandle, cursor); }
+
+	#else
+
+	if (x == 0 && y == 0) { fputs("\x1B[H", stdout); }
+	else { printf("\x1B[%d;%dH", x, y); }
+
+	#endif
 }
 
 size_t getOutputArraySize(void)
@@ -178,3 +201,10 @@ void error(const char* description, const char* fileName, int line)
 	printf("%s [%s:%d]\n", description, fileName, line);
 	exit(-1);
 }
+
+#ifndef _WIN32
+void Sleep(DWORD ms)
+{
+	usleep((useconds_t)(ms * 1000));
+}
+#endif

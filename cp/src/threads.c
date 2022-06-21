@@ -1,5 +1,19 @@
 #include "conplayer.h"
 
+#ifdef _WIN32
+
+#define CALL_CONV __cdecl
+typedef uintptr_t ThreadIDType;
+typedef void ThreadRetType;
+
+#else
+
+#define CALL_CONV
+typedef pthread_t ThreadIDType;
+typedef void* ThreadRetType;
+
+#endif
+
 const int SLEEP_ON_FREEZE = 4;
 int freezeThreads = 0;
 int mainFreezed = 0;
@@ -8,27 +22,40 @@ int drawFreezed = 0;
 
 static const double TIME_TO_RESET_TIMER = 0.5;
 
-static uintptr_t procThreadID = 0;
-static uintptr_t drawThreadID = 0;
-static uintptr_t keyboardThreadID = 0;
+static ThreadIDType procThreadID = 0;
+static ThreadIDType drawThreadID = 0;
+static ThreadIDType keyboardThreadID = 0;
 static double startTime;
 static int frameCounter;
 static int64_t drawFrameTime = 0;
 static int paused = 0;
 
-static void __cdecl procThread(void* ptr);
-static void __cdecl drawThread(void* ptr);
-static void __cdecl keyboardThread(void* ptr);
+static ThreadRetType CALL_CONV procThread(void* ptr);
+static ThreadRetType CALL_CONV drawThread(void* ptr);
+static ThreadRetType CALL_CONV keyboardThread(void* ptr);
 static void seek(int64_t timestamp);
 
 void beginThreads(void)
 {
+	#ifdef _WIN32
+
 	procThreadID = _beginthread(&procThread, 0, NULL);
 	drawThreadID = _beginthread(&drawThread, 0, NULL);
 	if (!disableKeyboard)
 	{
 		keyboardThreadID = _beginthread(&keyboardThread, 0, NULL);
 	}
+
+	#else
+
+	pthread_create(&procThreadID, NULL, &procThread, NULL);
+	pthread_create(&drawThreadID, NULL, &drawThread, NULL);
+	if (!disableKeyboard)
+	{
+		pthread_create(&keyboardThreadID, NULL, &keyboardThread, NULL);
+	}
+
+	#endif
 }
 
 void resetTimer(void)
@@ -36,7 +63,7 @@ void resetTimer(void)
 	frameCounter = 0;
 }
 
-static void __cdecl procThread(void* ptr)
+static ThreadRetType CALL_CONV procThread(void* ptr)
 {
 	while (1)
 	{
@@ -55,7 +82,7 @@ static void __cdecl procThread(void* ptr)
 	}
 }
 
-static void __cdecl drawThread(void* ptr)
+static ThreadRetType CALL_CONV drawThread(void* ptr)
 {
 	const int SLEEP_ON_PAUSE = 10;
 
@@ -109,8 +136,9 @@ static void __cdecl drawThread(void* ptr)
 	}
 }
 
-static void __cdecl keyboardThread(void* ptr)
+static ThreadRetType CALL_CONV keyboardThread(void* ptr)
 {
+	#ifdef _WIN32
 	const double SEEK_SECONDS = 10.0;
 	const double VOLUME_CHANGE = 0.05;
 	const double KEYBOARD_DELAY = 0.2;
@@ -162,6 +190,7 @@ static void __cdecl keyboardThread(void* ptr)
 			break;
 		}
 	}
+	#endif
 }
 
 static void seek(int64_t timestamp)

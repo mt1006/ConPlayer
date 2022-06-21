@@ -7,8 +7,16 @@
 #pragma once
 #define _CRT_SECURE_NO_WARNINGS
 
-// vcpkg install ffmpeg:x64-windows
-// vcpkg install libao:x64-windows
+/*
+*  vcpkg (windows):
+*    vcpkg install ffmpeg:x64-windows
+*    vcpkg install libao:x64-windows
+*  apt-get (Linux):
+*    sudo apt-get install libavcodec-dev
+*    sudo apt-get install libavformat-dev
+*    sudo apt-get install libswscale-dev
+*    sudo apt-get install libao-dev
+*/
 
 #include <stdio.h>
 #include <libavcodec/avcodec.h>
@@ -17,9 +25,16 @@
 #include <libswresample/swresample.h>
 #include <libswscale/swscale.h>
 #include <ao/ao.h>
+
+#ifdef _WIN32
 #include <conio.h>
 #include <process.h>
 #include <Windows.h>
+#else
+#include <unistd.h>
+#include <pthread.h>
+#include <sys/ioctl.h>
+#endif
 
 #pragma warning(disable : 4996)
 
@@ -54,6 +69,10 @@ typedef char unichar;
 #define uc_fopen fopen
 #define uc_puts puts
 #define uc_fputs fputs
+
+typedef void* HANDLE;
+typedef void* CHAR_INFO;
+typedef unsigned long DWORD;
 
 #endif
 
@@ -163,12 +182,16 @@ extern void showVersion(void);
 
 //utils.c
 extern double getTime(void);
-extern void clearScreen(HANDLE handle);
+extern void clearScreen(HANDLE outputHandle);
 extern void setDefaultColor(void);
+extern void setCursorPos(HANDLE outputHandle, int x, int y);
 extern size_t getOutputArraySize(void);
 extern uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b);
 extern ColorMode colorModeFromStr(char* str);
 extern int utf8ArraySize(unichar* input, int inputSize);
 extern void unicharArrayToUTF8(unichar* input, char* output, int inputSize);
 extern char* toUTF8(unichar* input, int inputLen);
-extern void error(const char* description, const char* fileName, int line);
+
+#ifndef _WIN32
+extern void Sleep(DWORD ms);
+#endif

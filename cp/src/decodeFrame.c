@@ -17,10 +17,10 @@ static int lastFrame = -1;
 static int useAVSeek = 0;
 static int64_t seekTimestamp = 0;
 
-void setFrameSize(int inputW, int inputH, enum AVPixelFormat inputFormat,
+static void setFrameSize(int inputW, int inputH, enum AVPixelFormat inputFormat,
 	int outputW, int outputH, enum AVPixelFormat outputFormat, AVFrame* outFrame);
-int decodeVideoPacket(AVPacket* packet, AVFrame* frame, AVFrame* scaledFrame);
-int decodeAudioPacket(AVPacket* packet, AVFrame* frame);
+static int decodeVideoPacket(AVPacket* packet, AVFrame* frame, AVFrame* scaledFrame);
+static int decodeAudioPacket(AVPacket* packet, AVFrame* frame);
 
 void initAV(const char* file, Stream** outAudioStream)
 {
