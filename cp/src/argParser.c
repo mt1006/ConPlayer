@@ -146,7 +146,7 @@ static int opColors(int argc, char** argv)
 	}
 	else
 	{
-		colorMode = CM_CSTD_256;
+		colorMode = DEFAULT_COLOR_MODE_C;
 		return 0;
 	}
 }

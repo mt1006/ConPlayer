@@ -27,13 +27,24 @@
 #include <ao/ao.h>
 
 #ifdef _WIN32
+
 #include <conio.h>
 #include <process.h>
 #include <Windows.h>
+#define CP_OS "Windows"
+
 #else
+
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/ioctl.h>
+
+#ifdef __linux__
+#define CP_OS "Linux"
+#else
+#define CP_OS "[unknown]"
+#endif
+
 #endif
 
 #pragma warning(disable : 4996)
@@ -124,6 +135,8 @@ typedef struct
 	AVCodecContext* codecContext;
 } Stream;
 
+extern const ColorMode DEFAULT_COLOR_MODE;
+extern const ColorMode DEFAULT_COLOR_MODE_C;
 extern const int QUEUE_SIZE;
 
 extern int w, h;

@@ -18,20 +18,22 @@ void showInfo(void)
 {
 	puts(
 		"ConPlayer - Information\n"
-		"ConPlayer " CP_VERSION " [" CP_CPU "]\n"
+		"ConPlayer " CP_VERSION " [" CP_CPU "/" CP_OS "]\n"
 		"Author: https://github.com/mt1006\n"
 		"Version: " CP_VERSION "\n"
-		"Architecture: " CP_CPU);
+		"Architecture: " CP_CPU "\n"
+		"Platform: " CP_OS);
 }
 
 void showFullInfo(void)
 {
 	puts(
 		"ConPlayer - Full info\n"
-		"ConPlayer " CP_VERSION " [" CP_CPU "]\n"
+		"ConPlayer " CP_VERSION " [" CP_CPU "/" CP_OS "]\n"
 		"Author: https://github.com/mt1006\n"
 		"Version: " CP_VERSION "\n"
-		"Architecture: " CP_CPU);
+		"Architecture: " CP_CPU "\n"
+		"Platform: " CP_OS);
 	#if defined(_MSC_VER)
 	puts("Compiler: MSC\n"
 		"Compiler version: " DEF_TO_STR(_MSC_VER) " [" DEF_TO_STR(_MSC_FULL_VER) "]");
@@ -45,7 +47,7 @@ void showFullInfo(void)
 
 void showVersion(void)
 {
-	puts("ConPlayer " CP_VERSION " [" CP_CPU "]");
+	puts("ConPlayer " CP_VERSION " [" CP_CPU "/" CP_OS "]");
 }
 
 static void helpBasicOptions(void)
@@ -116,9 +118,9 @@ static void helpColorModes(void)
 {
 	puts(
 		"Color modes:\n"
-		" >winapi-gray (default without \"-c\")\n"
+		" >winapi-gray (default without \"-c\" on Windows)\n"
 		" >winapi-16\n"
-		" >cstd-gray\n"
+		" >cstd-gray (default without \"-c\" on Linux)\n"
 		" >cstd-16\n"
 		" >cstd-256 (defaults to \"-c\")\n"
 		" >cstd-rgb\n");

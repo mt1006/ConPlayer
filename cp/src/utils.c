@@ -2,7 +2,17 @@
 
 double getTime(void)
 {
+	#ifdef _WIN32
+
 	return (double)clock() / (double)CLOCKS_PER_SEC;
+
+	#else
+
+	struct timespec timeSpec;
+	clock_gettime(CLOCK_REALTIME, &timeSpec);
+	return (double)((timeSpec.tv_nsec / 1000000) + (timeSpec.tv_sec * 1000)) / 1000.0;
+
+	#endif
 }
 
 void clearScreen(HANDLE outputHandle)
@@ -208,6 +218,6 @@ void Sleep(DWORD ms)
 	struct timespec timeSpec;
 	timeSpec.tv_sec = ms / 1000;
 	timeSpec.tv_nsec = (ms % 1000) * 1000000;
-	//nanosleep(&timeSpec, NULL);
+	nanosleep(&timeSpec, NULL);
 }
 #endif
