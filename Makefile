@@ -8,5 +8,5 @@ COMPILER_FLAGS = -w
 LIBRARIES = -lm -lavcodec -lavformat -lavutil -lswresample -lswscale -lao
 OUTPUT_NAME = conpl
 
-$(OUTPUT_NAME): $(FILES_TO_COMPILE)
+$(OUTPUT_NAME): $(FILES_TO_COMPILE) cp/src/conplayer.h
 	$(C_COMPILER) $(FILES_TO_COMPILE) $(COMPILER_FLAGS) $(LIBRARIES) -o $(OUTPUT_NAME)

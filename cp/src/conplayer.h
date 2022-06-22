@@ -87,8 +87,17 @@ typedef unsigned long DWORD;
 
 #endif
 
-#define CP_DEFAULT_COLOR_MODE CM_WINAPI_GRAY;
-#define CP_DEFAULT_COLOR_MODE_C CM_CSTD_256;
+#ifdef _WIN32
+
+#define CP_DEFAULT_COLOR_MODE CM_WINAPI_GRAY
+#define CP_DEFAULT_COLOR_MODE_C CM_CSTD_256
+
+#else
+
+#define CP_DEFAULT_COLOR_MODE CM_CSTD_GRAY
+#define CP_DEFAULT_COLOR_MODE_C CM_CSTD_256
+
+#endif
 
 typedef enum
 {
