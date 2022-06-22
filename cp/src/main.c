@@ -1,17 +1,5 @@
 #include "conplayer.h"
 
-#ifdef _WIN32
-
-const ColorMode DEFAULT_COLOR_MODE = CM_WINAPI_GRAY;
-const ColorMode DEFAULT_COLOR_MODE_C = CM_CSTD_256;
-
-#else
-
-const ColorMode DEFAULT_COLOR_MODE = CM_CSTD_GRAY;
-const ColorMode DEFAULT_COLOR_MODE_C = CM_CSTD_256;
-
-#endif
-
 const int QUEUE_SIZE = 64;
 
 int w = -1, h = -1;
@@ -19,7 +7,7 @@ int conW = -1, conH = -1;
 int vidW = -1, vidH = -1;
 int argW = -1, argH = -1;
 int fillArea = 0;
-ColorMode colorMode = DEFAULT_COLOR_MODE;
+ColorMode colorMode = CP_DEFAULT_COLOR_MODE;
 int scanlineCount = 1, scanlineHeight = 1;
 double volume = 0.5;
 double fps;

@@ -87,6 +87,9 @@ typedef unsigned long DWORD;
 
 #endif
 
+#define CP_DEFAULT_COLOR_MODE CM_WINAPI_GRAY;
+#define CP_DEFAULT_COLOR_MODE_C CM_CSTD_256;
+
 typedef enum
 {
 	CM_WINAPI_GRAY,
@@ -135,8 +138,6 @@ typedef struct
 	AVCodecContext* codecContext;
 } Stream;
 
-extern const ColorMode DEFAULT_COLOR_MODE;
-extern const ColorMode DEFAULT_COLOR_MODE_C;
 extern const int QUEUE_SIZE;
 
 extern int w, h;
