@@ -38,6 +38,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/ioctl.h>
+#include <termios.h>
 
 #ifdef __linux__
 #define CP_OS "Linux"
@@ -97,6 +98,8 @@ typedef unsigned long DWORD;
 
 #define CP_DEFAULT_COLOR_MODE CM_CSTD_GRAY
 #define CP_DEFAULT_COLOR_MODE_C CM_CSTD_256
+#define VK_ESCAPE 0x1B
+#define VK_SPACE 0x20
 
 #endif
 
@@ -219,5 +222,7 @@ extern void cpExit(int code);
 extern void error(const char* description, const char* fileName, int line);
 
 #ifndef _WIN32
+extern void setTermios(int deinit);
+extern int _getch(void);
 extern void Sleep(DWORD ms);
 #endif

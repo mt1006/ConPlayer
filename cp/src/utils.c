@@ -207,6 +207,10 @@ char* toUTF8(unichar* input, int inputLen)
 
 void cpExit(int code)
 {
+	#ifndef _WIN32
+	setTermios(1);
+	#endif
+
 	setDefaultColor();
 	exit(code);
 }
@@ -219,6 +223,45 @@ void error(const char* description, const char* fileName, int line)
 }
 
 #ifndef _WIN32
+
+//https://stackoverflow.com/a/7469410/18214530
+void setTermios(int deinit)
+{
+	static struct termios current, old;
+	static int termiosInitialized = 0;
+
+	if (deinit)
+	{
+		if (!termiosInitialized) { return; }
+		tcsetattr(0, TCSANOW, &old);
+	}
+	else
+	{
+		if (termiosInitialized) { return; }
+
+		tcgetattr(0, &old);
+		current = old;
+		current.c_lflag &= ~ICANON;
+		//current.c_lflag &= ~ECHO;
+		tcsetattr(0, TCSANOW, &current);
+
+		termiosInitialized = 1;
+	}
+}
+
+int _getch(void)
+{
+	static int firstCall = 1;
+	
+	if (firstCall)
+	{
+		setTermios(0);
+		firstCall = 0;
+	}
+
+	return getchar();
+}
+
 void Sleep(DWORD ms)
 {
 	struct timespec timeSpec;
@@ -226,4 +269,5 @@ void Sleep(DWORD ms)
 	timeSpec.tv_nsec = (ms % 1000) * 1000000;
 	nanosleep(&timeSpec, NULL);
 }
+
 #endif

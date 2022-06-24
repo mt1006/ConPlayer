@@ -138,7 +138,6 @@ static ThreadRetType CALL_CONV drawThread(void* ptr)
 
 static ThreadRetType CALL_CONV keyboardThread(void* ptr)
 {
-	#ifdef _WIN32
 	const double SEEK_SECONDS = 10.0;
 	const double VOLUME_CHANGE = 0.05;
 	const double KEYBOARD_DELAY = 0.2;
@@ -189,7 +188,6 @@ static ThreadRetType CALL_CONV keyboardThread(void* ptr)
 			break;
 		}
 	}
-	#endif
 }
 
 static void seek(int64_t timestamp)
