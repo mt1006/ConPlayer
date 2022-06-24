@@ -81,6 +81,7 @@ typedef char unichar;
 #define uc_puts puts
 #define uc_fputs fputs
 
+typedef void* HWND;
 typedef void* HANDLE;
 typedef void* CHAR_INFO;
 typedef unsigned long DWORD;

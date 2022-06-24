@@ -7,6 +7,7 @@ typedef struct
 	double fontRatio;
 } ConsoleInfo;
 
+static HWND conHWND = NULL;
 static HANDLE outputHandle = NULL;
 
 static void drawWithWinAPI(CHAR_INFO* output, int fw, int fh);
@@ -17,6 +18,7 @@ void initDrawFrame(void)
 	if (vidW == -1 || vidH == -1) { return; }
 
 	#ifdef _WIN32
+	conHWND = GetConsoleWindow();
 	outputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
 	if (colorMode == CM_CSTD_16 ||
@@ -219,6 +221,7 @@ static void drawWithWinAPI(CHAR_INFO* output, int fw, int fh)
 static void getConsoleInfo(ConsoleInfo* consoleInfo)
 {
 	const double DEFAULT_FONT_RATIO = 8.0 / 18.0;
+	const int USE_GET_CURRENT_CONSOLE_FONT = 0;
 
 	int fullConW, fullConH;
 	double fontRatio;
@@ -226,23 +229,36 @@ static void getConsoleInfo(ConsoleInfo* consoleInfo)
 	#ifdef _WIN32
 
 	CONSOLE_SCREEN_BUFFER_INFOEX consoleBufferInfo;
-	CONSOLE_FONT_INFOEX consoleFontInfo;
 	consoleBufferInfo.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
-	consoleFontInfo.cbSize = sizeof(CONSOLE_FONT_INFOEX);
 	GetConsoleScreenBufferInfoEx(outputHandle, &consoleBufferInfo);
-	GetCurrentConsoleFontEx(outputHandle, FALSE, &consoleFontInfo);
+
 	fullConW = consoleBufferInfo.srWindow.Right - consoleBufferInfo.srWindow.Left + 1;
 	fullConH = consoleBufferInfo.srWindow.Bottom - consoleBufferInfo.srWindow.Top + 1;
 
-	if (consoleFontInfo.dwFontSize.X == 0 ||
-		consoleFontInfo.dwFontSize.Y == 0)
+	RECT clientRect = { 0 };
+	if (!USE_GET_CURRENT_CONSOLE_FONT) { GetClientRect(conHWND, &clientRect); }
+
+	if (clientRect.bottom == 0 || fullConW == 0 || fullConH == 0)
 	{
-		fontRatio = DEFAULT_FONT_RATIO;
+		CONSOLE_FONT_INFOEX consoleFontInfo;
+		consoleFontInfo.cbSize = sizeof(CONSOLE_FONT_INFOEX);
+		GetCurrentConsoleFontEx(outputHandle, FALSE, &consoleFontInfo);
+
+		if (consoleFontInfo.dwFontSize.X == 0 ||
+			consoleFontInfo.dwFontSize.Y == 0)
+		{
+			fontRatio = DEFAULT_FONT_RATIO;
+		}
+		else
+		{
+			fontRatio = (double)consoleFontInfo.dwFontSize.X /
+				(double)consoleFontInfo.dwFontSize.Y;
+		}
 	}
 	else
 	{
-		fontRatio = (double)consoleFontInfo.dwFontSize.X/
-			(double)consoleFontInfo.dwFontSize.Y;
+		fontRatio = ((double)clientRect.right / (double)fullConW) /
+			((double)clientRect.bottom / (double)fullConH);
 	}
 
 	#else

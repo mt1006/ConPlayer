@@ -5,6 +5,7 @@
 -Added option to disable keyboard control.
 -Added keys for changing volume.
 -Fix: resizing too often could cause a crash
+-Fix: wrong image ratio when changing font size in cmd, using ctrl+scroll
 
 ===Version 1.1===
 -Removed "-cstd". Replaced with color modes.
