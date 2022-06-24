@@ -205,11 +205,17 @@ char* toUTF8(unichar* input, int inputLen)
 	}
 }
 
+void cpExit(int code)
+{
+	setDefaultColor();
+	exit(code);
+}
+
 void error(const char* description, const char* fileName, int line)
 {
 	puts("\nSomething went wrong...");
 	printf("%s [%s:%d]\n", description, fileName, line);
-	exit(-1);
+	cpExit(-1);
 }
 
 #ifndef _WIN32

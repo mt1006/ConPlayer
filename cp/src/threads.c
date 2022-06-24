@@ -158,8 +158,7 @@ static ThreadRetType CALL_CONV keyboardThread(void* ptr)
 		switch (key)
 		{
 		case VK_ESCAPE:
-			setDefaultColor();
-			exit(0);
+			cpExit(0);
 			break;
 		case VK_SPACE:
 			paused = !paused;

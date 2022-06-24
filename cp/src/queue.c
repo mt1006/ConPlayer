@@ -56,7 +56,7 @@ Frame* dequeueFrame(Stage fromStage)
 	Frame* nextFrame = queueNextElement(*pos);
 	while (nextFrame->stage != fromStage)
 	{
-		if (decodeEnd && fromStage == STAGE_PROCESSED_FRAME) { exit(0); }
+		if (decodeEnd && fromStage == STAGE_PROCESSED_FRAME) { cpExit(0); }
 		Sleep(TIME_TO_WAIT);
 	}
 	return nextFrame;
