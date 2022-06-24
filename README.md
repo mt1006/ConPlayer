@@ -8,7 +8,6 @@ Inspired by [mariiaan/CmdPlay](https://github.com/mariiaan/CmdPlay) with some si
 - allows you to go back and skip forward video
 
 Plans for future:
-- version for Linux
 - better audio/video sync (maybe I'll switch from libao to PortAudio)
 - more options
 
@@ -65,9 +64,21 @@ To get colors add "-c" option. Also when playing with colors use Windows Termina
 ```
 
 # Compiling
-To compile it you need Visual Studio. First you need to install vcpkg and integrate it with Visual Studio. Here is how to do it: https://vcpkg.io/en/getting-started.html. Then you need to install libav (ffmpeg's library) and libao.
+
+## Windows
+To compile it on Windows you need Visual Studio. First, install vcpkg and integrate it with Visual Studio. Here is how to do it: https://vcpkg.io/en/getting-started.html. Then you need to install libav (ffmpeg's library) and libao.
 ```
 vcpkg install ffmpeg:x64-windows
 vcpkg install libao:x64-windows
 ```
-Now you can just open .sln file and everything should work (at least theoretically).
+Now you can just open .sln file and everything should work (at least theoretically).\
+
+## Linux
+To compile it on Linux you need GCC. You also need the ffmpeg (libav) and libao libraries. If you're using apt package manager, you can install them with these commands:
+```
+sudo apt-get install libavcodec-dev
+sudo apt-get install libavformat-dev
+sudo apt-get install libswscale-dev
+sudo apt-get install libao-dev
+```
+Then you can just use ```make```.
