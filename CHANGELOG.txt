@@ -1,3 +1,4 @@
+===Version 1.2===
 -Version for Linux
 -Added option to set constant font ratio.
 -Added option to disable clearing screen.
@@ -6,6 +7,7 @@
 -Added keys for changing volume.
 -Fix: resizing too often could cause a crash
 -Fix: wrong image ratio when changing font size in cmd, using ctrl+scroll
+-Fix: not resetting color when video is finished
 
 ===Version 1.1===
 -Removed "-cstd". Replaced with color modes.
