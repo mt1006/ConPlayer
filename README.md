@@ -51,7 +51,7 @@ To get colors add "-c" option. Also when playing with colors use Windows Termina
  -inf(--information) Information about ConPlayer.
  -v  (--version)     Information about ConPlayer version.
  -h <topic>          Displays help message.
-  (--help)           Topics: basic, advanced, color-modes, keyboard, full
+  (--help)           Topics: basic, advanced, color-modes, keyboard, full 
   
 [To see full help use "conpl -h full"]
  ```
@@ -60,6 +60,7 @@ To get colors add "-c" option. Also when playing with colors use Windows Termina
 ```
  Space - Pause/Play
  "[" / "]" - Go back/Skip forward
+ "L" / "O" - Turn down/up the volume
  ESC - Exit
 ```
 
@@ -74,7 +75,7 @@ vcpkg install libao:x64-windows
 Now you can just open .sln file and everything should work (at least theoretically).\
 
 ## Linux
-To compile it on Linux you need GCC. You also need the ffmpeg (libav) and libao libraries. If you're using apt package manager, you can install them with these commands:
+To compile it on Linux you need GCC. You also need ffmpeg (libav) and libao libraries. If you're using apt package manager, you can install them with these commands:
 ```
 sudo apt-get install libavcodec-dev
 sudo apt-get install libavformat-dev
