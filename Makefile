@@ -4,8 +4,8 @@ endif
 
 C_COMPILER = gcc
 FILES_TO_COMPILE = cp/src/argParser.c cp/src/audio.c cp/src/decodeFrame.c cp/src/drawFrame.c cp/src/help.c cp/src/main.c cp/src/processFrame.c cp/src/queue.c cp/src/threads.c cp/src/utils.c
-COMPILER_FLAGS = -w -lpthread
-LIBRARIES = -lm -lavcodec -lavformat -lavutil -lswresample -lswscale -lao
+COMPILER_FLAGS = -w
+LIBRARIES = -lm -lpthread -lavcodec -lavformat -lavutil -lswresample -lswscale -lao
 OUTPUT_NAME = conpl
 
 $(OUTPUT_NAME): $(FILES_TO_COMPILE) cp/src/conplayer.h
