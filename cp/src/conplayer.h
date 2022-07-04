@@ -115,6 +115,14 @@ typedef enum
 
 typedef enum
 {
+	SCM_DISABLED,
+	SCM_WINAPI,
+	SCM_CSTD_256,
+	SCM_CSTD_RGB
+} SetColorMode;
+
+typedef enum
+{
 	STAGE_FREE,
 	STAGE_LOADED_FRAME,
 	STAGE_PROCESSED_FRAME
@@ -167,6 +175,8 @@ extern char* charset;
 extern int charsetSize;
 extern double constFontRatio;
 extern int disableKeyboard, disableSync, disableCLS;
+extern SetColorMode setColorMode;
+extern int setColorVal;
 
 //argParser.c
 extern char* argumentParser(int argc, unichar** argv);
@@ -209,9 +219,9 @@ extern void showVersion(void);
 
 //utils.c
 extern double getTime(void);
-extern void clearScreen(HANDLE outputHandle);
+extern void clearScreen(void);
 extern void setDefaultColor(void);
-extern void setCursorPos(HANDLE outputHandle, int x, int y);
+extern void setCursorPos(int x, int y);
 extern size_t getOutputArraySize(void);
 extern uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b);
 extern ColorMode colorModeFromStr(char* str);

@@ -7,8 +7,8 @@ typedef struct
 	double fontRatio;
 } ConsoleInfo;
 
+HANDLE outputHandle = NULL;
 static HWND conHWND = NULL;
-static HANDLE outputHandle = NULL;
 
 static void drawWithWinAPI(CHAR_INFO* output, int fw, int fh);
 static void getConsoleInfo(ConsoleInfo* consoleInfo);
@@ -23,7 +23,9 @@ void initDrawFrame(void)
 
 	if (colorMode == CM_CSTD_16 ||
 		colorMode == CM_CSTD_256 ||
-		colorMode == CM_CSTD_RGB)
+		colorMode == CM_CSTD_RGB ||
+		setColorMode == SCM_CSTD_256 ||
+		setColorMode == SCM_CSTD_RGB)
 	{
 		DWORD mode;
 		GetConsoleMode(outputHandle, &mode);
@@ -31,6 +33,26 @@ void initDrawFrame(void)
 		SetConsoleMode(outputHandle, mode);
 	}
 	#endif
+
+	switch (setColorMode)
+	{
+	case SCM_WINAPI:
+		#ifdef _WIN32
+		SetConsoleTextAttribute(outputHandle, (WORD)setColorVal);
+		#endif
+		break;
+	
+	case SCM_CSTD_256:
+		printf("\x1B[38;5;%dm", setColorVal);
+		break;
+
+	case SCM_CSTD_RGB:
+		printf("\x1B[38;2;%d;%d;%dm",
+			(setColorVal & 0xFF0000) >> 16,
+			(setColorVal & 0x00FF00) >> 8,
+			setColorVal & 0x0000FF);
+		break;
+	}
 
 	refreshSize();
 }
@@ -152,7 +174,7 @@ void drawFrame(void* output, int* lineOffsets, int fw, int fh)
 	{
 		lastFW = fw;
 		lastFH = fh;
-		clearScreen(outputHandle);
+		clearScreen();
 	}
 
 	if (colorMode == CM_WINAPI_GRAY || colorMode == CM_WINAPI_16)
@@ -163,7 +185,7 @@ void drawFrame(void* output, int* lineOffsets, int fw, int fh)
 
 	if (scanlineCount == 1)
 	{
-		if (!disableCLS) { setCursorPos(outputHandle, 0, 0); }
+		if (!disableCLS) { setCursorPos(0, 0); }
 		fwrite((char*)output, 1, lineOffsets[fh], stdout);
 	}
 	else
@@ -175,7 +197,7 @@ void drawFrame(void* output, int* lineOffsets, int fw, int fh)
 			if (sy >= fh) { break; }
 			else if (sy + sh > fh) { sh = fh - sy; }
 
-			if (!disableCLS) { setCursorPos(outputHandle, 0, sy); }
+			if (!disableCLS) { setCursorPos(0, sy); }
 			fwrite((char*)output + lineOffsets[sy], 1, lineOffsets[sy + sh] - lineOffsets[sy], stdout);
 		}
 
@@ -204,7 +226,6 @@ static void drawWithWinAPI(CHAR_INFO* output, int fw, int fh)
 			int sh = scanlineHeight;
 			if (sy >= fh) { break; }
 			else if (sy + sh > fh) { sh = fh - sy; }
-
 
 			COORD charBufSize = { fw,fh };
 			COORD startCharPos = { 0,sy };

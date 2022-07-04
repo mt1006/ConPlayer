@@ -1,5 +1,8 @@
 #include "conplayer.h"
 
+//drawFrame.c
+extern HANDLE outputHandle;
+
 double getTime(void)
 {
 	#ifdef _WIN32
@@ -15,7 +18,7 @@ double getTime(void)
 	#endif
 }
 
-void clearScreen(HANDLE outputHandle)
+void clearScreen(void)
 {
 	#ifdef _WIN32
 
@@ -56,13 +59,22 @@ void setDefaultColor(void)
 {
 	if (colorMode == CM_CSTD_16 ||
 		colorMode == CM_CSTD_256 ||
-		colorMode == CM_CSTD_RGB)
+		colorMode == CM_CSTD_RGB ||
+		setColorMode == SCM_CSTD_256 ||
+		setColorMode == SCM_CSTD_RGB)
 	{
 		fputs("\x1B[39m", stdout);
 	}
+	else if (setColorMode == SCM_WINAPI)
+	{
+		#ifdef _WIN32
+		SetConsoleTextAttribute(outputHandle,
+			FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+		#endif
+	}
 }
 
-void setCursorPos(HANDLE outputHandle, int x, int y)
+void setCursorPos(int x, int y)
 {
 	#ifdef _WIN32
 

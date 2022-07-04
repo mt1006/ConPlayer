@@ -201,7 +201,16 @@ static void processForWinAPI(Frame* frame)
 			{
 				uint8_t val = frame->videoFrame[j + i * frame->videoLinesize];
 				output[(i * frame->frameW) + j].Char.AsciiChar = charset[(val * charsetSize) / 256];
-				output[(i * frame->frameW) + j].Attributes = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+				
+				if (setColorMode == SCM_WINAPI)
+				{
+					output[(i * frame->frameW) + j].Attributes = setColorVal;
+				}
+				else
+				{
+					output[(i * frame->frameW) + j].Attributes =
+						FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+				}
 			}
 		}
 	}

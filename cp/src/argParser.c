@@ -25,6 +25,7 @@ static int opInformation(int argc, char** argv);
 static int opVersion(int argc, char** argv);
 static int opInterlaced(int argc, char** argv);
 static int opCharset(int argc, char** argv);
+static int opSetColor(int argc, char** argv);
 static int opFontRatio(int argc, char** argv);
 static int opDisableCLS(int argc, char** argv);
 static int opDisableSync(int argc, char** argv);
@@ -43,6 +44,7 @@ const Option OPTIONS[] = {
 	{"-v","--version",&opVersion,1},
 	{"-int","--interlaced",&opInterlaced,0},
 	{"-cs","--charset",&opCharset,0},
+	{"-sc","--set-color",&opSetColor,0},
 	{"-fr","--font-ratio",&opFontRatio,0},
 	{"-dcls","--disable-cls",&opDisableCLS,0},
 	{"-ds","--disable-sync",&opDisableSync,0},
@@ -266,6 +268,33 @@ static int opCharset(int argc, char** argv)
 		charsetSize = (int)fread(charset, sizeof(char), CHARSET_MAX_SIZE, charsetFile);
 		fclose(charsetFile);
 	}
+	return 1;
+}
+
+static int opSetColor(int argc, char** argv)
+{
+	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
+
+	if (argv[0][0] >= '0' && argv[0][0] <= '9')
+	{
+		setColorMode = SCM_WINAPI;
+		setColorVal = atoi(argv[0]);
+	}
+	else if (argv[0][0] == '$')
+	{
+		setColorMode = SCM_CSTD_256;
+		setColorVal = atoi(argv[0] + 1);
+	}
+	else if (argv[0][0] == '#')
+	{
+		setColorMode = SCM_CSTD_RGB;
+		setColorVal = strtol(argv[0] + 1, NULL, 16);
+	}
+	else
+	{
+		invalidSyntax(__LINE__);
+	}
+
 	return 1;
 }
 
