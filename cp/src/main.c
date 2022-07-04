@@ -16,6 +16,7 @@ char* charset = NULL;
 int charsetSize = 0;
 double constFontRatio = 0.0;
 int disableKeyboard = 0, disableSync = 0, disableCLS = 0;
+int ansiEnabled = 0;
 SetColorMode setColorMode = SCM_DISABLED;
 int setColorVal = 0;
 

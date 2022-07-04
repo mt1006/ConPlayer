@@ -143,7 +143,14 @@ static int opColors(int argc, char** argv)
 {
 	if (argc > 0 && argv[0][0] != '-')
 	{
-		colorMode = colorModeFromStr(argv[0]);
+		strToLower(argv[0]);
+		if (!strcmp(argv[0], "winapi-gray")) { colorMode = CM_WINAPI_GRAY; }
+		else if (!strcmp(argv[0], "winapi-16")) { colorMode = CM_WINAPI_16; }
+		else if (!strcmp(argv[0], "cstd-gray")) { colorMode = CM_CSTD_GRAY; }
+		else if (!strcmp(argv[0], "cstd-16")) { colorMode = CM_CSTD_16; }
+		else if (!strcmp(argv[0], "cstd-256")) { colorMode = CM_CSTD_256; }
+		else if (!strcmp(argv[0], "cstd-rgb")) { colorMode = CM_CSTD_RGB; }
+		else { error("Invalid color mode!", "argParser.c", __LINE__); }
 		return 1;
 	}
 	else
@@ -197,10 +204,7 @@ static int opHelp(int argc, char** argv)
 {
 	if (argc == 1 && argv[0][0] != '-')
 	{
-		for (int i = 0; i < strlen(argv[0]); i++)
-		{
-			argv[0][i] = (char)tolower((int)argv[0][i]);
-		}
+		strToLower(argv[0]);
 		if (!strcmp(argv[0], "basic")) { showHelp(1, 0, 0, 0); }
 		else if (!strcmp(argv[0], "advanced")) { showHelp(0, 1, 0, 0); }
 		else if (!strcmp(argv[0], "color-modes")) { showHelp(0, 0, 1, 0); }
@@ -247,10 +251,7 @@ static int opCharset(int argc, char** argv)
 	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
 	if (argv[0][0] == '#')
 	{
-		for (int i = 0; i < strlen(argv[0]); i++)
-		{
-			argv[0][i] = (char)tolower((int)argv[0][i]);
-		}
+		strToLower(argv[0]);
 		if (!strcmp(argv[0], "#long")) { charset = CHARSET_LONG; }
 		else if (!strcmp(argv[0], "#short")) { charset = CHARSET_SHORT; }
 		else if (!strcmp(argv[0], "#2")) { charset = CHARSET_2; }

@@ -31,6 +31,7 @@ void initDrawFrame(void)
 		GetConsoleMode(outputHandle, &mode);
 		mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 		SetConsoleMode(outputHandle, mode);
+		ansiEnabled = 1;
 	}
 	#endif
 

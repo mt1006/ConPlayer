@@ -175,6 +175,7 @@ extern char* charset;
 extern int charsetSize;
 extern double constFontRatio;
 extern int disableKeyboard, disableSync, disableCLS;
+extern int ansiEnabled;
 extern SetColorMode setColorMode;
 extern int setColorVal;
 
@@ -219,12 +220,12 @@ extern void showVersion(void);
 
 //utils.c
 extern double getTime(void);
+extern void strToLower(char* str);
 extern void clearScreen(void);
 extern void setDefaultColor(void);
 extern void setCursorPos(int x, int y);
 extern size_t getOutputArraySize(void);
 extern uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b);
-extern ColorMode colorModeFromStr(char* str);
 extern int utf8ArraySize(unichar* input, int inputSize);
 extern void unicharArrayToUTF8(unichar* input, char* output, int inputSize);
 extern char* toUTF8(unichar* input, int inputLen);

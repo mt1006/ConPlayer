@@ -18,6 +18,14 @@ double getTime(void)
 	#endif
 }
 
+void strToLower(char* str)
+{
+	for (int i = 0; i < strlen(str); i++)
+	{
+		str[i] = (char)tolower((int)str[i]);
+	}
+}
+
 void clearScreen(void)
 {
 	#ifdef _WIN32
@@ -57,11 +65,7 @@ void clearScreen(void)
 
 void setDefaultColor(void)
 {
-	if (colorMode == CM_CSTD_16 ||
-		colorMode == CM_CSTD_256 ||
-		colorMode == CM_CSTD_RGB ||
-		setColorMode == SCM_CSTD_256 ||
-		setColorMode == SCM_CSTD_RGB)
+	if (ansiEnabled)
 	{
 		fputs("\x1B[39m", stdout);
 	}
@@ -125,24 +129,6 @@ uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b)
 		+ (36.0 * round((double)r / 255.0 * 5.0))
 		+ (6.0 * round((double)g / 255.0 * 5.0))
 		+ round((double)b / 255.0 * 5.0));
-}
-
-ColorMode colorModeFromStr(char* str)
-{
-	for (int i = 0; i < strlen(str); i++)
-	{
-		str[i] = (char)tolower((int)str[i]);
-	}
-
-	if (!strcmp(str, "winapi-gray")) { return CM_WINAPI_GRAY; }
-	else if (!strcmp(str, "winapi-16")) { return CM_WINAPI_16; }
-	else if (!strcmp(str, "cstd-gray")) { return CM_CSTD_GRAY; }
-	else if (!strcmp(str, "cstd-16")) { return CM_CSTD_16; }
-	else if (!strcmp(str, "cstd-256")) { return CM_CSTD_256; }
-	else if (!strcmp(str, "cstd-rgb")) { return CM_CSTD_RGB; }
-
-	error("Invalid color mode!", "utils.c", __LINE__);
-	return CM_WINAPI_GRAY;
 }
 
 int utf8ArraySize(unichar* input, int inputSize)

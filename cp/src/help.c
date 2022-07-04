@@ -101,7 +101,7 @@ static void helpAdvancedOptions(void)
 		"                      conpl video.mp4 -ch my_charset.txt\n"
 		" -sc [value]         Sets constant color in grayscale mode.\n"
 		"  (--set-color)      Only number - sets text attribute using WinAPI.\n"
-		"                     \"$number\" - sets color from ANSI 256 palette (only cstd-gray).\n"
+		"                     \"$color\" - sets color from ANSI 256 palette (only cstd-gray).\n"
 		"                     \"#RRGGBB\" - sets RGB color (only cstd-gray).\n"
 		"                     Examples:\n"
 		"                      conpl video.mp4 -sc 4\n"
