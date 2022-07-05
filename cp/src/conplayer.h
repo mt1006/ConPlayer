@@ -161,6 +161,7 @@ typedef struct
 
 extern const int QUEUE_SIZE;
 
+extern HWND conHWND, wtDragBarHWND;
 extern int w, h;
 extern int conW, conH;
 extern int vidW, vidH;
@@ -221,6 +222,7 @@ extern void showVersion(void);
 //utils.c
 extern double getTime(void);
 extern void strToLower(char* str);
+extern void getConsoleWindow(void);
 extern void clearScreen(void);
 extern void setDefaultColor(void);
 extern void setCursorPos(int x, int y);

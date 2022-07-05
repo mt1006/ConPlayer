@@ -1,5 +1,9 @@
 #include "conplayer.h"
 
+#define CP_MAX_OLD_TITLE_LEN 1024
+#define CP_MAX_NEW_TITLE_LEN 128
+#define CP_WAIT_FOR_SET_TITLE 100
+
 //drawFrame.c
 extern HANDLE outputHandle;
 
@@ -24,6 +28,38 @@ void strToLower(char* str)
 	{
 		str[i] = (char)tolower((int)str[i]);
 	}
+}
+
+void getConsoleWindow(void)
+{
+	#ifdef _WIN32
+	if (conHWND) { return; }
+
+	RECT clientRect;
+	conHWND = GetConsoleWindow();
+	GetClientRect(conHWND, &clientRect);
+
+	if (clientRect.right == 0 || clientRect.bottom == 0)
+	{
+		wchar_t oldConTitle[CP_MAX_OLD_TITLE_LEN];
+		char newConTitle[CP_MAX_NEW_TITLE_LEN];
+
+		GetConsoleTitleW(oldConTitle, CP_MAX_OLD_TITLE_LEN);
+		sprintf(newConTitle, "Win2Con-(%d/%d)",
+			(int)clock(), (int)GetCurrentProcessId());
+		SetConsoleTitleA(newConTitle);
+		Sleep(CP_WAIT_FOR_SET_TITLE);
+		HWND newConHWND = FindWindowA(NULL, newConTitle);
+		SetConsoleTitleW(oldConTitle);
+
+		if (newConHWND)
+		{
+			conHWND = newConHWND;
+			wtDragBarHWND = FindWindowExW(conHWND, NULL,
+				L"DRAG_BAR_WINDOW_CLASS", NULL);
+		}
+	}
+	#endif
 }
 
 void clearScreen(void)

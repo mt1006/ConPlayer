@@ -2,6 +2,7 @@
 
 const int QUEUE_SIZE = 64;
 
+HWND conHWND = NULL, wtDragBarHWND = NULL;
 int w = -1, h = -1;
 int conW = -1, conH = -1;
 int vidW = -1, vidH = -1;

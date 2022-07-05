@@ -1,4 +1,5 @@
 -Added option to set constant color in grayscale mode.
+-Fix: wrong image ratio in Windows Terminal.
 -Fix: not compiling on WSL (thanks to @MilkFlavor).
 
 ===Version 1.2===

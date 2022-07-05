@@ -8,7 +8,6 @@ typedef struct
 } ConsoleInfo;
 
 HANDLE outputHandle = NULL;
-static HWND conHWND = NULL;
 
 static void drawWithWinAPI(CHAR_INFO* output, int fw, int fh);
 static void getConsoleInfo(ConsoleInfo* consoleInfo);
@@ -18,7 +17,7 @@ void initDrawFrame(void)
 	if (vidW == -1 || vidH == -1) { return; }
 
 	#ifdef _WIN32
-	conHWND = GetConsoleWindow();
+	getConsoleWindow();
 	outputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
 	if (colorMode == CM_CSTD_16 ||
@@ -243,7 +242,6 @@ static void drawWithWinAPI(CHAR_INFO* output, int fw, int fh)
 static void getConsoleInfo(ConsoleInfo* consoleInfo)
 {
 	const double DEFAULT_FONT_RATIO = 8.0 / 18.0;
-	const int USE_GET_CURRENT_CONSOLE_FONT = 0;
 
 	int fullConW, fullConH;
 	double fontRatio;
@@ -258,7 +256,7 @@ static void getConsoleInfo(ConsoleInfo* consoleInfo)
 	fullConH = consoleBufferInfo.srWindow.Bottom - consoleBufferInfo.srWindow.Top + 1;
 
 	RECT clientRect = { 0 };
-	if (!USE_GET_CURRENT_CONSOLE_FONT) { GetClientRect(conHWND, &clientRect); }
+	GetClientRect(conHWND, &clientRect);
 
 	if (clientRect.bottom == 0 || fullConW == 0 || fullConH == 0)
 	{
@@ -279,6 +277,13 @@ static void getConsoleInfo(ConsoleInfo* consoleInfo)
 	}
 	else
 	{
+		if (wtDragBarHWND && IsWindowVisible(wtDragBarHWND))
+		{
+			RECT wtDragBarRect;
+			GetClientRect(wtDragBarHWND, &wtDragBarRect);
+			clientRect.bottom -= wtDragBarRect.bottom;
+		}
+
 		fontRatio = ((double)clientRect.right / (double)fullConW) /
 			((double)clientRect.bottom / (double)fullConH);
 	}
