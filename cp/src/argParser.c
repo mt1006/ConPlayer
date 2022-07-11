@@ -15,6 +15,7 @@ typedef struct
 	int isOperation;
 } Option;
 
+static void checkSettings(void);
 static int opHelp(int argc, char** argv);
 static int opInput(int argc, char** argv);
 static int opColors(int argc, char** argv);
@@ -127,7 +128,43 @@ char* argumentParser(int argc, unichar** argv)
 	free(usedOptions);
 
 	if (inputFile == NULL) { invalidSyntax(__LINE__); }
+	checkSettings();
 	return inputFile;
+}
+
+static void checkSettings(void)
+{
+	if (colorMode == CM_WINAPI_GRAY ||
+		colorMode == CM_WINAPI_16)
+	{
+		#ifndef _WIN32
+		error("WinAPI color mode not supported on Linux!", "argParser.c", __LINE__);
+		#endif
+	}
+	if (setColorMode == SCM_WINAPI)
+	{
+		#ifndef _WIN32
+		error("WinAPI \"set color\" mode not supported on Linux!", "argParser.c", __LINE__);
+		#endif
+	}
+	if (setColorMode == SCM_WINAPI &&
+		colorMode != CM_WINAPI_GRAY &&
+		colorMode != CM_CSTD_GRAY)
+	{
+		error("\"Set color\" works only with grayscale color mode!", "argParser.c", __LINE__);
+	}
+	if (setColorMode == SCM_WINAPI &&
+		colorMode != CM_WINAPI_GRAY &&
+		colorMode != CM_CSTD_GRAY)
+	{
+		error("WinAPI \"set color\" mode mode works only with grayscale color mode!", "argParser.c", __LINE__);
+	}
+	if ((setColorMode == SCM_CSTD_256 ||
+		setColorMode == SCM_CSTD_RGB) &&
+		colorMode != CM_CSTD_GRAY)
+	{
+		error("C std \"set color\" mode works only with \"cstd-gray\" color mode!", "argParser.c", __LINE__);
+	}
 }
 
 static int opInput(int argc, char** argv)

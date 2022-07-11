@@ -45,7 +45,7 @@ void getConsoleWindow(void)
 		char newConTitle[CP_MAX_NEW_TITLE_LEN];
 
 		GetConsoleTitleW(oldConTitle, CP_MAX_OLD_TITLE_LEN);
-		sprintf(newConTitle, "Win2Con-(%d/%d)",
+		sprintf(newConTitle, "ConPlayer-(%d/%d)",
 			(int)clock(), (int)GetCurrentProcessId());
 		SetConsoleTitleA(newConTitle);
 		Sleep(CP_WAIT_FOR_SET_TITLE);
@@ -243,6 +243,7 @@ void cpExit(int code)
 {
 	#ifndef _WIN32
 	setTermios(1);
+	fputs("\n", stdout);
 	#endif
 
 	setDefaultColor();
