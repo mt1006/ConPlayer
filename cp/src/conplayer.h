@@ -10,7 +10,7 @@
 /*
 *  vcpkg (windows):
 *    vcpkg install ffmpeg:x64-windows
-*    vcpkg install libao:x64-windows
+*    vcpkg install portaudio:x64-windows
 *  apt-get (Linux):
 *    sudo apt-get install libavcodec-dev
 *    sudo apt-get install libavformat-dev
@@ -24,7 +24,7 @@
 #include <libavutil/log.h>
 #include <libswresample/swresample.h>
 #include <libswscale/swscale.h>
-#include <ao/ao.h>
+#include <portaudio.h>
 
 #ifdef _WIN32
 

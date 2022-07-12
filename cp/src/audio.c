@@ -1,43 +1,51 @@
 #include "conplayer.h"
 
 // If you're changing SAMPLE_BITS or CHANNELS value, remember
-// to change SAMPLE_SIZE value and modify "for loop"
-// in playAudio function responsible for changing volume,
-// which is hardcoded to 16 bits / 2 channels
-static const enum AVSampleFormat SAMPLE_FORMAT = AV_SAMPLE_FMT_S16;
-static const int SAMPLE_BITS = 16;
+// to modify "for loop" in addAudio function, responsible for
+// changing volume, which is hardcoded to 32 bits / 2 channels
+static const enum AVSampleFormat SAMPLE_FORMAT_AV = AV_SAMPLE_FMT_FLT;
+static const PaSampleFormat SAMPLE_FORMAT_PA = paFloat32;
+static const int SAMPLE_BITS = 32;
 static const int CHANNELS = 2;
-static const int SAMPLE_SIZE = 4; // (16 bits * 2 channels) / 8 bits
 static const int SAMPLE_RATE = 48000;
 
 static int initialized = 0;
-static ao_sample_format aoSampleFormat;
-static ao_device* aoDevice = NULL;
+static PaStream* stream;
+static PaStreamParameters audioParameters;
 static SwrContext* resampleContext = NULL;
 
-void initAudio(Stream* audioStream)
+void initAudio(Stream* avAudioStream)
 {
-	ao_initialize();
-	int driver = ao_default_driver_id();
+	PaError err;
 
-	memset(&aoSampleFormat, 0, sizeof(ao_sample_format));
-	aoSampleFormat.bits = SAMPLE_BITS;
-	aoSampleFormat.channels = CHANNELS;
-	aoSampleFormat.rate = SAMPLE_RATE;
-	aoSampleFormat.byte_format = AO_FMT_LITTLE;
-	aoSampleFormat.matrix = 0;
-	aoDevice = ao_open_live(driver, &aoSampleFormat, NULL);
+	err = Pa_Initialize();
+	if (err != paNoError) { return; }
+
+	audioParameters.device = Pa_GetDefaultOutputDevice();
+	if (audioParameters.device == paNoDevice) { return; }
+
+	audioParameters.channelCount = CHANNELS;
+	audioParameters.sampleFormat = SAMPLE_FORMAT_PA;
+	audioParameters.suggestedLatency = Pa_GetDeviceInfo(audioParameters.device)->defaultLowOutputLatency;
+	audioParameters.hostApiSpecificStreamInfo = NULL;
+
+	err = Pa_IsFormatSupported(NULL, &audioParameters, SAMPLE_RATE);
+
+	err = Pa_OpenStream(&stream, NULL, &audioParameters, SAMPLE_RATE, 0, paNoFlag, NULL, NULL);
+	Pa_StartStream(stream);
 
 	resampleContext = swr_alloc_set_opts(NULL,
-		av_get_default_channel_layout(aoSampleFormat.channels),             //out_channel_layout
-		SAMPLE_FORMAT,                                                      //out_sample_fmt
-		aoSampleFormat.rate,                                                //out_sample_rate
-		av_get_default_channel_layout(audioStream->codecContext->channels), //in_channel_layout
-		audioStream->codecContext->sample_fmt,                              //in_sample_fmt
-		audioStream->codecContext->sample_rate,                             //in_sample_rate
+		av_get_default_channel_layout(CHANNELS),                            //out_channel_layout
+		SAMPLE_FORMAT_AV,                                                   //out_sample_fmt
+		SAMPLE_RATE,                                                        //out_sample_rate
+		av_get_default_channel_layout(avAudioStream->codecContext->channels), //in_channel_layout
+		avAudioStream->codecContext->sample_fmt,                              //in_sample_fmt
+		avAudioStream->codecContext->sample_rate,                             //in_sample_rate
 		0, NULL);
 	int swrRetVal = swr_init(resampleContext);
-	if (aoDevice && swrRetVal >= 0) { initialized = 1; }
+	if (swrRetVal < 0) { return; }
+
+	initialized = 1;
 }
 
 void addAudio(AVFrame* frame)
@@ -49,17 +57,17 @@ void addAudio(AVFrame* frame)
 	{
 		queueFrame->audioFrameSize = outSamples * 2; // just for prevention
 		if (queueFrame->audioFrame) { av_free(queueFrame->audioFrame); }
-		av_samples_alloc(&queueFrame->audioFrame, NULL, aoSampleFormat.channels,
-			queueFrame->audioFrameSize, SAMPLE_FORMAT, 0);
+		av_samples_alloc(&queueFrame->audioFrame, NULL, CHANNELS,
+			queueFrame->audioFrameSize, SAMPLE_FORMAT_AV, 0);
 	}
 	outSamples = swr_convert(resampleContext, &queueFrame->audioFrame, outSamples,
 		frame->extended_data, frame->nb_samples);
 	if (outSamples < 0) { return; }
-	short* fullSamples = ((short*)queueFrame->audioFrame);
+	float* fullSamples = (float*)queueFrame->audioFrame;
 	for (int i = 0; i < outSamples; i++)
 	{
-		fullSamples[i * 2] = (short)((double)fullSamples[i * 2] * volume);
-		fullSamples[i * 2 + 1] = (short)((double)fullSamples[i * 2 + 1] * volume);
+		fullSamples[i * 2] = (float)((double)fullSamples[i * 2] * volume);
+		fullSamples[i * 2 + 1] = (float)((double)fullSamples[i * 2 + 1] * volume);
 	}
 	queueFrame->isAudio = 1;
 	queueFrame->audioSamplesNum = outSamples;
@@ -68,12 +76,17 @@ void addAudio(AVFrame* frame)
 
 void playAudio(Frame* frame)
 {
-	ao_play(aoDevice, frame->audioFrame, frame->audioSamplesNum * SAMPLE_SIZE);
+	Pa_WriteStream(stream, frame->audioFrame, frame->audioSamplesNum);
+	//ao_play(aoDevice, frame->audioFrame, frame->audioSamplesNum * SAMPLE_SIZE);
 }
 
 void deinitAudio(void)
 {
-	if (aoDevice) { ao_close(aoDevice); }
-	swr_free(&resampleContext);
-	ao_shutdown();
+	if (initialized)
+	{
+		swr_free(&resampleContext);
+		Pa_StopStream(stream);
+		Pa_CloseStream(stream);
+		Pa_Terminate();
+	}
 }
