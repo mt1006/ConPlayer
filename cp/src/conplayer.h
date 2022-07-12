@@ -15,7 +15,7 @@
 *    sudo apt-get install libavcodec-dev
 *    sudo apt-get install libavformat-dev
 *    sudo apt-get install libswscale-dev
-*    sudo apt-get install libao-dev
+*    sudo apt-get install libasound-dev portaudio19-dev libportaudio2
 */
 
 #include <stdio.h>
