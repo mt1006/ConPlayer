@@ -19,7 +19,8 @@ double constFontRatio = 0.0;
 int disableKeyboard = 0, disableSync = 0, disableCLS = 0;
 int ansiEnabled = 0;
 SetColorMode setColorMode = SCM_DISABLED;
-int setColorVal = 0;
+int setColorVal = 0, setColorVal2 = -1;
+int singleCharMode = 0;
 
 void load(char* inputFile)
 {

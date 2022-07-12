@@ -19,6 +19,7 @@ void initAudio(Stream* avAudioStream)
 	PaError err;
 
 	err = Pa_Initialize();
+	Sleep(1000);
 	if (err != paNoError) { return; }
 
 	audioParameters.device = Pa_GetDefaultOutputDevice();
@@ -35,9 +36,9 @@ void initAudio(Stream* avAudioStream)
 	Pa_StartStream(stream);
 
 	resampleContext = swr_alloc_set_opts(NULL,
-		av_get_default_channel_layout(CHANNELS),                            //out_channel_layout
-		SAMPLE_FORMAT_AV,                                                   //out_sample_fmt
-		SAMPLE_RATE,                                                        //out_sample_rate
+		av_get_default_channel_layout(CHANNELS),                              //out_channel_layout
+		SAMPLE_FORMAT_AV,                                                     //out_sample_fmt
+		SAMPLE_RATE,                                                          //out_sample_rate
 		av_get_default_channel_layout(avAudioStream->codecContext->channels), //in_channel_layout
 		avAudioStream->codecContext->sample_fmt,                              //in_sample_fmt
 		avAudioStream->codecContext->sample_rate,                             //in_sample_rate
@@ -77,7 +78,6 @@ void addAudio(AVFrame* frame)
 void playAudio(Frame* frame)
 {
 	Pa_WriteStream(stream, frame->audioFrame, frame->audioSamplesNum);
-	//ao_play(aoDevice, frame->audioFrame, frame->audioSamplesNum * SAMPLE_SIZE);
 }
 
 void deinitAudio(void)

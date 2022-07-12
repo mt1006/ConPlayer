@@ -85,7 +85,7 @@ void clearScreen(void)
 	fill.Char.UnicodeChar = TEXT(' ');
 	fill.Attributes = csbi.wAttributes;
 
-	ScrollConsoleScreenBuffer(outputHandle, &scrollRect, NULL, scrollTarget, &fill);
+	ScrollConsoleScreenBufferA(outputHandle, &scrollRect, NULL, scrollTarget, &fill);
 
 	csbi.dwCursorPosition.X = 0;
 	csbi.dwCursorPosition.Y = 0;
@@ -103,7 +103,7 @@ void setDefaultColor(void)
 {
 	if (ansiEnabled)
 	{
-		fputs("\x1B[39m", stdout);
+		fputs("\x1B[0m", stdout);
 	}
 	else if (setColorMode == SCM_WINAPI)
 	{

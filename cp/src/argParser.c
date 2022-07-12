@@ -28,6 +28,7 @@ static int opInterlaced(int argc, char** argv);
 static int opCharset(int argc, char** argv);
 static int opSetColor(int argc, char** argv);
 static int opFontRatio(int argc, char** argv);
+static int opSingleChar(int argc, char** argv);
 static int opDisableCLS(int argc, char** argv);
 static int opDisableSync(int argc, char** argv);
 static int opDisableKeys(int argc, char** argv);
@@ -47,6 +48,7 @@ const Option OPTIONS[] = {
 	{"-cs","--charset",&opCharset,0},
 	{"-sc","--set-color",&opSetColor,0},
 	{"-fr","--font-ratio",&opFontRatio,0},
+	{"-sch","--single-char",&opSingleChar,0},
 	{"-dcls","--disable-cls",&opDisableCLS,0},
 	{"-ds","--disable-sync",&opDisableSync,0},
 	{"-dk","--disable-keys",&opDisableKeys,0},
@@ -164,6 +166,12 @@ static void checkSettings(void)
 		colorMode != CM_CSTD_GRAY)
 	{
 		error("C std \"set color\" mode works only with \"cstd-gray\" color mode!", "argParser.c", __LINE__);
+	}
+	if (singleCharMode &&
+		(colorMode == CM_WINAPI_GRAY ||
+			colorMode == CM_CSTD_GRAY))
+	{
+		error("Single character mode requires colors!", "argParser.c", __LINE__);
 	}
 }
 
@@ -318,15 +326,43 @@ static int opSetColor(int argc, char** argv)
 		setColorMode = SCM_WINAPI;
 		setColorVal = atoi(argv[0]);
 	}
-	else if (argv[0][0] == '$')
+	else if (argv[0][0] == '@')
 	{
 		setColorMode = SCM_CSTD_256;
 		setColorVal = atoi(argv[0] + 1);
+		if (setColorVal < 0 || setColorVal > 255)
+		{
+			error("Invalid color!", "argParser.c", __LINE__);
+		}
+		
+		if (argc > 1 && argv[1][0] != '-')
+		{
+			setColorVal2 = atoi(argv[1]);
+			if (setColorVal2 < 0 || setColorVal2 > 255)
+			{
+				error("Invalid color!", "argParser.c", __LINE__);
+			}
+			return 2;
+		}
 	}
 	else if (argv[0][0] == '#')
 	{
 		setColorMode = SCM_CSTD_RGB;
 		setColorVal = strtol(argv[0] + 1, NULL, 16);
+		if (setColorVal < 0 || setColorVal > 0xFFFFFF)
+		{
+			error("Invalid color!", "argParser.c", __LINE__);
+		}
+
+		if (argc > 1 && argv[1][0] != '-')
+		{
+			setColorVal2 = strtol(argv[1], NULL, 16);
+			if (setColorVal2 < 0 || setColorVal2 > 0xFFFFFF)
+			{
+				error("Invalid color!", "argParser.c", __LINE__);
+			}
+			return 2;
+		}
 	}
 	else
 	{
@@ -342,6 +378,12 @@ static int opFontRatio(int argc, char** argv)
 	constFontRatio = atof(argv[0]);
 	if (constFontRatio <= 0.0) { error("Invalid font ratio!", "argParser.c", __LINE__); }
 	return 1;
+}
+
+static int opSingleChar(int argc, char** argv)
+{
+	singleCharMode = 1;
+	return 0;
 }
 
 static int opDisableCLS(int argc, char** argv)

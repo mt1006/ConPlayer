@@ -138,10 +138,13 @@ static ThreadRetType CALL_CONV drawThread(void* ptr)
 
 static ThreadRetType CALL_CONV keyboardThread(void* ptr)
 {
+	const int SLEEP_ON_START = 300;
 	const double SEEK_SECONDS = 10.0;
 	const double VOLUME_CHANGE = 0.05;
 	const double KEYBOARD_DELAY = 0.2;
 	static double keyTime = 0.0;
+
+	Sleep(SLEEP_ON_START);
 
 	int64_t timeToSet;
 	while (1)

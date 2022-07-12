@@ -1,17 +1,20 @@
--Added option to set constant color in grayscale mode.
+-Better audio synchronization - switched from libao to PortAudio.
+-Added option to set constant color in grayscale mode - "--set-color".
+-Added "--single-char" option.
+-Trying to use WinAPI color mode on Linux now ends up with error.
 -Fix: wrong image ratio in Windows Terminal.
 -Fix: not compiling on WSL (thanks to @MilkFlavor).
 
 ===Version 1.2===
--Version for Linux
+-Version for Linux.
 -Added option to set constant font ratio.
 -Added option to disable clearing screen.
 -Added option to disable synchronization.
 -Added option to disable keyboard control.
 -Added keys for changing volume.
--Fix: resizing too often could cause a crash
--Fix: wrong image ratio when changing font size in cmd, using ctrl+scroll
--Fix: not resetting color when video is finished
+-Fix: resizing too often could cause a crash.
+-Fix: wrong image ratio when changing font size in cmd, using ctrl+scroll.
+-Fix: not resetting color when video is finished.
 
 ===Version 1.1===
 -Removed "-cstd". Replaced with color modes.

@@ -44,8 +44,10 @@ void processFrame(Frame* frame)
 				uint8_t valG = frame->videoFrame[(j * 3) + (i * frame->videoLinesize) + 1];
 				uint8_t valB = frame->videoFrame[(j * 3) + (i * frame->videoLinesize) + 2];
 
-				uint8_t val = procColor(&valR, &valG, &valB);
-				uint8_t color;
+				uint8_t val, color;
+
+				if (singleCharMode) { val = 255; }
+				else { val = procColor(&valR, &valG, &valB); }
 
 				switch (colorMode)
 				{
@@ -186,7 +188,10 @@ static void processForWinAPI(Frame* frame)
 				uint8_t valG = frame->videoFrame[(j * 3) + (i * frame->videoLinesize) + 1];
 				uint8_t valB = frame->videoFrame[(j * 3) + (i * frame->videoLinesize) + 2];
 
-				uint8_t val = procColor(&valR, &valG, &valB);
+				uint8_t val;
+				
+				if (singleCharMode) { val = 255; }
+				else { val = procColor(&valR, &valG, &valB); }
 
 				output[(i * frame->frameW) + j].Char.AsciiChar = charset[(val * charsetSize) / 256];
 				output[(i * frame->frameW) + j].Attributes = findNearestColor16(valR, valG, valB);
