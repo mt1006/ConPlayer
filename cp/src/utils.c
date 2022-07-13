@@ -22,6 +22,21 @@ double getTime(void)
 	#endif
 }
 
+ThreadIDType startThread(ThreadFuncPtr threadFunc, void* args)
+{
+	#ifdef _WIN32
+
+	return _beginthread(threadFunc, 0, args);
+
+	#else
+
+	ThreadIDType retVal;
+	pthread_create(&retVal, NULL, threadFunc, args);
+	return retVal;
+
+	#endif
+}
+
 void strToLower(char* str)
 {
 	for (int i = 0; i < strlen(str); i++)

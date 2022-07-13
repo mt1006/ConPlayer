@@ -72,6 +72,12 @@ typedef wchar_t unichar;
 #define uc_puts _putws
 #define uc_fputs fputws
 
+#define CP_CALL_CONV __cdecl
+#define CP_END_THREAD return;
+typedef uintptr_t ThreadIDType;
+typedef void ThreadRetType;
+typedef _beginthread_proc_type ThreadFuncPtr;
+
 #else
 
 #define USE_WCHAR 0
@@ -81,6 +87,12 @@ typedef char unichar;
 #define uc_fopen fopen
 #define uc_puts puts
 #define uc_fputs fputs
+
+#define CP_CALL_CONV
+#define CP_END_THREAD return NULL;
+typedef pthread_t ThreadIDType;
+typedef void* ThreadRetType;
+typedef void* (*ThreadFuncPtr)(void*);
 
 typedef void* HWND;
 typedef void* HANDLE;
@@ -201,13 +213,13 @@ extern void drawFrame(void* output, int* lineOffsets, int fw, int fh);
 
 //audio.c
 extern void initAudio(Stream* audioStream);
+extern void initAudioLib(void);
 extern void addAudio(AVFrame* frame);
 extern void playAudio(Frame* frame);
 extern void deinitAudio(void);
 
 //threads.c
 extern void beginThreads(void);
-extern void resetTimer(void);
 
 //queue.c
 extern void initQueue(void);
@@ -222,6 +234,7 @@ extern void showVersion(void);
 
 //utils.c
 extern double getTime(void);
+extern ThreadIDType startThread(ThreadFuncPtr threadFunc, void* args);
 extern void strToLower(char* str);
 extern void getConsoleWindow(void);
 extern void clearScreen(void);

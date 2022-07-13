@@ -10,30 +10,19 @@ static const int CHANNELS = 2;
 static const int SAMPLE_RATE = 48000;
 
 static int initialized = 0;
+static int libInitialized = 0;
 static PaStream* stream;
 static PaStreamParameters audioParameters;
 static SwrContext* resampleContext = NULL;
 
+static ThreadRetType CP_CALL_CONV initAudioLibThread(void* ptr);
+
 void initAudio(Stream* avAudioStream)
 {
-	PaError err;
+	const int MS_TO_WAIT = 8;
+	while (!libInitialized) { Sleep(MS_TO_WAIT); }
 
-	err = Pa_Initialize();
-	Sleep(1000);
-	if (err != paNoError) { return; }
-
-	audioParameters.device = Pa_GetDefaultOutputDevice();
-	if (audioParameters.device == paNoDevice) { return; }
-
-	audioParameters.channelCount = CHANNELS;
-	audioParameters.sampleFormat = SAMPLE_FORMAT_PA;
-	audioParameters.suggestedLatency = Pa_GetDeviceInfo(audioParameters.device)->defaultLowOutputLatency;
-	audioParameters.hostApiSpecificStreamInfo = NULL;
-
-	err = Pa_IsFormatSupported(NULL, &audioParameters, SAMPLE_RATE);
-
-	err = Pa_OpenStream(&stream, NULL, &audioParameters, SAMPLE_RATE, 0, paNoFlag, NULL, NULL);
-	Pa_StartStream(stream);
+	if (libInitialized == -1) { return; }
 
 	resampleContext = swr_alloc_set_opts(NULL,
 		av_get_default_channel_layout(CHANNELS),                              //out_channel_layout
@@ -47,6 +36,11 @@ void initAudio(Stream* avAudioStream)
 	if (swrRetVal < 0) { return; }
 
 	initialized = 1;
+}
+
+void initAudioLib(void)
+{
+	startThread(&initAudioLibThread, NULL);
 }
 
 void addAudio(AVFrame* frame)
@@ -89,4 +83,36 @@ void deinitAudio(void)
 		Pa_CloseStream(stream);
 		Pa_Terminate();
 	}
+}
+
+static ThreadRetType CP_CALL_CONV initAudioLibThread(void* ptr)
+{
+	PaError err;
+
+	err = Pa_Initialize();
+	if (err != paNoError)
+	{
+		libInitialized = -1;
+		return;
+	}
+
+	audioParameters.device = Pa_GetDefaultOutputDevice();
+	if (audioParameters.device == paNoDevice)
+	{
+		libInitialized = -1;
+		return;
+	}
+
+	audioParameters.channelCount = CHANNELS;
+	audioParameters.sampleFormat = SAMPLE_FORMAT_PA;
+	audioParameters.suggestedLatency = Pa_GetDeviceInfo(audioParameters.device)->defaultLowOutputLatency;
+	audioParameters.hostApiSpecificStreamInfo = NULL;
+
+	Pa_OpenStream(&stream, NULL, &audioParameters, SAMPLE_RATE, 0, paNoFlag, NULL, NULL);
+	err = Pa_StartStream(stream);
+
+	if (err == paNoError) { libInitialized = 1; }
+	else { libInitialized = -1; }
+
+	CP_END_THREAD
 }

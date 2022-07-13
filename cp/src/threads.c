@@ -1,19 +1,5 @@
 #include "conplayer.h"
 
-#ifdef _WIN32
-
-#define CALL_CONV __cdecl
-typedef uintptr_t ThreadIDType;
-typedef void ThreadRetType;
-
-#else
-
-#define CALL_CONV
-typedef pthread_t ThreadIDType;
-typedef void* ThreadRetType;
-
-#endif
-
 const int SLEEP_ON_FREEZE = 4;
 int freezeThreads = 0;
 int mainFreezed = 0;
@@ -30,40 +16,22 @@ static int frameCounter;
 static int64_t drawFrameTime = 0;
 static int paused = 0;
 
-static ThreadRetType CALL_CONV procThread(void* ptr);
-static ThreadRetType CALL_CONV drawThread(void* ptr);
-static ThreadRetType CALL_CONV keyboardThread(void* ptr);
+static ThreadRetType CP_CALL_CONV procThread(void* ptr);
+static ThreadRetType CP_CALL_CONV drawThread(void* ptr);
+static ThreadRetType CP_CALL_CONV keyboardThread(void* ptr);
 static void seek(int64_t timestamp);
 
 void beginThreads(void)
 {
-	#ifdef _WIN32
-
-	procThreadID = _beginthread(&procThread, 0, NULL);
-	drawThreadID = _beginthread(&drawThread, 0, NULL);
+	procThreadID = startThread(&procThread, NULL);
+	drawThreadID = startThread(&drawThread, NULL);
 	if (!disableKeyboard)
 	{
-		keyboardThreadID = _beginthread(&keyboardThread, 0, NULL);
+		keyboardThreadID = startThread(&keyboardThread, NULL);
 	}
-
-	#else
-
-	pthread_create(&procThreadID, NULL, &procThread, NULL);
-	pthread_create(&drawThreadID, NULL, &drawThread, NULL);
-	if (!disableKeyboard)
-	{
-		pthread_create(&keyboardThreadID, NULL, &keyboardThread, NULL);
-	}
-
-	#endif
 }
 
-void resetTimer(void)
-{
-	frameCounter = 0;
-}
-
-static ThreadRetType CALL_CONV procThread(void* ptr)
+static ThreadRetType CP_CALL_CONV procThread(void* ptr)
 {
 	while (1)
 	{
@@ -80,9 +48,11 @@ static ThreadRetType CALL_CONV procThread(void* ptr)
 		}
 		enqueueFrame(STAGE_PROCESSED_FRAME);
 	}
+
+	CP_END_THREAD
 }
 
-static ThreadRetType CALL_CONV drawThread(void* ptr)
+static ThreadRetType CP_CALL_CONV drawThread(void* ptr)
 {
 	const int SLEEP_ON_PAUSE = 10;
 
@@ -96,7 +66,7 @@ static ThreadRetType CALL_CONV drawThread(void* ptr)
 
 		while (paused)
 		{
-			resetTimer();
+			frameCounter = 0;
 			Sleep(SLEEP_ON_PAUSE);
 		}
 
@@ -134,9 +104,11 @@ static ThreadRetType CALL_CONV drawThread(void* ptr)
 		}
 		enqueueFrame(STAGE_FREE);
 	}
+
+	CP_END_THREAD
 }
 
-static ThreadRetType CALL_CONV keyboardThread(void* ptr)
+static ThreadRetType CP_CALL_CONV keyboardThread(void* ptr)
 {
 	const int SLEEP_ON_START = 300;
 	const double SEEK_SECONDS = 10.0;
@@ -191,6 +163,8 @@ static ThreadRetType CALL_CONV keyboardThread(void* ptr)
 			break;
 		}
 	}
+
+	CP_END_THREAD
 }
 
 static void seek(int64_t timestamp)

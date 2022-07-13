@@ -28,6 +28,7 @@ void load(char* inputFile)
 
 	puts("Loading...");
 
+	initAudioLib();
 	initAV(inputFile, &audioStream);
 	initDrawFrame();
 	initProcessFrame();
@@ -43,7 +44,7 @@ int main(int argc, char** argv)
 	#ifndef _DEBUG
 	av_log_set_level(AV_LOG_QUIET);
 	#endif
-
+	
 	int uc_argc;
 	unichar** uc_argv;
 	if (USE_WCHAR)
