@@ -1,6 +1,7 @@
 -Better audio synchronization - switched from libao to PortAudio.
--Added option to set constant color in grayscale mode - "--set-color".
+-Added "--rand" option.
 -Added "--single-char" option.
+-Added option to set constant color in grayscale mode - "--set-color".
 -Trying to use WinAPI color mode on Linux now ends up with error.
 -Fix: wrong image ratio in Windows Terminal.
 -Fix: not compiling on WSL (thanks to @MilkFlavor).

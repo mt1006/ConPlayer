@@ -192,6 +192,7 @@ extern int ansiEnabled;
 extern SetColorMode setColorMode;
 extern int setColorVal, setColorVal2;
 extern int singleCharMode;
+extern int brightnessRand;
 
 //argParser.c
 extern char* argumentParser(int argc, unichar** argv);

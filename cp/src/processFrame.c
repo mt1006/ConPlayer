@@ -12,6 +12,7 @@ static const uint8_t CMD_COLORS_16[16][3] =
 static void processForWinAPI(Frame* frame);
 static uint8_t procColor(uint8_t* r, uint8_t* g, uint8_t* b);
 static uint8_t findNearestColor16(uint8_t r, uint8_t g, uint8_t b);
+static void procRand(uint8_t* val);
 
 void initProcessFrame(void)
 {
@@ -48,6 +49,8 @@ void processFrame(Frame* frame)
 
 				if (singleCharMode) { val = 255; }
 				else { val = procColor(&valR, &valG, &valB); }
+
+				if (brightnessRand) { procRand(&val); }
 
 				switch (colorMode)
 				{
@@ -193,6 +196,8 @@ static void processForWinAPI(Frame* frame)
 				if (singleCharMode) { val = 255; }
 				else { val = procColor(&valR, &valG, &valB); }
 
+				if (brightnessRand) { procRand(&val); }
+
 				output[(i * frame->frameW) + j].Char.AsciiChar = charset[(val * charsetSize) / 256];
 				output[(i * frame->frameW) + j].Attributes = findNearestColor16(valR, valG, valB);
 			}
@@ -205,6 +210,7 @@ static void processForWinAPI(Frame* frame)
 			for (int j = 0; j < frame->frameW; j++)
 			{
 				uint8_t val = frame->videoFrame[j + i * frame->videoLinesize];
+				if (brightnessRand) { procRand(&val); }
 				output[(i * frame->frameW) + j].Char.AsciiChar = charset[(val * charsetSize) / 256];
 				
 				if (setColorMode == SCM_WINAPI)
@@ -264,4 +270,30 @@ static uint8_t findNearestColor16(uint8_t r, uint8_t g, uint8_t b)
 		}
 	}
 	return (uint8_t)minPos;
+}
+
+static void procRand(uint8_t* val)
+{
+	if (singleCharMode)
+	{
+		*val -= rand() % (brightnessRand + 1);
+	}
+	else
+	{
+		if (brightnessRand > 0)
+		{
+			int tempVal = (int)(*val) + (rand() % (brightnessRand + 1)) - (brightnessRand / 2);
+
+			if (tempVal >= 255) { *val = 255; }
+			else if (tempVal <= 0) { *val = 0; }
+			else { *val = (uint8_t)tempVal; }
+		}
+		else
+		{
+			int tempVal = (int)(*val) - (rand() % (-brightnessRand + 1));
+
+			if (tempVal <= 0) { *val = 0; }
+			else { *val = (uint8_t)tempVal; }
+		}
+	}
 }

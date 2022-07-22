@@ -25,10 +25,11 @@ static int opFill(int argc, char** argv);
 static int opInformation(int argc, char** argv);
 static int opVersion(int argc, char** argv);
 static int opInterlaced(int argc, char** argv);
-static int opCharset(int argc, char** argv);
 static int opSetColor(int argc, char** argv);
-static int opFontRatio(int argc, char** argv);
+static int opCharset(int argc, char** argv);
 static int opSingleChar(int argc, char** argv);
+static int opRand(int argc, char** argv);
+static int opFontRatio(int argc, char** argv);
 static int opDisableCLS(int argc, char** argv);
 static int opDisableSync(int argc, char** argv);
 static int opDisableKeys(int argc, char** argv);
@@ -45,10 +46,11 @@ const Option OPTIONS[] = {
 	{"-inf","--information",&opInformation,1},
 	{"-v","--version",&opVersion,1},
 	{"-int","--interlaced",&opInterlaced,0},
-	{"-cs","--charset",&opCharset,0},
 	{"-sc","--set-color",&opSetColor,0},
-	{"-fr","--font-ratio",&opFontRatio,0},
+	{"-cs","--charset",&opCharset,0},
 	{"-sch","--single-char",&opSingleChar,0},
+	{"-r","--rand",&opRand,0},
+	{"-fr","--font-ratio",&opFontRatio,0},
 	{"-dcls","--disable-cls",&opDisableCLS,0},
 	{"-ds","--disable-sync",&opDisableSync,0},
 	{"-dk","--disable-keys",&opDisableKeys,0},
@@ -173,6 +175,11 @@ static void checkSettings(void)
 	{
 		error("Single character mode requires colors!", "argParser.c", __LINE__);
 	}
+
+	if (singleCharMode && brightnessRand)
+	{
+		if (brightnessRand < 0) { brightnessRand = -brightnessRand; }
+	}
 }
 
 static int opInput(int argc, char** argv)
@@ -289,34 +296,6 @@ static int opInterlaced(int argc, char** argv)
 	}
 }
 
-static int opCharset(int argc, char** argv)
-{ 
-	const int CHARSET_MAX_SIZE = 256;
-
-	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
-	if (argv[0][0] == '#')
-	{
-		strToLower(argv[0]);
-		if (!strcmp(argv[0], "#long")) { charset = CHARSET_LONG; }
-		else if (!strcmp(argv[0], "#short")) { charset = CHARSET_SHORT; }
-		else if (!strcmp(argv[0], "#2")) { charset = CHARSET_2; }
-		else if (!strcmp(argv[0], "#blocks")) { charset = CHARSET_BLOCKS; }
-		else if (!strcmp(argv[0], "#outline")) { charset = CHARSET_OUTLINE; }
-		else if (!strcmp(argv[0], "#bold-outline")) { charset = CHARSET_BOLD_OUTLINE; }
-		else { error("Invalid predefined charset name!", "argParser.c", __LINE__); }
-		charsetSize = (int)strlen(charset);
-	}
-	else
-	{
-		FILE* charsetFile = fopen(argv[0], "rb");
-		if (!charsetFile) { error("Failed to open charset file!", "argParser.c", __LINE__); }
-		charset = (char*)malloc(CHARSET_MAX_SIZE * sizeof(char));
-		charsetSize = (int)fread(charset, sizeof(char), CHARSET_MAX_SIZE, charsetFile);
-		fclose(charsetFile);
-	}
-	return 1;
-}
-
 static int opSetColor(int argc, char** argv)
 {
 	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
@@ -372,11 +351,31 @@ static int opSetColor(int argc, char** argv)
 	return 1;
 }
 
-static int opFontRatio(int argc, char** argv)
+static int opCharset(int argc, char** argv)
 {
+	const int CHARSET_MAX_SIZE = 256;
+
 	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
-	constFontRatio = atof(argv[0]);
-	if (constFontRatio <= 0.0) { error("Invalid font ratio!", "argParser.c", __LINE__); }
+	if (argv[0][0] == '#')
+	{
+		strToLower(argv[0]);
+		if (!strcmp(argv[0], "#long")) { charset = CHARSET_LONG; }
+		else if (!strcmp(argv[0], "#short")) { charset = CHARSET_SHORT; }
+		else if (!strcmp(argv[0], "#2")) { charset = CHARSET_2; }
+		else if (!strcmp(argv[0], "#blocks")) { charset = CHARSET_BLOCKS; }
+		else if (!strcmp(argv[0], "#outline")) { charset = CHARSET_OUTLINE; }
+		else if (!strcmp(argv[0], "#bold-outline")) { charset = CHARSET_BOLD_OUTLINE; }
+		else { error("Invalid predefined charset name!", "argParser.c", __LINE__); }
+		charsetSize = (int)strlen(charset);
+	}
+	else
+	{
+		FILE* charsetFile = fopen(argv[0], "rb");
+		if (!charsetFile) { error("Failed to open charset file!", "argParser.c", __LINE__); }
+		charset = (char*)malloc(CHARSET_MAX_SIZE * sizeof(char));
+		charsetSize = (int)fread(charset, sizeof(char), CHARSET_MAX_SIZE, charsetFile);
+		fclose(charsetFile);
+	}
 	return 1;
 }
 
@@ -384,6 +383,26 @@ static int opSingleChar(int argc, char** argv)
 {
 	singleCharMode = 1;
 	return 0;
+}
+
+static int opRand(int argc, char** argv)
+{
+	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
+	srand(time(NULL));
+
+	if (argv[0][0] == '@') { brightnessRand = -atoi(argv[0] + 1); }
+	else { brightnessRand = atoi(argv[0]); }
+
+	if (brightnessRand < -255 || brightnessRand > 255) { error("Invalid rand value!", "argParser.c", __LINE__); }
+	return 1;
+}
+
+static int opFontRatio(int argc, char** argv)
+{
+	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
+	constFontRatio = atof(argv[0]);
+	if (constFontRatio <= 0.0) { error("Invalid font ratio!", "argParser.c", __LINE__); }
+	return 1;
 }
 
 static int opDisableCLS(int argc, char** argv)
