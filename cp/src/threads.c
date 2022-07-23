@@ -5,11 +5,13 @@ int freezeThreads = 0;
 int mainFreezed = 0;
 int procFreezed = 0;
 int drawFreezed = 0;
+int audioFreezed = 0;
 
 static const double TIME_TO_RESET_TIMER = 0.5;
 
 static ThreadIDType procThreadID = 0;
 static ThreadIDType drawThreadID = 0;
+static ThreadIDType audioThreadID = 0;
 static ThreadIDType keyboardThreadID = 0;
 static double startTime;
 static int frameCounter;
@@ -18,6 +20,7 @@ static int paused = 0;
 
 static ThreadRetType CP_CALL_CONV procThread(void* ptr);
 static ThreadRetType CP_CALL_CONV drawThread(void* ptr);
+static ThreadRetType CP_CALL_CONV audioThread(void* ptr);
 static ThreadRetType CP_CALL_CONV keyboardThread(void* ptr);
 static void seek(int64_t timestamp);
 
@@ -25,6 +28,7 @@ void beginThreads(void)
 {
 	procThreadID = startThread(&procThread, NULL);
 	drawThreadID = startThread(&drawThread, NULL);
+	audioThreadID = startThread(&audioThread, NULL);
 	if (!disableKeyboard)
 	{
 		keyboardThreadID = startThread(&keyboardThread, NULL);
@@ -105,6 +109,12 @@ static ThreadRetType CP_CALL_CONV drawThread(void* ptr)
 		enqueueFrame(STAGE_FREE);
 	}
 
+	CP_END_THREAD
+}
+
+static ThreadRetType CP_CALL_CONV audioThread(void* ptr)
+{
+	audioLoop();
 	CP_END_THREAD
 }
 

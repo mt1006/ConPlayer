@@ -216,8 +216,8 @@ extern void drawFrame(void* output, int* lineOffsets, int fw, int fh);
 extern void initAudio(Stream* audioStream);
 extern void initAudioLib(void);
 extern void addAudio(AVFrame* frame);
+extern void audioLoop(void);
 extern void playAudio(Frame* frame);
-extern void deinitAudio(void);
 
 //threads.c
 extern void beginThreads(void);

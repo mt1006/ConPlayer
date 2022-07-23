@@ -1,5 +1,18 @@
 #include "conplayer.h"
 
+// from threads.c
+extern const int SLEEP_ON_FREEZE;
+extern int freezeThreads;
+extern int audioFreezed;
+
+typedef struct
+{
+	int front, back;
+	uint8_t** audioFrames;
+	int* audioSamplesNum;
+	int* audioFramesSize;
+} AudioQueue;
+
 // If you're changing SAMPLE_BITS or CHANNELS value, remember
 // to modify "for loop" in addAudio function, responsible for
 // changing volume, which is hardcoded to 32 bits / 2 channels
@@ -14,6 +27,9 @@ static int libInitialized = 0;
 static PaStream* stream;
 static PaStreamParameters audioParameters;
 static SwrContext* resampleContext = NULL;
+
+static const int AUDIO_QUEUE_SIZE = 32;
+static AudioQueue audioQueue;
 
 static ThreadRetType CP_CALL_CONV initAudioLibThread(void* ptr);
 
@@ -69,20 +85,65 @@ void addAudio(AVFrame* frame)
 	enqueueFrame(STAGE_LOADED_FRAME);
 }
 
-void playAudio(Frame* frame)
+void audioLoop(void)
 {
-	Pa_WriteStream(stream, frame->audioFrame, frame->audioSamplesNum);
+	const int TIME_TO_SLEEP = 8;
+
+	audioQueue.front = 0;
+	audioQueue.back = 0;
+	audioQueue.audioFrames = (uint8_t**)malloc(AUDIO_QUEUE_SIZE * sizeof(uint8_t*));
+	audioQueue.audioSamplesNum = (int*)malloc(AUDIO_QUEUE_SIZE * sizeof(int));
+	audioQueue.audioFramesSize = (int*)malloc(AUDIO_QUEUE_SIZE * sizeof(int));
+
+	for (int i = 0; i < AUDIO_QUEUE_SIZE; i++)
+	{
+		audioQueue.audioFrames[i] = NULL;
+		audioQueue.audioFramesSize[i] = 0;
+	}
+
+	while (1)
+	{
+		while (freezeThreads && !decodeEnd)
+		{
+			audioFreezed = 1;
+			audioQueue.front = 0;
+			audioQueue.back = 0;
+			Sleep(SLEEP_ON_FREEZE);
+		}
+
+		if (audioQueue.front != audioQueue.back)
+		{
+			Pa_WriteStream(stream, audioQueue.audioFrames[audioQueue.front],
+				audioQueue.audioSamplesNum[audioQueue.front]);
+
+			audioQueue.front++;
+			if (audioQueue.front == AUDIO_QUEUE_SIZE) { audioQueue.front = 0; }
+		}
+
+		Sleep(TIME_TO_SLEEP);
+	}
 }
 
-void deinitAudio(void)
+void playAudio(Frame* frame)
 {
-	if (initialized)
+	if (audioQueue.audioFramesSize[audioQueue.back] < frame->audioFrameSize)
 	{
-		swr_free(&resampleContext);
-		Pa_StopStream(stream);
-		Pa_CloseStream(stream);
-		Pa_Terminate();
+		if (audioQueue.audioFrames[audioQueue.back])
+		{
+			av_free(audioQueue.audioFrames[audioQueue.back]);
+		}
+		av_samples_alloc(&audioQueue.audioFrames[audioQueue.back], NULL,
+			CHANNELS, frame->audioFrameSize, SAMPLE_FORMAT_AV, 0);
+		audioQueue.audioFramesSize[audioQueue.back] = frame->audioFrameSize;
 	}
+
+	audioQueue.audioSamplesNum[audioQueue.back] = frame->audioSamplesNum;
+	av_samples_copy(&audioQueue.audioFrames[audioQueue.back], 
+		&frame->audioFrame, 0, 0, frame->audioSamplesNum,
+		CHANNELS, SAMPLE_FORMAT_AV);
+
+	audioQueue.back++;
+	if (audioQueue.back == AUDIO_QUEUE_SIZE) { audioQueue.back = 0; }
 }
 
 static ThreadRetType CP_CALL_CONV initAudioLibThread(void* ptr)
