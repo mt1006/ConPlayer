@@ -35,8 +35,6 @@ void initDrawFrame(void)
 	}
 	#endif
 
-	
-
 	refreshSize();
 }
 

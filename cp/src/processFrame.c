@@ -14,11 +14,6 @@ static uint8_t procColor(uint8_t* r, uint8_t* g, uint8_t* b);
 static uint8_t findNearestColor16(uint8_t r, uint8_t g, uint8_t b);
 static void procRand(uint8_t* val);
 
-void initProcessFrame(void)
-{
-	return;
-}
-
 void processFrame(Frame* frame)
 {
 	if (colorMode == CM_WINAPI_GRAY || colorMode == CM_WINAPI_16)

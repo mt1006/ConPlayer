@@ -78,6 +78,9 @@ typedef uintptr_t ThreadIDType;
 typedef void ThreadRetType;
 typedef _beginthread_proc_type ThreadFuncPtr;
 
+#define CP_DEFAULT_COLOR_MODE CM_WINAPI_GRAY
+#define CP_DEFAULT_COLOR_MODE_C CM_CSTD_256
+
 #else
 
 #define USE_WCHAR 0
@@ -99,19 +102,11 @@ typedef void* HANDLE;
 typedef void* CHAR_INFO;
 typedef unsigned long DWORD;
 
-#endif
-
-#ifdef _WIN32
-
-#define CP_DEFAULT_COLOR_MODE CM_WINAPI_GRAY
-#define CP_DEFAULT_COLOR_MODE_C CM_CSTD_256
-
-#else
+#define VK_ESCAPE 0x1B
+#define VK_SPACE 0x20
 
 #define CP_DEFAULT_COLOR_MODE CM_CSTD_GRAY
 #define CP_DEFAULT_COLOR_MODE_C CM_CSTD_256
-#define VK_ESCAPE 0x1B
-#define VK_SPACE 0x20
 
 #endif
 
@@ -132,6 +127,13 @@ typedef enum
 	SCM_CSTD_256,
 	SCM_CSTD_RGB
 } SetColorMode;
+
+typedef enum
+{
+	SM_DISABLED,
+	SM_DRAW_ALL,
+	SM_ENABLED
+} SyncMode;
 
 typedef enum
 {
@@ -187,24 +189,23 @@ extern int decodeEnd;
 extern char* charset;
 extern int charsetSize;
 extern double constFontRatio;
-extern int disableKeyboard, disableSync, disableCLS;
+extern int disableKeyboard, disableCLS, disableAudio;
 extern int ansiEnabled;
 extern SetColorMode setColorMode;
 extern int setColorVal, setColorVal2;
 extern int singleCharMode;
 extern int brightnessRand;
+extern SyncMode syncMode;
 
 //argParser.c
 extern char* argumentParser(int argc, unichar** argv);
 
 //decodeFrame.c
-extern void initAV(const char* file, Stream** outAudioStream);
+extern void initDecodeFrame(const char* file, Stream** outAudioStream);
 extern void readFrames(void);
 extern void avSeek(int64_t timestamp);
-extern void unload(void);
 
 //processFrame.c
-extern void initProcessFrame(void);
 extern void processFrame(Frame* frame);
 
 //drawFrame.c

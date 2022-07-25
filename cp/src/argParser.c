@@ -30,8 +30,9 @@ static int opCharset(int argc, char** argv);
 static int opSingleChar(int argc, char** argv);
 static int opRand(int argc, char** argv);
 static int opFontRatio(int argc, char** argv);
+static int opSync(int argc, char** argv);
 static int opDisableCLS(int argc, char** argv);
-static int opDisableSync(int argc, char** argv);
+static int opDisableAudio(int argc, char** argv);
 static int opDisableKeys(int argc, char** argv);
 static int opFullInfo(int argc, char** argv);
 static void invalidSyntax(int line);
@@ -51,8 +52,9 @@ const Option OPTIONS[] = {
 	{"-sch","--single-char",&opSingleChar,0},
 	{"-r","--rand",&opRand,0},
 	{"-fr","--font-ratio",&opFontRatio,0},
+	{"-sy","--sync",&opSync,0},
 	{"-dcls","--disable-cls",&opDisableCLS,0},
-	{"-ds","--disable-sync",&opDisableSync,0},
+	{"-da","--disable-audio",&opDisableAudio,0},
 	{"-dk","--disable-keys",&opDisableKeys,0},
 	{"-fi","--full-info",&opFullInfo,1} };
 
@@ -405,15 +407,28 @@ static int opFontRatio(int argc, char** argv)
 	return 1;
 }
 
+static int opSync(int argc, char** argv)
+{
+	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
+
+	strToLower(argv[0]);
+	if (!strcmp(argv[0], "disabled")) { syncMode = SM_DISABLED; }
+	else if (!strcmp(argv[0], "draw-all")) { colorMode = SM_DRAW_ALL; }
+	else if (!strcmp(argv[0], "enabled")) { colorMode = SM_ENABLED; }
+	else { error("Invalid synchronization mode!", "argParser.c", __LINE__); }
+
+	return 1;
+}
+
 static int opDisableCLS(int argc, char** argv)
 {
 	disableCLS = 1;
 	return 0;
 }
 
-static int opDisableSync(int argc, char** argv)
+static int opDisableAudio(int argc, char** argv)
 {
-	disableSync = 1;
+	disableAudio = 1;
 	return 0;
 }
 

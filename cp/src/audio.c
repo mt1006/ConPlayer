@@ -1,10 +1,5 @@
 #include "conplayer.h"
 
-// from threads.c
-extern const int SLEEP_ON_FREEZE;
-extern int freezeThreads;
-extern int audioFreezed;
-
 typedef struct
 {
 	int front, back;
@@ -28,7 +23,7 @@ static PaStream* stream;
 static PaStreamParameters audioParameters;
 static SwrContext* resampleContext = NULL;
 
-static const int AUDIO_QUEUE_SIZE = 32;
+static const int AUDIO_QUEUE_SIZE = 128;
 static AudioQueue audioQueue;
 
 static ThreadRetType CP_CALL_CONV initAudioLibThread(void* ptr);
@@ -103,14 +98,6 @@ void audioLoop(void)
 
 	while (1)
 	{
-		while (freezeThreads && !decodeEnd)
-		{
-			audioFreezed = 1;
-			audioQueue.front = 0;
-			audioQueue.back = 0;
-			Sleep(SLEEP_ON_FREEZE);
-		}
-
 		if (audioQueue.front != audioQueue.back)
 		{
 			Pa_WriteStream(stream, audioQueue.audioFrames[audioQueue.front],
@@ -126,6 +113,12 @@ void audioLoop(void)
 
 void playAudio(Frame* frame)
 {
+	while ((audioQueue.back + 1 == audioQueue.front) ||
+		(audioQueue.back == AUDIO_QUEUE_SIZE - 1 && audioQueue.front == 0))
+	{
+		Sleep(0);
+	}
+
 	if (audioQueue.audioFramesSize[audioQueue.back] < frame->audioFrameSize)
 	{
 		if (audioQueue.audioFrames[audioQueue.back])

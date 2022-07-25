@@ -22,7 +22,7 @@ static void setFrameSize(int inputW, int inputH, enum AVPixelFormat inputFormat,
 static int decodeVideoPacket(AVPacket* packet, AVFrame* frame, AVFrame* scaledFrame);
 static int decodeAudioPacket(AVPacket* packet, AVFrame* frame);
 
-void initAV(const char* file, Stream** outAudioStream)
+void initDecodeFrame(const char* file, Stream** outAudioStream)
 {
 	if (colorMode==CM_CSTD_16 ||
 		colorMode == CM_CSTD_256||
@@ -225,17 +225,9 @@ static int decodeVideoPacket(AVPacket* packet, AVFrame* frame, AVFrame* scaledFr
 
 static int decodeAudioPacket(AVPacket* packet, AVFrame* frame)
 {
+	if (disableAudio) { return 0; }
 	int success = 0;
 	int len = avcodec_decode_audio4(audioStream.codecContext, frame, &success, packet);
 	if (success) { addAudio(frame); }
 	return 0;
-}
-
-void unload(void)
-{
-	sws_freeContext(swsContext);
-	av_free(scaledFrameBuffer);
-	avcodec_free_context(&videoStream.codecContext);
-	avcodec_free_context(&audioStream.codecContext);
-	avformat_close_input(&formatContext);
 }

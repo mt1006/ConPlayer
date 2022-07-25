@@ -16,12 +16,13 @@ int decodeEnd = 0;
 char* charset = NULL;
 int charsetSize = 0;
 double constFontRatio = 0.0;
-int disableKeyboard = 0, disableSync = 0, disableCLS = 0;
+int disableKeyboard = 0, disableCLS = 0, disableAudio = 0;
 int ansiEnabled = 0;
 SetColorMode setColorMode = SCM_DISABLED;
 int setColorVal = 0, setColorVal2 = -1;
 int singleCharMode = 0;
 int brightnessRand = 0;
+SyncMode syncMode = SM_ENABLED;
 
 void load(char* inputFile)
 {
@@ -29,12 +30,11 @@ void load(char* inputFile)
 
 	puts("Loading...");
 
-	initAudioLib();
-	initAV(inputFile, &audioStream);
+	if (!disableAudio) { initAudioLib(); }
+	initDecodeFrame(inputFile, &audioStream);
 	initDrawFrame();
-	initProcessFrame();
 	initQueue();
-	initAudio(audioStream);
+	if (!disableAudio) { initAudio(audioStream); }
 
 	beginThreads();
 	readFrames();

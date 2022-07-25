@@ -5,13 +5,13 @@ int freezeThreads = 0;
 int mainFreezed = 0;
 int procFreezed = 0;
 int drawFreezed = 0;
-int audioFreezed = 0;
 
 static const double TIME_TO_RESET_TIMER = 0.5;
 
 static ThreadIDType procThreadID = 0;
 static ThreadIDType drawThreadID = 0;
 static ThreadIDType audioThreadID = 0;
+static ThreadIDType consoleThreadID = 0;
 static ThreadIDType keyboardThreadID = 0;
 static double startTime;
 static int frameCounter;
@@ -21,6 +21,7 @@ static int paused = 0;
 static ThreadRetType CP_CALL_CONV procThread(void* ptr);
 static ThreadRetType CP_CALL_CONV drawThread(void* ptr);
 static ThreadRetType CP_CALL_CONV audioThread(void* ptr);
+static ThreadRetType CP_CALL_CONV consoleThread(void* ptr);
 static ThreadRetType CP_CALL_CONV keyboardThread(void* ptr);
 static void seek(int64_t timestamp);
 
@@ -28,11 +29,9 @@ void beginThreads(void)
 {
 	procThreadID = startThread(&procThread, NULL);
 	drawThreadID = startThread(&drawThread, NULL);
-	audioThreadID = startThread(&audioThread, NULL);
-	if (!disableKeyboard)
-	{
-		keyboardThreadID = startThread(&keyboardThread, NULL);
-	}
+	if (!disableAudio) { audioThreadID = startThread(&audioThread, NULL); }
+	if (syncMode == SM_ENABLED) { consoleThreadID = startThread(&audioThread, NULL); }
+	if (!disableKeyboard) { keyboardThreadID = startThread(&keyboardThread, NULL); }
 }
 
 static ThreadRetType CP_CALL_CONV procThread(void* ptr)
@@ -75,7 +74,7 @@ static ThreadRetType CP_CALL_CONV drawThread(void* ptr)
 		}
 
 		Frame* frame = dequeueFrame(STAGE_PROCESSED_FRAME);
-		if (disableSync)
+		if (syncMode == SM_DISABLED)
 		{
 			if (!frame->isAudio)
 			{
@@ -88,7 +87,7 @@ static ThreadRetType CP_CALL_CONV drawThread(void* ptr)
 		{
 			if (frame->isAudio)
 			{
-				playAudio(frame);
+				if (!disableAudio) { playAudio(frame); }
 			}
 			else
 			{
@@ -101,8 +100,17 @@ static ThreadRetType CP_CALL_CONV drawThread(void* ptr)
 					double timeToSleep = ((frameCounter + 1) / fps) - curTime;
 					Sleep((DWORD)(timeToSleep * 1000.0));
 				}
-				drawFrame(frame->output, frame->outputLineOffsets,
-					frame->frameW, frame->frameH);
+
+				if (syncMode == SM_DRAW_ALL)
+				{
+					drawFrame(frame->output, frame->outputLineOffsets,
+						frame->frameW, frame->frameH);
+				}
+				else
+				{
+
+				}
+				
 				frameCounter++;
 			}
 		}
@@ -112,9 +120,15 @@ static ThreadRetType CP_CALL_CONV drawThread(void* ptr)
 	CP_END_THREAD
 }
 
+static ThreadRetType CP_CALL_CONV consoleThread(void* ptr)
+{
+	CP_END_THREAD
+}
+
 static ThreadRetType CP_CALL_CONV audioThread(void* ptr)
 {
 	audioLoop();
+
 	CP_END_THREAD
 }
 

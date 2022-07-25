@@ -314,10 +314,17 @@ int _getch(void)
 
 void Sleep(DWORD ms)
 {
-	struct timespec timeSpec;
-	timeSpec.tv_sec = ms / 1000;
-	timeSpec.tv_nsec = (ms % 1000) * 1000000;
-	nanosleep(&timeSpec, NULL);
+	if (ms == 0)
+	{
+		pthread_yield();
+	}
+	else
+	{
+		struct timespec timeSpec;
+		timeSpec.tv_sec = ms / 1000;
+		timeSpec.tv_nsec = (ms % 1000) * 1000000;
+		nanosleep(&timeSpec, NULL);
+	}
 }
 
 #endif
