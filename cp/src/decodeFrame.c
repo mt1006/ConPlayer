@@ -210,7 +210,7 @@ static int decodeVideoPacket(AVPacket* packet, AVFrame* frame, AVFrame* scaledFr
 			queueFrame->frameH = h;
 			queueFrame->videoLinesize = scaledFrame->linesize[0];
 			queueFrame->videoFrame = malloc(scaledFrame->linesize[0] * h);
-			queueFrame->output = malloc(getOutputArraySize());
+			queueFrame->output = malloc(getOutputArraySize(w, h));
 			queueFrame->outputLineOffsets = malloc((h + 1) * sizeof(int));
 		}
 		memcpy(queueFrame->videoFrame, scaledFrame->data[0],

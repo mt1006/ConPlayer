@@ -144,7 +144,7 @@ void setCursorPos(int x, int y)
 	#endif
 }
 
-size_t getOutputArraySize(void)
+size_t getOutputArraySize(int frameW, int frameH)
 {
 	const int CSTD_16_CODE_LEN = 6;   // "\x1B[??m?"
 	const int CSTD_256_CODE_LEN = 12; // "\x1B[38;5;???m?"
@@ -153,16 +153,16 @@ size_t getOutputArraySize(void)
 	switch (colorMode)
 	{
 	case CM_CSTD_GRAY:
-		return (w + 1) * h * sizeof(char);
+		return (frameW + 1) * frameH * sizeof(char);
 	case CM_CSTD_16:
-		return ((w * h * CSTD_16_CODE_LEN) + h) * sizeof(char);
+		return ((frameW * frameH * CSTD_16_CODE_LEN) + frameH) * sizeof(char);
 	case CM_CSTD_256:
-		return ((w * h * CSTD_256_CODE_LEN) + h) * sizeof(char);
+		return ((frameW * frameH * CSTD_256_CODE_LEN) + frameH) * sizeof(char);
 	case CM_CSTD_RGB:
-		return ((w * h * CSTD_RGB_CODE_LEN) + h) * sizeof(char);
+		return ((frameW * frameH * CSTD_RGB_CODE_LEN) + frameH) * sizeof(char);
 	case CM_WINAPI_GRAY:
 	case CM_WINAPI_16:
-		return w * h * sizeof(CHAR_INFO);
+		return frameW * frameH * sizeof(CHAR_INFO);
 	}
 }
 

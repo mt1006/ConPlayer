@@ -413,8 +413,8 @@ static int opSync(int argc, char** argv)
 
 	strToLower(argv[0]);
 	if (!strcmp(argv[0], "disabled")) { syncMode = SM_DISABLED; }
-	else if (!strcmp(argv[0], "draw-all")) { colorMode = SM_DRAW_ALL; }
-	else if (!strcmp(argv[0], "enabled")) { colorMode = SM_ENABLED; }
+	else if (!strcmp(argv[0], "draw-all")) { syncMode = SM_DRAW_ALL; }
+	else if (!strcmp(argv[0], "enabled")) { syncMode = SM_ENABLED; }
 	else { error("Invalid synchronization mode!", "argParser.c", __LINE__); }
 
 	return 1;

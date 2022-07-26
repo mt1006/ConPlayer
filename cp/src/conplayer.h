@@ -242,7 +242,7 @@ extern void getConsoleWindow(void);
 extern void clearScreen(void);
 extern void setDefaultColor(void);
 extern void setCursorPos(int x, int y);
-extern size_t getOutputArraySize(void);
+extern size_t getOutputArraySize(int frameW, int frameH);
 extern uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b);
 extern int utf8ArraySize(unichar* input, int inputSize);
 extern void unicharArrayToUTF8(unichar* input, char* output, int inputSize);

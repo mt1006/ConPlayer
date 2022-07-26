@@ -1,5 +1,12 @@
 #include "conplayer.h"
 
+typedef struct
+{
+	void* output;
+	int* outputLineOffsets;
+	int w, h;
+} ConsoleFrame;
+
 const int SLEEP_ON_FREEZE = 4;
 int freezeThreads = 0;
 int mainFreezed = 0;
@@ -17,7 +24,8 @@ static double startTime;
 static int frameCounter;
 static int64_t drawFrameTime = 0;
 static int paused = 0;
-
+static ConsoleFrame consoleFrame;
+static int waitingForFrame = 0;
 
 static ThreadRetType CP_CALL_CONV procThread(void* ptr);
 static ThreadRetType CP_CALL_CONV drawThread(void* ptr);
@@ -31,8 +39,13 @@ void beginThreads(void)
 	procThreadID = startThread(&procThread, NULL);
 	drawThreadID = startThread(&drawThread, NULL);
 	if (!disableAudio) { audioThreadID = startThread(&audioThread, NULL); }
-	if (syncMode == SM_ENABLED) { consoleThreadID = startThread(&audioThread, NULL); }
+	if (syncMode == SM_ENABLED) { consoleThreadID = startThread(&consoleThread, NULL); }
 	if (!disableKeyboard) { keyboardThreadID = startThread(&keyboardThread, NULL); }
+
+	consoleFrame.output = NULL;
+	consoleFrame.outputLineOffsets = NULL;
+	consoleFrame.w = -1;
+	consoleFrame.h = -1;
 }
 
 static ThreadRetType CP_CALL_CONV procThread(void* ptr)
@@ -109,8 +122,31 @@ static ThreadRetType CP_CALL_CONV drawThread(void* ptr)
 				}
 				else
 				{
-					drawFrame(frame->output, frame->outputLineOffsets,
-						frame->frameW, frame->frameH);
+					if (waitingForFrame)
+					{
+						int outputArraySize = getOutputArraySize(frame->frameW, frame->frameH);
+						int lineOffsetsArraySize = (frame->frameH + 1) * sizeof(int);
+
+						if (frame->frameW != consoleFrame.w ||
+							frame->frameH != consoleFrame.h)
+						{
+							if (consoleFrame.output) { free(consoleFrame.output); }
+							if (consoleFrame.outputLineOffsets) { free(consoleFrame.outputLineOffsets); }
+
+							consoleFrame.output =
+								malloc(outputArraySize);
+							consoleFrame.outputLineOffsets =
+								(int*)malloc(lineOffsetsArraySize);
+							consoleFrame.w = frame->frameW;
+							consoleFrame.h = frame->frameH;
+						}
+
+						memcpy(consoleFrame.output, frame->output, outputArraySize);
+						memcpy(consoleFrame.outputLineOffsets, frame->outputLineOffsets,
+							lineOffsetsArraySize);
+
+						waitingForFrame = 0;
+					}
 				}
 				
 				frameCounter++;
@@ -124,6 +160,16 @@ static ThreadRetType CP_CALL_CONV drawThread(void* ptr)
 
 static ThreadRetType CP_CALL_CONV consoleThread(void* ptr)
 {
+	while (1)
+	{
+		waitingForFrame = 1;
+		while (waitingForFrame) { Sleep(0); }
+
+		drawFrame(consoleFrame.output,
+			consoleFrame.outputLineOffsets,
+			consoleFrame.w, consoleFrame.h);
+	}
+
 	CP_END_THREAD
 }
 
