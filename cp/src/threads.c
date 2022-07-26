@@ -18,6 +18,7 @@ static int frameCounter;
 static int64_t drawFrameTime = 0;
 static int paused = 0;
 
+
 static ThreadRetType CP_CALL_CONV procThread(void* ptr);
 static ThreadRetType CP_CALL_CONV drawThread(void* ptr);
 static ThreadRetType CP_CALL_CONV audioThread(void* ptr);
@@ -108,7 +109,8 @@ static ThreadRetType CP_CALL_CONV drawThread(void* ptr)
 				}
 				else
 				{
-
+					drawFrame(frame->output, frame->outputLineOffsets,
+						frame->frameW, frame->frameH);
 				}
 				
 				frameCounter++;
