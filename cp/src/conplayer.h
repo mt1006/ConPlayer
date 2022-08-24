@@ -1,6 +1,6 @@
 /*
 * Project: ConPlayer
-* Version: 1.2
+* Version: 1.3
 * Author: https://github.com/mt1006
 */
 
