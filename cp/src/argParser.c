@@ -195,23 +195,18 @@ static int opInput(int argc, char** argv)
 
 static int opColors(int argc, char** argv)
 {
-	if (argc > 0 && argv[0][0] != '-')
-	{
-		strToLower(argv[0]);
-		if (!strcmp(argv[0], "winapi-gray")) { colorMode = CM_WINAPI_GRAY; }
-		else if (!strcmp(argv[0], "winapi-16")) { colorMode = CM_WINAPI_16; }
-		else if (!strcmp(argv[0], "cstd-gray")) { colorMode = CM_CSTD_GRAY; }
-		else if (!strcmp(argv[0], "cstd-16")) { colorMode = CM_CSTD_16; }
-		else if (!strcmp(argv[0], "cstd-256")) { colorMode = CM_CSTD_256; }
-		else if (!strcmp(argv[0], "cstd-rgb")) { colorMode = CM_CSTD_RGB; }
-		else { error("Invalid color mode!", "argParser.c", __LINE__); }
-		return 1;
-	}
-	else
-	{
-		colorMode = CP_DEFAULT_COLOR_MODE_C;
-		return 0;
-	}
+	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
+
+	strToLower(argv[0]);
+	if (!strcmp(argv[0], "winapi-gray")) { colorMode = CM_WINAPI_GRAY; }
+	else if (!strcmp(argv[0], "winapi-16")) { colorMode = CM_WINAPI_16; }
+	else if (!strcmp(argv[0], "cstd-gray")) { colorMode = CM_CSTD_GRAY; }
+	else if (!strcmp(argv[0], "cstd-16")) { colorMode = CM_CSTD_16; }
+	else if (!strcmp(argv[0], "cstd-256")) { colorMode = CM_CSTD_256; }
+	else if (!strcmp(argv[0], "cstd-rgb")) { colorMode = CM_CSTD_RGB; }
+	else { error("Invalid color mode!", "argParser.c", __LINE__); }
+
+	return 1;
 }
 
 static int opVolume(int argc, char** argv)

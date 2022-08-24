@@ -8,7 +8,7 @@ int conW = -1, conH = -1;
 int vidW = -1, vidH = -1;
 int argW = -1, argH = -1;
 int fillArea = 0;
-ColorMode colorMode = CP_DEFAULT_COLOR_MODE;
+ColorMode colorMode = CM_CSTD_256;
 int scanlineCount = 1, scanlineHeight = 1;
 double volume = 0.5;
 double fps;

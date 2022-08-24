@@ -1,9 +1,11 @@
--Better audio and video performance.
--Better audio synchronization - switched from libao to PortAudio.
+===Version 1.3===
+-Better performance.
+-Better audio synchronization.
 -Added "--rand" option.
 -Added "--single-char" option.
 -Added "--disable-audio" option.
 -Added option to set constant color in grayscale mode - "--set-color".
+-"cstd-256" is now default color mode.
 -Trying to use WinAPI color mode on Linux now ends up with error.
 -Fix: wrong image ratio in Windows Terminal.
 -Fix: not compiling on WSL (thanks to @MilkFlavor).

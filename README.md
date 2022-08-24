@@ -7,9 +7,6 @@ Inspired by [mariiaan/CmdPlay](https://github.com/mariiaan/CmdPlay) with some si
 - it allows you to resize console while playing video and it keeps its correct aspect ratio
 - allows you to go back and skip forward video
 
-Plans for future:
-- more options
-
 [Download Version 1.2](https://github.com/mt1006/ConPlayer/releases/tag/ConPlayer-1.2)
 
 Demonstration: https://www.youtube.com/watch?v=nbUKhalJATk
@@ -79,6 +76,6 @@ To compile it on Linux you need GCC. You also need ffmpeg (libav) and libao libr
 sudo apt-get install libavcodec-dev
 sudo apt-get install libavformat-dev
 sudo apt-get install libswscale-dev
-sudo apt-get install libasound-dev portaudio19-dev libportaudio2
+*    sudo apt-get install libao-dev
 ```
 Then you can just use ```make```.

@@ -8,25 +8,39 @@ typedef struct
 	int* audioFramesSize;
 } AudioQueue;
 
-// If you're changing SAMPLE_BITS or CHANNELS value, remember
-// to modify "for loop" in addAudio function, responsible for
-// changing volume, which is hardcoded to 32 bits / 2 channels
+#ifdef CP_USE_PORTAUDIO
+
 static const enum AVSampleFormat SAMPLE_FORMAT_AV = AV_SAMPLE_FMT_FLT;
 static const PaSampleFormat SAMPLE_FORMAT_PA = paFloat32;
 static const int SAMPLE_BITS = 32;
 static const int CHANNELS = 2;
 static const int SAMPLE_RATE = 48000;
 
-static int initialized = 0;
-static int libInitialized = 0;
 static PaStream* stream;
 static PaStreamParameters audioParameters;
+
+#else
+
+static const enum AVSampleFormat SAMPLE_FORMAT_AV = AV_SAMPLE_FMT_S16;
+static const int SAMPLE_BITS = 16;
+static const int CHANNELS = 2;
+static const int SAMPLE_SIZE = 4; // (16 bits * 2 channels) / 8 bits
+static const int SAMPLE_RATE = 48000;
+
+static ao_sample_format aoSampleFormat;
+static ao_device* aoDevice = NULL;
+
+#endif
+
+static int initialized = 0;
+static int libInitialized = 0;
 static SwrContext* resampleContext = NULL;
 
 static const int AUDIO_QUEUE_SIZE = 128;
 static AudioQueue audioQueue;
 
-static ThreadRetType CP_CALL_CONV initAudioLibThread(void* ptr);
+static ThreadRetType CP_CALL_CONV initPortAudio(void* ptr);
+static ThreadRetType CP_CALL_CONV initLibao(void* ptr);
 
 void initAudio(Stream* avAudioStream)
 {
@@ -51,7 +65,11 @@ void initAudio(Stream* avAudioStream)
 
 void initAudioLib(void)
 {
-	startThread(&initAudioLibThread, NULL);
+	#ifdef CP_USE_PORTAUDIO
+	startThread(&initPortAudio, NULL);
+	#else
+	startThread(&initLibao, NULL);
+	#endif
 }
 
 void addAudio(AVFrame* frame)
@@ -69,12 +87,27 @@ void addAudio(AVFrame* frame)
 	outSamples = swr_convert(resampleContext, &queueFrame->audioFrame, outSamples,
 		frame->extended_data, frame->nb_samples);
 	if (outSamples < 0) { return; }
+
+	#ifdef CP_USE_PORTAUDIO
+
 	float* fullSamples = (float*)queueFrame->audioFrame;
 	for (int i = 0; i < outSamples; i++)
 	{
 		fullSamples[i * 2] = (float)((double)fullSamples[i * 2] * volume);
 		fullSamples[i * 2 + 1] = (float)((double)fullSamples[i * 2 + 1] * volume);
 	}
+
+	#else
+
+	short* fullSamples = ((short*)queueFrame->audioFrame);
+	for (int i = 0; i < outSamples; i++)
+	{
+		fullSamples[i * 2] = (short)((double)fullSamples[i * 2] * volume);
+		fullSamples[i * 2 + 1] = (short)((double)fullSamples[i * 2 + 1] * volume);
+	}
+
+	#endif
+
 	queueFrame->isAudio = 1;
 	queueFrame->audioSamplesNum = outSamples;
 	enqueueFrame(STAGE_LOADED_FRAME);
@@ -100,8 +133,17 @@ void audioLoop(void)
 	{
 		if (audioQueue.front != audioQueue.back)
 		{
+			#ifdef CP_USE_PORTAUDIO
+
 			Pa_WriteStream(stream, audioQueue.audioFrames[audioQueue.front],
 				audioQueue.audioSamplesNum[audioQueue.front]);
+
+			#else
+
+			ao_play(aoDevice, audioQueue.audioFrames[audioQueue.front],
+				audioQueue.audioSamplesNum[audioQueue.front] * SAMPLE_SIZE);
+
+			#endif
 
 			audioQueue.front++;
 			if (audioQueue.front == AUDIO_QUEUE_SIZE) { audioQueue.front = 0; }
@@ -139,8 +181,10 @@ void playAudio(Frame* frame)
 	if (audioQueue.back == AUDIO_QUEUE_SIZE) { audioQueue.back = 0; }
 }
 
-static ThreadRetType CP_CALL_CONV initAudioLibThread(void* ptr)
+static ThreadRetType CP_CALL_CONV initPortAudio(void* ptr)
 {
+	#ifdef CP_USE_PORTAUDIO
+
 	PaError err;
 
 	err = Pa_Initialize();
@@ -159,7 +203,7 @@ static ThreadRetType CP_CALL_CONV initAudioLibThread(void* ptr)
 
 	audioParameters.channelCount = CHANNELS;
 	audioParameters.sampleFormat = SAMPLE_FORMAT_PA;
-	audioParameters.suggestedLatency = Pa_GetDeviceInfo(audioParameters.device)->defaultLowOutputLatency;
+	audioParameters.suggestedLatency = Pa_GetDeviceInfo(audioParameters.device)->defaultHighOutputLatency;
 	audioParameters.hostApiSpecificStreamInfo = NULL;
 
 	Pa_OpenStream(&stream, NULL, &audioParameters, SAMPLE_RATE, 0, paNoFlag, NULL, NULL);
@@ -167,6 +211,31 @@ static ThreadRetType CP_CALL_CONV initAudioLibThread(void* ptr)
 
 	if (err == paNoError) { libInitialized = 1; }
 	else { libInitialized = -1; }
+
+	#endif
+
+	CP_END_THREAD
+}
+
+static ThreadRetType CP_CALL_CONV initLibao(void* ptr)
+{
+	#ifndef CP_USE_PORTAUDIO
+
+	ao_initialize();
+	int driver = ao_default_driver_id();
+
+	memset(&aoSampleFormat, 0, sizeof(ao_sample_format));
+	aoSampleFormat.bits = SAMPLE_BITS;
+	aoSampleFormat.channels = CHANNELS;
+	aoSampleFormat.rate = SAMPLE_RATE;
+	aoSampleFormat.byte_format = AO_FMT_LITTLE;
+	aoSampleFormat.matrix = 0;
+	aoDevice = ao_open_live(driver, &aoSampleFormat, NULL);
+
+	if (aoDevice) { libInitialized = 1; }
+	else { libInitialized = -1; }
+
+	#endif
 
 	CP_END_THREAD
 }

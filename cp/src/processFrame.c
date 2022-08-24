@@ -158,6 +158,7 @@ void processFrame(Frame* frame)
 			for (int j = 0; j < frame->frameW; j++)
 			{
 				uint8_t val = frame->videoFrame[(i * frame->videoLinesize) + j];
+				if (brightnessRand) { procRand(&val); }
 				output[(i * fullW) + j] = charset[(val * charsetSize) / 256];
 			}
 			output[(i * fullW) + frame->frameW] = '\n';

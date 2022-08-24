@@ -15,7 +15,7 @@
 *    sudo apt-get install libavcodec-dev
 *    sudo apt-get install libavformat-dev
 *    sudo apt-get install libswscale-dev
-*    sudo apt-get install libasound-dev portaudio19-dev libportaudio2
+*    sudo apt-get install libao-dev
 */
 
 #include <stdio.h>
@@ -24,7 +24,6 @@
 #include <libavutil/log.h>
 #include <libswresample/swresample.h>
 #include <libswscale/swscale.h>
-#include <portaudio.h>
 
 #ifdef _WIN32
 
@@ -32,6 +31,7 @@
 #include <process.h>
 #include <Windows.h>
 #define CP_OS "Windows"
+#define CP_USE_PORTAUDIO
 
 #else
 
@@ -39,6 +39,7 @@
 #include <pthread.h>
 #include <sys/ioctl.h>
 #include <termios.h>
+#include <sched.h>
 
 #ifdef __linux__
 #define CP_OS "Linux"
@@ -46,6 +47,12 @@
 #define CP_OS "[unknown]"
 #endif
 
+#endif
+
+#ifdef CP_USE_PORTAUDIO
+#include <portaudio.h>
+#else
+#include <ao/ao.h>
 #endif
 
 #pragma warning(disable : 4996)
@@ -58,7 +65,7 @@
 #define CP_CPU "[unknown]"
 #endif
 
-#define CP_VERSION "1.2"
+#define CP_VERSION "1.3"
 #define TO_STR(x) #x
 #define DEF_TO_STR(x) TO_STR(x)
 
@@ -77,9 +84,6 @@ typedef wchar_t unichar;
 typedef uintptr_t ThreadIDType;
 typedef void ThreadRetType;
 typedef _beginthread_proc_type ThreadFuncPtr;
-
-#define CP_DEFAULT_COLOR_MODE CM_WINAPI_GRAY
-#define CP_DEFAULT_COLOR_MODE_C CM_CSTD_256
 
 #else
 
@@ -104,9 +108,6 @@ typedef unsigned long DWORD;
 
 #define VK_ESCAPE 0x1B
 #define VK_SPACE 0x20
-
-#define CP_DEFAULT_COLOR_MODE CM_CSTD_GRAY
-#define CP_DEFAULT_COLOR_MODE_C CM_CSTD_256
 
 #endif
 

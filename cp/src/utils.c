@@ -316,7 +316,7 @@ void Sleep(DWORD ms)
 {
 	if (ms == 0)
 	{
-		pthread_yield();
+		sched_yield();
 	}
 	else
 	{
