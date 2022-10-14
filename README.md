@@ -8,7 +8,7 @@ Inspired by [mariiaan/CmdPlay](https://github.com/mariiaan/CmdPlay) with signifi
 - you can go back and skip forward video
 - it has multiple advanced options like enabling interlacing, changing charset or applying FFmpeg filters
 
-[Download Version 1.3](https://github.com/mt1006/ConPlayer/releases/tag/ConPlayer-1.3)
+[Download Version 1.4](https://github.com/mt1006/ConPlayer/releases/tag/ConPlayer-1.4)
 
 Demonstration: https://www.youtube.com/watch?v=nbUKhalJATk
 
@@ -179,6 +179,7 @@ To compile ConPlayer on Linux you first need to have GCC. You also need ffmpeg (
 ```
 sudo apt-get install libavcodec-dev
 sudo apt-get install libavformat-dev
+sudo apt-get install libavfilter-dev
 sudo apt-get install libswscale-dev
 sudo apt-get install libao-dev
 ```
