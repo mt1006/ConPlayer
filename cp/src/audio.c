@@ -8,11 +8,23 @@ typedef struct
 	int* audioFramesSize;
 } AudioQueue;
 
+#ifdef _WIN32
+
 static const enum AVSampleFormat SAMPLE_FORMAT_AV = AV_SAMPLE_FMT_S32;
 static const int SAMPLE_BITS = 32;
 static const int CHANNELS = 2;
 static const int SAMPLE_SIZE = 8; // (32 bits * 2 channels) / 8 bits
 static const int SAMPLE_RATE = 48000;
+
+#else
+
+static const enum AVSampleFormat SAMPLE_FORMAT_AV = AV_SAMPLE_FMT_S16;
+static const int SAMPLE_BITS = 16;
+static const int CHANNELS = 2;
+static const int SAMPLE_SIZE = 4; // (16 bits * 2 channels) / 8 bits
+static const int SAMPLE_RATE = 48000;
+
+#endif
 
 static ao_sample_format aoSampleFormat;
 static ao_device* aoDevice = NULL;
@@ -69,13 +81,6 @@ void addAudioFrame(AVFrame* frame)
 		frame->extended_data, frame->nb_samples);
 	if (outSamples < 0) { return; }
 
-	int* fullSamples = (int*)queueFrame->audioFrame;
-	for (int i = 0; i < outSamples; i++)
-	{
-		fullSamples[i * 2] = (int)((double)fullSamples[i * 2] * settings.volume);
-		fullSamples[i * 2 + 1] = (int)((double)fullSamples[i * 2 + 1] * settings.volume);
-	}
-
 	queueFrame->audioSamplesNum = outSamples;
 	queueFrame->isAudio = true;
 
@@ -90,12 +95,25 @@ void audioLoop(void)
 	{
 		if (audioQueue.front != audioQueue.back)
 		{
+			#ifdef _WIN32
+
 			int* fullSamples = (int*)audioQueue.audioFrames[audioQueue.front];
 			for (int i = 0; i < audioQueue.audioSamplesNum[audioQueue.front]; i++)
 			{
 				fullSamples[i * 2] = (int)((double)fullSamples[i * 2] * settings.volume);
 				fullSamples[i * 2 + 1] = (int)((double)fullSamples[i * 2 + 1] * settings.volume);
 			}
+
+			#else
+
+			short* fullSamples = (short*)audioQueue.audioFrames[audioQueue.front];
+			for (int i = 0; i < audioQueue.audioSamplesNum[audioQueue.front]; i++)
+			{
+				fullSamples[i * 2] = (short)((double)fullSamples[i * 2] * settings.volume);
+				fullSamples[i * 2 + 1] = (short)((double)fullSamples[i * 2 + 1] * settings.volume);
+			}
+
+			#endif
 
 			ao_play(aoDevice, audioQueue.audioFrames[audioQueue.front],
 				audioQueue.audioSamplesNum[audioQueue.front] * SAMPLE_SIZE);
