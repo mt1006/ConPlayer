@@ -8,10 +8,10 @@ typedef struct
 } ConsoleFrame;
 
 const int SLEEP_ON_FREEZE = 4;
-int freezeThreads = 0;
-int mainFreezed = 0;
-int procFreezed = 0;
-int drawFreezed = 0;
+bool freezeThreads = false;
+bool mainFreezed = false;
+bool procFreezed = false;
+bool drawFreezed = false;
 
 static const double TIME_TO_RESET_TIMER = 0.5;
 
@@ -23,9 +23,9 @@ static ThreadIDType keyboardThreadID = 0;
 static double startTime;
 static int frameCounter;
 static int64_t drawFrameTime = 0;
-static int paused = 0;
+static bool paused = false;
 static ConsoleFrame consoleFrame;
-static int waitingForFrame = 0;
+static bool waitingForFrame = false;
 
 static ThreadRetType CP_CALL_CONV procThread(void* ptr);
 static ThreadRetType CP_CALL_CONV drawThread(void* ptr);
@@ -36,16 +36,16 @@ static void seek(int64_t timestamp);
 
 void beginThreads(void)
 {
-	procThreadID = startThread(&procThread, NULL);
-	drawThreadID = startThread(&drawThread, NULL);
-	if (!disableAudio) { audioThreadID = startThread(&audioThread, NULL); }
-	if (syncMode == SM_ENABLED) { consoleThreadID = startThread(&consoleThread, NULL); }
-	if (!disableKeyboard) { keyboardThreadID = startThread(&keyboardThread, NULL); }
-
 	consoleFrame.output = NULL;
 	consoleFrame.outputLineOffsets = NULL;
 	consoleFrame.w = -1;
 	consoleFrame.h = -1;
+
+	procThreadID = startThread(&procThread, NULL);
+	drawThreadID = startThread(&drawThread, NULL);
+	if (!settings.disableAudio) { audioThreadID = startThread(&audioThread, NULL); }
+	if (settings.syncMode == SM_ENABLED) { consoleThreadID = startThread(&consoleThread, NULL); }
+	if (!settings.disableKeyboard) { keyboardThreadID = startThread(&keyboardThread, NULL); }
 }
 
 static ThreadRetType CP_CALL_CONV procThread(void* ptr)
@@ -54,11 +54,11 @@ static ThreadRetType CP_CALL_CONV procThread(void* ptr)
 	{
 		while (freezeThreads && !decodeEnd)
 		{
-			procFreezed = 1;
+			procFreezed = true;
 			Sleep(SLEEP_ON_FREEZE);
 		}
 
-		Frame* frame = dequeueFrame(STAGE_LOADED_FRAME);
+		Frame* frame = dequeueFrame(STAGE_LOADED_FRAME, &procFreezed);
 		if (!frame->isAudio)
 		{
 			processFrame(frame);
@@ -77,7 +77,7 @@ static ThreadRetType CP_CALL_CONV drawThread(void* ptr)
 	{
 		while (freezeThreads && !decodeEnd)
 		{
-			drawFreezed = 1;
+			drawFreezed = true;
 			Sleep(SLEEP_ON_FREEZE);
 		}
 
@@ -87,8 +87,8 @@ static ThreadRetType CP_CALL_CONV drawThread(void* ptr)
 			Sleep(SLEEP_ON_PAUSE);
 		}
 
-		Frame* frame = dequeueFrame(STAGE_PROCESSED_FRAME);
-		if (syncMode == SM_DISABLED)
+		Frame* frame = dequeueFrame(STAGE_PROCESSED_FRAME, &drawFreezed);
+		if (settings.syncMode == SM_DISABLED)
 		{
 			if (!frame->isAudio)
 			{
@@ -101,7 +101,7 @@ static ThreadRetType CP_CALL_CONV drawThread(void* ptr)
 		{
 			if (frame->isAudio)
 			{
-				if (!disableAudio) { playAudio(frame); }
+				if (!settings.disableAudio) { playAudio(frame); }
 			}
 			else
 			{
@@ -115,7 +115,7 @@ static ThreadRetType CP_CALL_CONV drawThread(void* ptr)
 					Sleep((DWORD)(timeToSleep * 1000.0));
 				}
 
-				if (syncMode == SM_DRAW_ALL)
+				if (settings.syncMode == SM_DRAW_ALL)
 				{
 					drawFrame(frame->output, frame->outputLineOffsets,
 						frame->frameW, frame->frameH);
@@ -124,7 +124,7 @@ static ThreadRetType CP_CALL_CONV drawThread(void* ptr)
 				{
 					if (waitingForFrame)
 					{
-						int outputArraySize = getOutputArraySize(frame->frameW, frame->frameH);
+						int outputArraySize = (int)getOutputArraySize(frame->frameW, frame->frameH);
 						int lineOffsetsArraySize = (frame->frameH + 1) * sizeof(int);
 
 						if (frame->frameW != consoleFrame.w ||
@@ -133,10 +133,8 @@ static ThreadRetType CP_CALL_CONV drawThread(void* ptr)
 							if (consoleFrame.output) { free(consoleFrame.output); }
 							if (consoleFrame.outputLineOffsets) { free(consoleFrame.outputLineOffsets); }
 
-							consoleFrame.output =
-								malloc(outputArraySize);
-							consoleFrame.outputLineOffsets =
-								(int*)malloc(lineOffsetsArraySize);
+							consoleFrame.output = malloc(outputArraySize);
+							consoleFrame.outputLineOffsets = (int*)malloc(lineOffsetsArraySize);
 							consoleFrame.w = frame->frameW;
 							consoleFrame.h = frame->frameH;
 						}
@@ -145,13 +143,14 @@ static ThreadRetType CP_CALL_CONV drawThread(void* ptr)
 						memcpy(consoleFrame.outputLineOffsets, frame->outputLineOffsets,
 							lineOffsetsArraySize);
 
-						waitingForFrame = 0;
+						waitingForFrame = false;
 					}
 				}
 				
 				frameCounter++;
 			}
 		}
+
 		enqueueFrame(STAGE_FREE);
 	}
 
@@ -162,7 +161,7 @@ static ThreadRetType CP_CALL_CONV consoleThread(void* ptr)
 {
 	while (1)
 	{
-		waitingForFrame = 1;
+		waitingForFrame = true;
 		while (waitingForFrame) { Sleep(0); }
 
 		drawFrame(consoleFrame.output,
@@ -183,14 +182,16 @@ static ThreadRetType CP_CALL_CONV audioThread(void* ptr)
 static ThreadRetType CP_CALL_CONV keyboardThread(void* ptr)
 {
 	const int SLEEP_ON_START = 300;
-	const double SEEK_SECONDS = 10.0;
+	const double SEEK1_SECONDS = 10.0;
+	const double SEEK2_SECONDS = 30.0;
 	const double VOLUME_CHANGE = 0.05;
 	const double KEYBOARD_DELAY = 0.2;
-	static double keyTime = 0.0;
 
 	Sleep(SLEEP_ON_START);
 
-	int64_t timeToSet;
+	double keyTime = 0.0;
+	double mutedVolume = 0.0;
+
 	while (1)
 	{
 		unsigned char key = _getch();
@@ -199,39 +200,52 @@ static ThreadRetType CP_CALL_CONV keyboardThread(void* ptr)
 		if (newKeyTime < keyTime + KEYBOARD_DELAY) { continue; }
 		keyTime = newKeyTime;
 
-		double newVolume = volume;
+		double newVolume = settings.volume;
 
 		switch (key)
 		{
 		case VK_ESCAPE:
 			cpExit(0);
 			break;
+
 		case VK_SPACE:
 			paused = !paused;
 			break;
+
 		case '[':
-			paused = 0;
-			timeToSet = drawFrameTime;
-			timeToSet -= (int64_t)(SEEK_SECONDS * AV_TIME_BASE);
-			if (timeToSet < 0) { timeToSet = 0; }
-			seek(timeToSet);
+			seek(drawFrameTime - (int64_t)(SEEK1_SECONDS * AV_TIME_BASE));
 			break;
+
 		case ']':
-			paused = 0;
-			timeToSet = drawFrameTime;
-			timeToSet += (int64_t)(SEEK_SECONDS * AV_TIME_BASE);
-			if (timeToSet < 0) { timeToSet = 0; }
-			seek(timeToSet);
+			seek(drawFrameTime + (int64_t)(SEEK1_SECONDS * AV_TIME_BASE));
 			break;
+
+		case '-':
+			seek(drawFrameTime - (int64_t)(SEEK2_SECONDS * AV_TIME_BASE));
+			break;
+
+		case '=':
+			seek(drawFrameTime + (int64_t)(SEEK2_SECONDS * AV_TIME_BASE));
+			break;
+
 		case 'l':
+			mutedVolume = 0.0;
 			newVolume -= VOLUME_CHANGE;
 			if (newVolume < 0.0) { newVolume = 0.0; }
-			volume = newVolume;
+			settings.volume = newVolume;
 			break;
+
 		case 'o':
+			mutedVolume = 0.0;
 			newVolume += VOLUME_CHANGE;
 			if (newVolume > 1.0) { newVolume = 1.0; }
-			volume = newVolume;
+			settings.volume = newVolume;
+			break;
+
+		case 'm':
+			newVolume = mutedVolume;
+			mutedVolume = settings.volume;
+			settings.volume = newVolume;
 			break;
 		}
 	}
@@ -241,7 +255,9 @@ static ThreadRetType CP_CALL_CONV keyboardThread(void* ptr)
 
 static void seek(int64_t timestamp)
 {
-	freezeThreads = 1;
+	freezeThreads = true;
+	paused = false;
+	if (timestamp < 0) { timestamp = 0; }
 
 	while (!mainFreezed || !procFreezed || !drawFreezed) { Sleep(SLEEP_ON_FREEZE); }
 	while (decodeEnd) { Sleep(30); }

@@ -6,35 +6,48 @@ HWND conHWND = NULL, wtDragBarHWND = NULL;
 int w = -1, h = -1;
 int conW = -1, conH = -1;
 int vidW = -1, vidH = -1;
-int argW = -1, argH = -1;
-int fillArea = 0;
-ColorMode colorMode = CM_CSTD_256;
-int scanlineCount = 1, scanlineHeight = 1;
-double volume = 0.5;
-double fps;
-int decodeEnd = 0;
-char* charset = NULL;
-int charsetSize = 0;
-double constFontRatio = 0.0;
-int disableKeyboard = 0, disableCLS = 0, disableAudio = 0;
-int ansiEnabled = 0;
-SetColorMode setColorMode = SCM_DISABLED;
-int setColorVal = 0, setColorVal2 = -1;
-int singleCharMode = 0;
-int brightnessRand = 0;
-SyncMode syncMode = SM_ENABLED;
+double fps = 0.0;
+bool ansiEnabled = false;
+bool decodeEnd = false;
+
+Settings settings =
+{
+	.argW = -1, .argH = -1,
+	.fillArea = false,
+	.colorMode = CM_CSTD_256,
+	.scanlineCount = 1, .scanlineHeight = 1,
+	.volume = 0.5,
+	.charset = NULL,
+	.charsetSize = 0,
+	.setColorMode = SCM_DISABLED,
+	.setColorVal1 = 0, .setColorVal2 = 0,
+	.constFontRatio = 0.0,
+	.brightnessRand = 0,
+	.scalingMode = SWS_BICUBIC,
+	.syncMode = SM_ENABLED,
+	.videoFilters = NULL,
+	.scaledVideoFilters = NULL,
+	.audioFilters = NULL,
+	.disableKeyboard = false,
+	.disableCLS = false,
+	.disableAudio = false,
+	.singleCharMode = false,
+	.libavLogs = false
+};
 
 void load(char* inputFile)
 {
+	if (settings.libavLogs) { av_log_set_level(AV_LOG_VERBOSE); }
+	else { av_log_set_level(AV_LOG_QUIET); }
+
 	Stream* audioStream;
 
 	puts("Loading...");
 
-	if (!disableAudio) { initAudioLib(); }
 	initDecodeFrame(inputFile, &audioStream);
 	initDrawFrame();
 	initQueue();
-	if (!disableAudio) { initAudio(audioStream); }
+	if (!settings.disableAudio) { initAudio(audioStream); }
 
 	beginThreads();
 	readFrames();
@@ -42,27 +55,17 @@ void load(char* inputFile)
 
 int main(int argc, char** argv)
 {
-	#ifndef _DEBUG
-	av_log_set_level(AV_LOG_QUIET);
+	#ifdef _WIN32
+	argc = getWindowsArgv(&argv);
 	#endif
-	
-	int uc_argc;
-	unichar** uc_argv;
-	if (USE_WCHAR)
+
+	if (argc < 2)
 	{
-		#ifdef _WIN32
-		uc_argv = CommandLineToArgvW(GetCommandLineW(), &uc_argc);
-		#else
-		error("USE_WCHAR defined but it isn't Windows!", "main.c", __LINE__);
-		#endif
-	}
-	else
-	{
-		uc_argc = argc;
-		uc_argv = (unichar**)argv;
+		showNoArgsInfo();
+		return -1;
 	}
 
-	char* inputFile = argumentParser(uc_argc - 1, uc_argv + 1);
+	char* inputFile = argumentParser(argc - 1, argv + 1);
 	if (inputFile) { load(inputFile); }
 
 	cpExit(0);

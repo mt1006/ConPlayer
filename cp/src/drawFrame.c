@@ -21,17 +21,17 @@ void initDrawFrame(void)
 	getConsoleWindow();
 	outputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
-	if (colorMode == CM_CSTD_16 ||
-		colorMode == CM_CSTD_256 ||
-		colorMode == CM_CSTD_RGB ||
-		setColorMode == SCM_CSTD_256 ||
-		setColorMode == SCM_CSTD_RGB)
+	if (settings.colorMode == CM_CSTD_16 ||
+		settings.colorMode == CM_CSTD_256 ||
+		settings.colorMode == CM_CSTD_RGB ||
+		settings.setColorMode == SCM_CSTD_256 ||
+		settings.setColorMode == SCM_CSTD_RGB)
 	{
 		DWORD mode;
 		GetConsoleMode(outputHandle, &mode);
 		mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 		SetConsoleMode(outputHandle, mode);
-		ansiEnabled = 1;
+		ansiEnabled = true;
 	}
 	#endif
 
@@ -50,45 +50,45 @@ void refreshSize(void)
 
 	int newW = lastW, newH = lastH;
 
-	if (argW != -1 && argH != -1)
+	if (settings.argW != -1 && settings.argH != -1)
 	{
-		if (argW == 0 && argH == 0)
+		if (settings.argW == 0 && settings.argH == 0)
 		{
-			argW = consoleInfo.conW;
-			argH = consoleInfo.conH;
+			settings.argW = consoleInfo.conW;
+			settings.argH = consoleInfo.conH;
 		}
 
-		if (fillArea)
+		if (settings.fillArea)
 		{
 			if (firstCall)
 			{
-				newW = argW;
-				newH = argH;
+				newW = settings.argW;
+				newH = settings.argH;
 			}
 		}
 		else if (fontRatio != consoleInfo.fontRatio)
 		{
-			if (constFontRatio == 0.0) { fontRatio = consoleInfo.fontRatio; }
-			else { fontRatio = constFontRatio; }
+			if (settings.constFontRatio == 0.0) { fontRatio = consoleInfo.fontRatio; }
+			else { fontRatio = settings.constFontRatio; }
 
 			double vidRatio = (double)vidW / (double)vidH;
-			double conRatio = ((double)argW / (double)argH) * fontRatio;
+			double conRatio = ((double)settings.argW / (double)settings.argH) * fontRatio;
 
 			if (vidRatio > conRatio)
 			{
-				newW = argW;
-				newH = (int)((conRatio / vidRatio) * argH);
+				newW = settings.argW;
+				newH = (int)((conRatio / vidRatio) * settings.argH);
 			}
 			else
 			{
-				newW = (int)((vidRatio / conRatio) * argW);
-				newH = argH;
+				newW = (int)((vidRatio / conRatio) * settings.argW);
+				newH = settings.argH;
 			}
 		}
 	}
 	else
 	{
-		if (fillArea)
+		if (settings.fillArea)
 		{
 			if (conW != consoleInfo.conW || conH != consoleInfo.conH)
 			{
@@ -104,8 +104,8 @@ void refreshSize(void)
 			conW = consoleInfo.conW;
 			conH = consoleInfo.conH;
 			
-			if (constFontRatio == 0.0) { fontRatio = consoleInfo.fontRatio; }
-			else { fontRatio = constFontRatio; }
+			if (settings.constFontRatio == 0.0) { fontRatio = consoleInfo.fontRatio; }
+			else { fontRatio = settings.constFontRatio; }
 
 			double vidRatio = (double)vidW / (double)vidH;
 			double conRatio = ((double)conW / (double)conH) * fontRatio;
@@ -151,14 +151,14 @@ void drawFrame(void* output, int* lineOffsets, int fw, int fh)
 {
 	static int scanline = 0;
 	static int lastFW = 0, lastFH = 0;
-	if ((lastFW != fw || lastFH != fh) && !disableCLS)
+	if ((lastFW != fw || lastFH != fh) && !settings.disableCLS)
 	{
 		lastFW = fw;
 		lastFH = fh;
 		clearScreen();
 	}
 
-	if (colorMode == CM_WINAPI_GRAY || colorMode == CM_WINAPI_16)
+	if (settings.colorMode == CM_WINAPI_GRAY || settings.colorMode == CM_WINAPI_16)
 	{
 		drawWithWinAPI((CHAR_INFO*)output, fw, fh);
 		return;
@@ -166,26 +166,26 @@ void drawFrame(void* output, int* lineOffsets, int fw, int fh)
 
 	setConstColor();
 
-	if (scanlineCount == 1)
+	if (settings.scanlineCount == 1)
 	{
-		if (!disableCLS) { setCursorPos(0, 0); }
+		if (!settings.disableCLS) { setCursorPos(0, 0); }
 		fwrite((char*)output, 1, lineOffsets[fh], stdout);
 	}
 	else
 	{
-		for (int i = 0; i < fh; i += scanlineCount * scanlineHeight)
+		for (int i = 0; i < fh; i += settings.scanlineCount * settings.scanlineHeight)
 		{
-			int sy = i + (scanline * scanlineHeight);
-			int sh = scanlineHeight;
+			int sy = i + (scanline * settings.scanlineHeight);
+			int sh = settings.scanlineHeight;
 			if (sy >= fh) { break; }
 			else if (sy + sh > fh) { sh = fh - sy; }
 
-			if (!disableCLS) { setCursorPos(0, sy); }
+			if (!settings.disableCLS) { setCursorPos(0, sy); }
 			fwrite((char*)output + lineOffsets[sy], 1, lineOffsets[sy + sh] - lineOffsets[sy], stdout);
 		}
 
 		scanline++;
-		if (scanline == scanlineCount) { scanline = 0; }
+		if (scanline == settings.scanlineCount) { scanline = 0; }
 	}
 }
 
@@ -194,7 +194,7 @@ static void drawWithWinAPI(CHAR_INFO* output, int fw, int fh)
 	#ifdef _WIN32
 	static int scanline = 0;
 
-	if (scanlineCount == 1)
+	if (settings.scanlineCount == 1)
 	{
 		COORD charBufSize = { fw,fh };
 		COORD startCharPos = { 0,0 };
@@ -203,10 +203,10 @@ static void drawWithWinAPI(CHAR_INFO* output, int fw, int fh)
 	}
 	else
 	{
-		for (int i = 0; i < fh; i += scanlineCount * scanlineHeight)
+		for (int i = 0; i < fh; i += settings.scanlineCount * settings.scanlineHeight)
 		{
-			int sy = i + (scanline * scanlineHeight);
-			int sh = scanlineHeight;
+			int sy = i + (scanline * settings.scanlineHeight);
+			int sh = settings.scanlineHeight;
 			if (sy >= fh) { break; }
 			else if (sy + sh > fh) { sh = fh - sy; }
 
@@ -217,7 +217,7 @@ static void drawWithWinAPI(CHAR_INFO* output, int fw, int fh)
 		}
 
 		scanline++;
-		if (scanline == scanlineCount) { scanline = 0; }
+		if (scanline == settings.scanlineCount) { scanline = 0; }
 	}
 	#endif
 }
@@ -284,7 +284,7 @@ static void getConsoleInfo(ConsoleInfo* consoleInfo)
 	if (fullConW < 4) { fullConW = 4; }
 	if (fullConH < 4) { fullConH = 4; }
 
-	if (colorMode != CM_WINAPI_GRAY && colorMode != CM_WINAPI_16) { fullConW--; }
+	if (settings.colorMode != CM_WINAPI_GRAY && settings.colorMode != CM_WINAPI_16) { fullConW--; }
 
 	consoleInfo->conW = fullConW;
 	consoleInfo->conH = fullConH;
@@ -293,33 +293,33 @@ static void getConsoleInfo(ConsoleInfo* consoleInfo)
 
 static void setConstColor(void)
 {
-	switch (setColorMode)
+	switch (settings.setColorMode)
 	{
 	case SCM_WINAPI:
 		#ifdef _WIN32
-		SetConsoleTextAttribute(outputHandle, (WORD)setColorVal);
+		SetConsoleTextAttribute(outputHandle, (WORD)settings.setColorVal1);
 		#endif
 		break;
 
 	case SCM_CSTD_256:
-		printf("\x1B[38;5;%dm", setColorVal);
-		if (setColorVal2 != -1)
+		printf("\x1B[38;5;%dm", settings.setColorVal1);
+		if (settings.setColorVal2 != -1)
 		{
-			printf("\x1B[48;5;%dm", setColorVal2);
+			printf("\x1B[48;5;%dm", settings.setColorVal2);
 		}
 		break;
 
 	case SCM_CSTD_RGB:
 		printf("\x1B[38;2;%d;%d;%dm",
-			(setColorVal & 0xFF0000) >> 16,
-			(setColorVal & 0x00FF00) >> 8,
-			setColorVal & 0x0000FF);
-		if (setColorVal2 != -1)
+			(settings.setColorVal1 & 0xFF0000) >> 16,
+			(settings.setColorVal1 & 0x00FF00) >> 8,
+			settings.setColorVal1 & 0x0000FF);
+		if (settings.setColorVal2 != -1)
 		{
 			printf("\x1B[48;2;%d;%d;%dm",
-				(setColorVal2 & 0xFF0000) >> 16,
-				(setColorVal2 & 0x00FF00) >> 8,
-				setColorVal2 & 0x0000FF);
+				(settings.setColorVal2 & 0xFF0000) >> 16,
+				(settings.setColorVal2 & 0x00FF00) >> 8,
+				settings.setColorVal2 & 0x0000FF);
 		}
 		break;
 	}

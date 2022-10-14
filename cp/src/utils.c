@@ -116,17 +116,12 @@ void clearScreen(void)
 
 void setDefaultColor(void)
 {
-	if (ansiEnabled)
-	{
-		fputs("\x1B[0m", stdout);
-	}
-	else if (setColorMode == SCM_WINAPI)
-	{
-		#ifdef _WIN32
-		SetConsoleTextAttribute(outputHandle,
-			FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-		#endif
-	}
+	#ifdef _WIN32
+	SetConsoleTextAttribute(outputHandle,
+		FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+	#else
+	puts("\x1B[39");
+	#endif
 }
 
 void setCursorPos(int x, int y)
@@ -134,7 +129,7 @@ void setCursorPos(int x, int y)
 	#ifdef _WIN32
 
 	COORD cursor = { (SHORT)x,(SHORT)y };
-	if (!disableCLS) { SetConsoleCursorPosition(outputHandle, cursor); }
+	if (!settings.disableCLS) { SetConsoleCursorPosition(outputHandle, cursor); }
 
 	#else
 
@@ -150,7 +145,7 @@ size_t getOutputArraySize(int frameW, int frameH)
 	const int CSTD_256_CODE_LEN = 12; // "\x1B[38;5;???m?"
 	const int CSTD_RGB_CODE_LEN = 20; // "\x1B[38;2;???;???;???m?"
 
-	switch (colorMode)
+	switch (settings.colorMode)
 	{
 	case CM_CSTD_GRAY:
 		return (frameW + 1) * frameH * sizeof(char);
@@ -166,103 +161,15 @@ size_t getOutputArraySize(int frameW, int frameH)
 	}
 }
 
-uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b)
-{
-	// https://stackoverflow.com/questions/15682537/ansi-color-specific-rgb-sequence-bash
-	if (r == g && g == b)
-	{
-		if (r < 8) { return 16; }
-		if (r > 248) { return 231; }
-		return (uint8_t)round((((double)r - 8.0) / 247.0) * 24.0) + 232;
-	}
-
-	return (uint8_t)(16.0
-		+ (36.0 * round((double)r / 255.0 * 5.0))
-		+ (6.0 * round((double)g / 255.0 * 5.0))
-		+ round((double)b / 255.0 * 5.0));
-}
-
-int utf8ArraySize(unichar* input, int inputSize)
-{
-	if (USE_WCHAR)
-	{
-		int output = 1;
-		for (int i = 0; i < inputSize; i++)
-		{
-			unsigned short ch = (unsigned short)input[i];
-			if (ch < 0x80) { output++; }
-			else if (ch < 0x800) { output += 2; }
-			else { output += 3; }
-		}
-		return output;
-	}
-	else
-	{
-		return inputSize + 1;
-	}
-}
-
-void unicharArrayToUTF8(unichar* input, char* output, int inputSize)
-{
-	if (USE_WCHAR)
-	{
-		int p = 0;
-		for (int i = 0; i < inputSize; i++)
-		{
-			unsigned short ch = (unsigned short)input[i];
-			if (ch < 0x80)
-			{
-				output[p] = (char)ch;
-				p++;
-			}
-			else if (ch < 0x800)
-			{
-				output[p] = (ch >> 6) | 0xC0;
-				output[p + 1] = (ch & 0x3F) | 0x80;
-				p += 2;
-			}
-			else
-			{
-				output[p] = (ch >> 12) | 0xE0;
-				output[p + 1] = ((ch >> 6) & 0x3F) | 0x80;
-				output[p + 2] = (ch & 0x3F) | 0x80;
-				p += 3;
-			}
-		}
-		output[p] = '\0';
-	}
-	else
-	{
-		memcpy(output, input, inputSize + 1);
-	}
-}
-
-char* toUTF8(unichar* input, int inputLen)
-{
-	if (USE_WCHAR)
-	{
-		int outputStrSize = utf8ArraySize(input, inputLen);
-		char* output = (char*)malloc(outputStrSize * sizeof(char));
-		unicharArrayToUTF8(input, output, inputLen);
-		return output;
-	}
-	else
-	{
-		char* output = (char*)malloc((inputLen + 1) * sizeof(char));
-		memcpy(output, input, (inputLen + 1));
-		return output;
-	}
-}
-
 void cpExit(int code)
 {
 	#ifndef _WIN32
-	setTermios(1);
+	setTermios(true);
 	fputs("\n", stdout);
 	#endif
 
 	setDefaultColor();
-	exit(code);
+	exit((int)code);
 }
 
 void error(const char* description, const char* fileName, int line)
@@ -272,10 +179,31 @@ void error(const char* description, const char* fileName, int line)
 	cpExit(-1);
 }
 
-#ifndef _WIN32
+#ifdef _WIN32
+
+int getWindowsArgv(char*** pargv)
+{
+	int argc;
+	wchar_t** argvw = CommandLineToArgvW(GetCommandLineW(), &argc);
+
+	char** argv = (char**)malloc(argc * sizeof(char*));
+
+	for (int i = 0; i < argc; i++)
+	{
+		int utf8Len = WideCharToMultiByte(CP_UTF8, 0, argvw[i], -1, NULL, 0, NULL, NULL);
+		argv[i] = (char*)malloc(utf8Len * sizeof(char));
+		WideCharToMultiByte(CP_UTF8, 0, argvw[i], -1, argv[i], utf8Len, NULL, NULL);
+	}
+
+	*pargv = argv;
+	LocalFree(argvw);
+	return argc;
+}
+
+#else
 
 //https://stackoverflow.com/a/7469410/18214530
-void setTermios(int deinit)
+void setTermios(bool deinit)
 {
 	static struct termios current, old;
 	static int termiosInitialized = 0;
@@ -301,12 +229,12 @@ void setTermios(int deinit)
 
 int _getch(void)
 {
-	static int firstCall = 1;
+	static bool firstCall = true;
 	
 	if (firstCall)
 	{
-		setTermios(0);
-		firstCall = 0;
+		setTermios(false);
+		firstCall = false;
 	}
 
 	return getchar();
@@ -326,5 +254,4 @@ void Sleep(DWORD ms)
 		nanosleep(&timeSpec, NULL);
 	}
 }
-
 #endif

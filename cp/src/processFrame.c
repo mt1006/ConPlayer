@@ -11,19 +11,24 @@ static const uint8_t CMD_COLORS_16[16][3] =
 
 static void processForWinAPI(Frame* frame);
 static uint8_t procColor(uint8_t* r, uint8_t* g, uint8_t* b);
-static uint8_t findNearestColor16(uint8_t r, uint8_t g, uint8_t b);
 static void procRand(uint8_t* val);
+static uint8_t findNearestColor16(uint8_t r, uint8_t g, uint8_t b);
+static uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b);
 
 void processFrame(Frame* frame)
 {
-	if (colorMode == CM_WINAPI_GRAY || colorMode == CM_WINAPI_16)
+	if (settings.colorMode == CM_WINAPI_GRAY ||
+		settings.colorMode == CM_WINAPI_16)
 	{
 		processForWinAPI(frame);
 		return;
 	}
 
 	uint8_t* output = (uint8_t*)frame->output;
-	if (colorMode == CM_CSTD_16 || colorMode == CM_CSTD_256 || colorMode == CM_CSTD_RGB)
+
+	if (settings.colorMode == CM_CSTD_16 ||
+		settings.colorMode == CM_CSTD_256 ||
+		settings.colorMode == CM_CSTD_RGB)
 	{
 		frame->outputLineOffsets[0] = 0;
 		for (int i = 0; i < frame->frameH; i++)
@@ -42,12 +47,12 @@ void processFrame(Frame* frame)
 
 				uint8_t val, color;
 
-				if (singleCharMode) { val = 255; }
+				if (settings.singleCharMode) { val = 255; }
 				else { val = procColor(&valR, &valG, &valB); }
 
-				if (brightnessRand) { procRand(&val); }
+				if (settings.brightnessRand) { procRand(&val); }
 
-				switch (colorMode)
+				switch (settings.colorMode)
 				{
 				case CM_CSTD_16:
 					color = findNearestColor16(valR, valG, valB);
@@ -57,7 +62,7 @@ void processFrame(Frame* frame)
 
 					if (color == oldColor && !isFirstChar)
 					{
-						output[offset] = charset[(val * charsetSize) / 256];
+						output[offset] = settings.charset[(val * settings.charsetSize) / 256];
 						offset++;
 						break;
 					}
@@ -68,7 +73,7 @@ void processFrame(Frame* frame)
 					output[offset + 2] = (char)(((color / 10) % 10) + 0x30);
 					output[offset + 3] = (char)((color % 10) + 0x30);
 					output[offset + 4] = 'm';
-					output[offset + 5] = charset[(val * charsetSize) / 256];
+					output[offset + 5] = settings.charset[(val * settings.charsetSize) / 256];
 
 					offset += 6;
 					break;
@@ -78,7 +83,7 @@ void processFrame(Frame* frame)
 
 					if (color == oldColor && !isFirstChar)
 					{
-						output[offset] = charset[(val * charsetSize) / 256];
+						output[offset] = settings.charset[(val * settings.charsetSize) / 256];
 						offset++;
 						break;
 					}
@@ -95,7 +100,7 @@ void processFrame(Frame* frame)
 					output[offset + 8] = (char)(((color / 10) % 10) + 0x30);
 					output[offset + 9] = (char)((color % 10) + 0x30);
 					output[offset + 10] = 'm';
-					output[offset + 11] = charset[(val * charsetSize) / 256];
+					output[offset + 11] = settings.charset[(val * settings.charsetSize) / 256];
 
 					offset += 12;
 					break;
@@ -103,7 +108,7 @@ void processFrame(Frame* frame)
 				case CM_CSTD_RGB:
 					if (valR == oldR && valG == oldG && valB == oldB && !isFirstChar)
 					{
-						output[offset] = charset[(val * charsetSize) / 256];
+						output[offset] = settings.charset[(val * settings.charsetSize) / 256];
 						offset++;
 						break;
 					}
@@ -130,7 +135,7 @@ void processFrame(Frame* frame)
 					output[offset + 16] = (char)(((valB / 10) % 10) + 0x30);
 					output[offset + 17] = (char)((valB % 10) + 0x30);
 					output[offset + 18] = 'm';
-					output[offset + 19] = charset[(val * charsetSize) / 256];
+					output[offset + 19] = settings.charset[(val * settings.charsetSize) / 256];
 
 					offset += 20;
 					break;
@@ -143,7 +148,7 @@ void processFrame(Frame* frame)
 			frame->outputLineOffsets[i + 1] = offset + 1;
 		}
 
-		if (!disableCLS)
+		if (!settings.disableCLS)
 		{
 			output[frame->outputLineOffsets[frame->frameH] - 1] = '\0';
 			frame->outputLineOffsets[frame->frameH]--;
@@ -158,14 +163,14 @@ void processFrame(Frame* frame)
 			for (int j = 0; j < frame->frameW; j++)
 			{
 				uint8_t val = frame->videoFrame[(i * frame->videoLinesize) + j];
-				if (brightnessRand) { procRand(&val); }
-				output[(i * fullW) + j] = charset[(val * charsetSize) / 256];
+				if (settings.brightnessRand) { procRand(&val); }
+				output[(i * fullW) + j] = settings.charset[(val * settings.charsetSize) / 256];
 			}
 			output[(i * fullW) + frame->frameW] = '\n';
 			frame->outputLineOffsets[i + 1] = ((i + 1) * fullW);
 		}
 
-		if (!disableCLS)
+		if (!settings.disableCLS)
 		{
 			output[((frame->frameH - 1) * fullW) + frame->frameW] = '\0';
 			frame->outputLineOffsets[frame->frameH]--;
@@ -177,7 +182,7 @@ static void processForWinAPI(Frame* frame)
 {
 	#ifdef _WIN32
 	CHAR_INFO* output = (CHAR_INFO*)frame->output;
-	if (colorMode == CM_WINAPI_16)
+	if (settings.colorMode == CM_WINAPI_16)
 	{
 		for (int i = 0; i < frame->frameH; i++)
 		{
@@ -189,12 +194,12 @@ static void processForWinAPI(Frame* frame)
 
 				uint8_t val;
 				
-				if (singleCharMode) { val = 255; }
+				if (settings.singleCharMode) { val = 255; }
 				else { val = procColor(&valR, &valG, &valB); }
 
-				if (brightnessRand) { procRand(&val); }
+				if (settings.brightnessRand) { procRand(&val); }
 
-				output[(i * frame->frameW) + j].Char.AsciiChar = charset[(val * charsetSize) / 256];
+				output[(i * frame->frameW) + j].Char.AsciiChar = settings.charset[(val * settings.charsetSize) / 256];
 				output[(i * frame->frameW) + j].Attributes = findNearestColor16(valR, valG, valB);
 			}
 		}
@@ -206,12 +211,12 @@ static void processForWinAPI(Frame* frame)
 			for (int j = 0; j < frame->frameW; j++)
 			{
 				uint8_t val = frame->videoFrame[j + i * frame->videoLinesize];
-				if (brightnessRand) { procRand(&val); }
-				output[(i * frame->frameW) + j].Char.AsciiChar = charset[(val * charsetSize) / 256];
+				if (settings.brightnessRand) { procRand(&val); }
+				output[(i * frame->frameW) + j].Char.AsciiChar = settings.charset[(val * settings.charsetSize) / 256];
 				
-				if (setColorMode == SCM_WINAPI)
+				if (settings.setColorMode == SCM_WINAPI)
 				{
-					output[(i * frame->frameW) + j].Attributes = setColorVal;
+					output[(i * frame->frameW) + j].Attributes = settings.setColorVal1;
 				}
 				else
 				{
@@ -250,6 +255,35 @@ static uint8_t procColor(uint8_t* r, uint8_t* g, uint8_t* b)
 	return (uint8_t)((double)valR * 0.299 + (double)valG * 0.587 + (double)valB * 0.114);
 }
 
+static void procRand(uint8_t* val)
+{
+	if (settings.singleCharMode)
+	{
+		*val -= rand() % (settings.brightnessRand + 1);
+	}
+	else
+	{
+		if (settings.brightnessRand > 0)
+		{
+			int tempVal = (int)(*val) +
+				(rand() % (settings.brightnessRand + 1)) -
+				(settings.brightnessRand / 2);
+
+			if (tempVal >= 255) { *val = 255; }
+			else if (tempVal <= 0) { *val = 0; }
+			else { *val = (uint8_t)tempVal; }
+		}
+		else
+		{
+			int tempVal = (int)(*val) -
+				(rand() % (-settings.brightnessRand + 1));
+
+			if (tempVal <= 0) { *val = 0; }
+			else { *val = (uint8_t)tempVal; }
+		}
+	}
+}
+
 static uint8_t findNearestColor16(uint8_t r, uint8_t g, uint8_t b)
 {
 	int min = INT_MAX;
@@ -268,28 +302,18 @@ static uint8_t findNearestColor16(uint8_t r, uint8_t g, uint8_t b)
 	return (uint8_t)minPos;
 }
 
-static void procRand(uint8_t* val)
+static uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b)
 {
-	if (singleCharMode)
+	// https://stackoverflow.com/questions/15682537/ansi-color-specific-rgb-sequence-bash
+	if (r == g && g == b)
 	{
-		*val -= rand() % (brightnessRand + 1);
+		if (r < 8) { return 16; }
+		if (r > 248) { return 231; }
+		return (uint8_t)round((((double)r - 8.0) / 247.0) * 24.0) + 232;
 	}
-	else
-	{
-		if (brightnessRand > 0)
-		{
-			int tempVal = (int)(*val) + (rand() % (brightnessRand + 1)) - (brightnessRand / 2);
 
-			if (tempVal >= 255) { *val = 255; }
-			else if (tempVal <= 0) { *val = 0; }
-			else { *val = (uint8_t)tempVal; }
-		}
-		else
-		{
-			int tempVal = (int)(*val) - (rand() % (-brightnessRand + 1));
-
-			if (tempVal <= 0) { *val = 0; }
-			else { *val = (uint8_t)tempVal; }
-		}
-	}
+	return (uint8_t)(16.0
+		+ (36.0 * round((double)r / 255.0 * 5.0))
+		+ (6.0 * round((double)g / 255.0 * 5.0))
+		+ round((double)b / 255.0 * 5.0));
 }

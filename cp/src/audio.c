@@ -8,29 +8,14 @@ typedef struct
 	int* audioFramesSize;
 } AudioQueue;
 
-#ifdef CP_USE_PORTAUDIO
-
-static const enum AVSampleFormat SAMPLE_FORMAT_AV = AV_SAMPLE_FMT_FLT;
-static const PaSampleFormat SAMPLE_FORMAT_PA = paFloat32;
+static const enum AVSampleFormat SAMPLE_FORMAT_AV = AV_SAMPLE_FMT_S32;
 static const int SAMPLE_BITS = 32;
 static const int CHANNELS = 2;
-static const int SAMPLE_RATE = 48000;
-
-static PaStream* stream;
-static PaStreamParameters audioParameters;
-
-#else
-
-static const enum AVSampleFormat SAMPLE_FORMAT_AV = AV_SAMPLE_FMT_S16;
-static const int SAMPLE_BITS = 16;
-static const int CHANNELS = 2;
-static const int SAMPLE_SIZE = 4; // (16 bits * 2 channels) / 8 bits
+static const int SAMPLE_SIZE = 8; // (32 bits * 2 channels) / 8 bits
 static const int SAMPLE_RATE = 48000;
 
 static ao_sample_format aoSampleFormat;
 static ao_device* aoDevice = NULL;
-
-#endif
 
 static int initialized = 0;
 static int libInitialized = 0;
@@ -39,15 +24,11 @@ static SwrContext* resampleContext = NULL;
 static const int AUDIO_QUEUE_SIZE = 128;
 static AudioQueue audioQueue;
 
-static ThreadRetType CP_CALL_CONV initPortAudio(void* ptr);
-static ThreadRetType CP_CALL_CONV initLibao(void* ptr);
+static bool initAudioLib(void);
 
 void initAudio(Stream* avAudioStream)
 {
-	const int MS_TO_WAIT = 8;
-	while (!libInitialized) { Sleep(MS_TO_WAIT); }
-
-	if (libInitialized == -1) { return; }
+	if (!initAudioLib()) { return; }
 
 	resampleContext = swr_alloc_set_opts(NULL,
 		av_get_default_channel_layout(CHANNELS),                              //out_channel_layout
@@ -60,22 +41,21 @@ void initAudio(Stream* avAudioStream)
 	int swrRetVal = swr_init(resampleContext);
 	if (swrRetVal < 0) { return; }
 
+	audioQueue.front = 0;
+	audioQueue.back = 0;
+	audioQueue.audioFrames = (uint8_t**)calloc(AUDIO_QUEUE_SIZE, sizeof(uint8_t*));
+	audioQueue.audioSamplesNum = (int*)malloc(AUDIO_QUEUE_SIZE * sizeof(int));
+	audioQueue.audioFramesSize = (int*)calloc(AUDIO_QUEUE_SIZE, sizeof(int));
+
 	initialized = 1;
 }
 
-void initAudioLib(void)
-{
-	#ifdef CP_USE_PORTAUDIO
-	startThread(&initPortAudio, NULL);
-	#else
-	startThread(&initLibao, NULL);
-	#endif
-}
-
-void addAudio(AVFrame* frame)
+void addAudioFrame(AVFrame* frame)
 {
 	if (!initialized) { return; }
-	Frame* queueFrame = dequeueFrame(STAGE_FREE);
+
+	Frame* queueFrame = dequeueFrame(STAGE_FREE, NULL);
+	
 	int outSamples = swr_get_out_samples(resampleContext, frame->nb_samples);
 	if (queueFrame->audioFrameSize < outSamples)
 	{
@@ -84,32 +64,21 @@ void addAudio(AVFrame* frame)
 		av_samples_alloc(&queueFrame->audioFrame, NULL, CHANNELS,
 			queueFrame->audioFrameSize, SAMPLE_FORMAT_AV, 0);
 	}
+
 	outSamples = swr_convert(resampleContext, &queueFrame->audioFrame, outSamples,
 		frame->extended_data, frame->nb_samples);
 	if (outSamples < 0) { return; }
 
-	#ifdef CP_USE_PORTAUDIO
-
-	float* fullSamples = (float*)queueFrame->audioFrame;
+	int* fullSamples = (int*)queueFrame->audioFrame;
 	for (int i = 0; i < outSamples; i++)
 	{
-		fullSamples[i * 2] = (float)((double)fullSamples[i * 2] * volume);
-		fullSamples[i * 2 + 1] = (float)((double)fullSamples[i * 2 + 1] * volume);
+		fullSamples[i * 2] = (int)((double)fullSamples[i * 2] * settings.volume);
+		fullSamples[i * 2 + 1] = (int)((double)fullSamples[i * 2 + 1] * settings.volume);
 	}
 
-	#else
-
-	short* fullSamples = ((short*)queueFrame->audioFrame);
-	for (int i = 0; i < outSamples; i++)
-	{
-		fullSamples[i * 2] = (short)((double)fullSamples[i * 2] * volume);
-		fullSamples[i * 2 + 1] = (short)((double)fullSamples[i * 2 + 1] * volume);
-	}
-
-	#endif
-
-	queueFrame->isAudio = 1;
 	queueFrame->audioSamplesNum = outSamples;
+	queueFrame->isAudio = true;
+
 	enqueueFrame(STAGE_LOADED_FRAME);
 }
 
@@ -117,34 +86,20 @@ void audioLoop(void)
 {
 	const int TIME_TO_SLEEP = 8;
 
-	audioQueue.front = 0;
-	audioQueue.back = 0;
-	audioQueue.audioFrames = (uint8_t**)malloc(AUDIO_QUEUE_SIZE * sizeof(uint8_t*));
-	audioQueue.audioSamplesNum = (int*)malloc(AUDIO_QUEUE_SIZE * sizeof(int));
-	audioQueue.audioFramesSize = (int*)malloc(AUDIO_QUEUE_SIZE * sizeof(int));
-
-	for (int i = 0; i < AUDIO_QUEUE_SIZE; i++)
-	{
-		audioQueue.audioFrames[i] = NULL;
-		audioQueue.audioFramesSize[i] = 0;
-	}
-
 	while (1)
 	{
 		if (audioQueue.front != audioQueue.back)
 		{
-			#ifdef CP_USE_PORTAUDIO
-
-			Pa_WriteStream(stream, audioQueue.audioFrames[audioQueue.front],
-				audioQueue.audioSamplesNum[audioQueue.front]);
-
-			#else
+			int* fullSamples = (int*)audioQueue.audioFrames[audioQueue.front];
+			for (int i = 0; i < audioQueue.audioSamplesNum[audioQueue.front]; i++)
+			{
+				fullSamples[i * 2] = (int)((double)fullSamples[i * 2] * settings.volume);
+				fullSamples[i * 2 + 1] = (int)((double)fullSamples[i * 2 + 1] * settings.volume);
+			}
 
 			ao_play(aoDevice, audioQueue.audioFrames[audioQueue.front],
 				audioQueue.audioSamplesNum[audioQueue.front] * SAMPLE_SIZE);
-
-			#endif
-
+			
 			audioQueue.front++;
 			if (audioQueue.front == AUDIO_QUEUE_SIZE) { audioQueue.front = 0; }
 		}
@@ -173,7 +128,7 @@ void playAudio(Frame* frame)
 	}
 
 	audioQueue.audioSamplesNum[audioQueue.back] = frame->audioSamplesNum;
-	av_samples_copy(&audioQueue.audioFrames[audioQueue.back], 
+	av_samples_copy(&audioQueue.audioFrames[audioQueue.back],
 		&frame->audioFrame, 0, 0, frame->audioSamplesNum,
 		CHANNELS, SAMPLE_FORMAT_AV);
 
@@ -181,46 +136,8 @@ void playAudio(Frame* frame)
 	if (audioQueue.back == AUDIO_QUEUE_SIZE) { audioQueue.back = 0; }
 }
 
-static ThreadRetType CP_CALL_CONV initPortAudio(void* ptr)
+static bool initAudioLib(void)
 {
-	#ifdef CP_USE_PORTAUDIO
-
-	PaError err;
-
-	err = Pa_Initialize();
-	if (err != paNoError)
-	{
-		libInitialized = -1;
-		return;
-	}
-
-	audioParameters.device = Pa_GetDefaultOutputDevice();
-	if (audioParameters.device == paNoDevice)
-	{
-		libInitialized = -1;
-		return;
-	}
-
-	audioParameters.channelCount = CHANNELS;
-	audioParameters.sampleFormat = SAMPLE_FORMAT_PA;
-	audioParameters.suggestedLatency = Pa_GetDeviceInfo(audioParameters.device)->defaultHighOutputLatency;
-	audioParameters.hostApiSpecificStreamInfo = NULL;
-
-	Pa_OpenStream(&stream, NULL, &audioParameters, SAMPLE_RATE, 0, paNoFlag, NULL, NULL);
-	err = Pa_StartStream(stream);
-
-	if (err == paNoError) { libInitialized = 1; }
-	else { libInitialized = -1; }
-
-	#endif
-
-	CP_END_THREAD
-}
-
-static ThreadRetType CP_CALL_CONV initLibao(void* ptr)
-{
-	#ifndef CP_USE_PORTAUDIO
-
 	ao_initialize();
 	int driver = ao_default_driver_id();
 
@@ -232,10 +149,6 @@ static ThreadRetType CP_CALL_CONV initLibao(void* ptr)
 	aoSampleFormat.matrix = 0;
 	aoDevice = ao_open_live(driver, &aoSampleFormat, NULL);
 
-	if (aoDevice) { libInitialized = 1; }
-	else { libInitialized = -1; }
-
-	#endif
-
-	CP_END_THREAD
+	if (aoDevice) { return true; }
+	else { return false; }
 }

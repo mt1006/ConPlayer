@@ -129,6 +129,7 @@
   <ItemGroup>
     <ClCompile Include="src\argParser.c" />
     <ClCompile Include="src\audio.c" />
+    <ClCompile Include="src\avFilters.c" />
     <ClCompile Include="src\decodeFrame.c" />
     <ClCompile Include="src\drawFrame.c" />
     <ClCompile Include="src\help.c" />

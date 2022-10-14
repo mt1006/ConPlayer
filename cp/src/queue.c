@@ -1,5 +1,12 @@
 #include "conplayer.h"
 
+typedef struct
+{
+	int drawingPos, processingPos, loadingPos;
+	int size;
+	Frame* array;
+} Queue;
+
 static const int TIME_TO_WAIT = 16;
 static Queue queue;
 
@@ -7,7 +14,7 @@ static Frame* queueNextElement(int currentPos);
 
 void initQueue(void)
 {
-	static int queueExists = 0;
+	static bool queueExists = false;
 
 	if (queueExists)
 	{
@@ -27,10 +34,11 @@ void initQueue(void)
 	queue.drawingPos = 0;
 	queue.processingPos = 0;
 	queue.loadingPos = 0;
+
 	for (int i = 0; i < QUEUE_SIZE; i++)
 	{
 		queue.array[i].stage = STAGE_FREE;
-		queue.array[i].isAudio = 0;
+		queue.array[i].isAudio = false;
 		queue.array[i].audioSamplesNum = 0;
 		queue.array[i].videoFrame = NULL;
 		queue.array[i].audioFrame = NULL;
@@ -43,10 +51,10 @@ void initQueue(void)
 		queue.array[i].time = 0;
 	}
 
-	queueExists = 1;
+	queueExists = true;
 }
 
-Frame* dequeueFrame(Stage fromStage)
+Frame* dequeueFrame(Stage fromStage, bool* threadFreezedFlag)
 {
 	int* pos;
 	if (fromStage == STAGE_LOADED_FRAME) { pos = &queue.processingPos; }
@@ -54,11 +62,28 @@ Frame* dequeueFrame(Stage fromStage)
 	else { pos = &queue.loadingPos; }
 
 	Frame* nextFrame = queueNextElement(*pos);
+
 	while (nextFrame->stage != fromStage)
 	{
-		if (decodeEnd && fromStage == STAGE_PROCESSED_FRAME) { cpExit(0); }
+		if (decodeEnd && fromStage == STAGE_PROCESSED_FRAME &&
+			(nextFrame->stage == STAGE_FREE || freezeThreads))
+		{
+			cpExit(0);
+		}
+
+		if (freezeThreads && threadFreezedFlag)
+		{
+			while (freezeThreads)
+			{
+				*threadFreezedFlag = true;
+				Sleep(SLEEP_ON_FREEZE);
+			}
+			return dequeueFrame(fromStage, threadFreezedFlag);
+		}
+
 		Sleep(TIME_TO_WAIT);
 	}
+
 	return nextFrame;
 }
 
@@ -70,6 +95,7 @@ void enqueueFrame(Stage toStage)
 	else { pos = &queue.drawingPos; }
 
 	Frame* nextFrame = queueNextElement(*pos);
+
 	nextFrame->stage = toStage;
 	(*pos)++;
 	if (*pos == queue.size) { *pos = 0; }

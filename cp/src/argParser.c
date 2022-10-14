@@ -12,7 +12,7 @@ typedef struct
 	char* name;
 	char* fullName;
 	int (*parserFunction)(int, char**);
-	int isOperation;
+	bool isOperation;
 } Option;
 
 static void checkSettings(void);
@@ -29,68 +29,73 @@ static int opSetColor(int argc, char** argv);
 static int opCharset(int argc, char** argv);
 static int opSingleChar(int argc, char** argv);
 static int opRand(int argc, char** argv);
+static int opScalingMode(int argc, char** argv);
 static int opFontRatio(int argc, char** argv);
 static int opSync(int argc, char** argv);
+static int opVideoFilters(int argc, char** argv);
+static int opScaledVideoFilters(int argc, char** argv);
+static int opAudioFilters(int argc, char** argv);
 static int opDisableCLS(int argc, char** argv);
 static int opDisableAudio(int argc, char** argv);
 static int opDisableKeys(int argc, char** argv);
+static int opLibavLogs(int argc, char** argv);
 static int opFullInfo(int argc, char** argv);
 static void invalidSyntax(int line);
 
 const Option OPTIONS[] = {
-	{"-h","--help",&opHelp,1},
-	{"-i","--input",&opInput,0},
-	{"-c","--colors",&opColors,0},
-	{"-vol","--volume",&opVolume,0},
-	{"-s","--size",&opSize,0},
-	{"-f","--fill",&opFill,0},
-	{"-inf","--information",&opInformation,1},
-	{"-v","--version",&opVersion,1},
-	{"-int","--interlaced",&opInterlaced,0},
-	{"-sc","--set-color",&opSetColor,0},
-	{"-cs","--charset",&opCharset,0},
-	{"-sch","--single-char",&opSingleChar,0},
-	{"-r","--rand",&opRand,0},
-	{"-fr","--font-ratio",&opFontRatio,0},
-	{"-sy","--sync",&opSync,0},
-	{"-dcls","--disable-cls",&opDisableCLS,0},
-	{"-da","--disable-audio",&opDisableAudio,0},
-	{"-dk","--disable-keys",&opDisableKeys,0},
-	{"-fi","--full-info",&opFullInfo,1} };
+	{"-h","--help",&opHelp,true},
+	{"-i","--input",&opInput,false},
+	{"-c","--colors",&opColors,false},
+	{"-vol","--volume",&opVolume,false},
+	{"-s","--size",&opSize,false},
+	{"-f","--fill",&opFill,false},
+	{"-inf","--information",&opInformation,true},
+	{"-v","--version",&opVersion,true},
+	{"-int","--interlaced",&opInterlaced,false},
+	{"-sc","--set-color",&opSetColor,false},
+	{"-cs","--charset",&opCharset,false},
+	{"-sch","--single-char",&opSingleChar,false},
+	{"-r","--rand",&opRand,false},
+	{"-sm","--scaling-mode",&opScalingMode,false},
+	{"-fr","--font-ratio",&opFontRatio,false},
+	{"-sy","--sync",&opSync,false},
+	{"-vf","--video-filters",&opVideoFilters,false},
+	{"-svf","--scaled-video-filters",&opScaledVideoFilters,false},
+	{"-af","--audio-filters",&opAudioFilters,false},
+	{"-dcls","--disable-cls",&opDisableCLS,false},
+	{"-da","--disable-audio",&opDisableAudio,false},
+	{"-dk","--disable-keys",&opDisableKeys,false},
+	{"-avl","--libav-logs",&opLibavLogs,false},
+	{"-fi","--full-info",&opFullInfo,true} };
 
 static int optionCount;
 static char* inputFile = NULL;
 
-char* argumentParser(int argc, unichar** argv)
+char* argumentParser(int argc, char** argv)
 {
 	optionCount = sizeof(OPTIONS) / sizeof(Option);
-	int* usedOptions = calloc(optionCount, sizeof(int));
+	bool* optionsUsed = calloc(optionCount, sizeof(bool));
 
-	charset = CHARSET_LONG;
-	charsetSize = (int)strlen(charset);
-
-	char** input = (char**)malloc(argc * sizeof(char*));
-	for (int i = 0; i < argc; i++)
-	{
-		input[i] = toUTF8(argv[i], (int)uc_strlen(argv[i]));
-	}
+	settings.charset = CHARSET_LONG;
+	settings.charsetSize = (int)strlen(settings.charset);
 
 	for (int i = 0; i < argc; i++)
 	{
-		if (input[i][0] == '-')
+		if (argv[i][0] == '-')
 		{
-			if (i == 0 && !strcmp(input[0], "-?")) { input[0][1] = 'h'; }
+			if (i == 0 && !strcmp(argv[0], "-?")) { argv[0][1] = 'h'; }
 
-			int breaked = 0;
+			bool optionFound = false;
+
 			for (int j = 0; j < optionCount; j++)
 			{
-				if (!strcmp(input[i], OPTIONS[j].name) ||
-					!strcmp(input[i], OPTIONS[j].fullName))
+				if (!strcmp(argv[i], OPTIONS[j].name) ||
+					!strcmp(argv[i], OPTIONS[j].fullName))
 				{
-					if (usedOptions[j]) { invalidSyntax(__LINE__); }
+					if (optionsUsed[j]) { invalidSyntax(__LINE__); }
 					if (OPTIONS[j].isOperation && i != 0) { invalidSyntax(__LINE__); }
 
-					i += OPTIONS[j].parserFunction(argc - i - 1, input + i + 1);
+					i += OPTIONS[j].parserFunction(argc - i - 1, argv + i + 1);
 
 					if (OPTIONS[j].isOperation)
 					{
@@ -98,26 +103,26 @@ char* argumentParser(int argc, unichar** argv)
 						return NULL;
 					}
 
-					usedOptions[j] = 1;
-					breaked = 1;
+					optionsUsed[j] = true;
+					optionFound = true;
 					break;
 				}
 			}
 
-			if (!breaked) { invalidSyntax(__LINE__); }
+			if (!optionFound) { invalidSyntax(__LINE__); }
 		}
 		else if (i == 0)
 		{
-			if (!strcmp(input[0], "/?"))
+			if (!strcmp(argv[0], "/?"))
 			{
-				input[0][0] = '-';
-				input[0][1] = 'h';
+				argv[0][0] = '-';
+				argv[0][1] = 'h';
 				i--;
 			}
 			else
 			{
-				opInput(argc, input);
-				usedOptions[1] = 1;
+				opInput(argc, argv);
+				optionsUsed[1] = 1;
 			}
 		}
 		else
@@ -126,12 +131,7 @@ char* argumentParser(int argc, unichar** argv)
 		}
 	}
 
-	for (int i = 0; i < argc; i++)
-	{
-		free(input[i]);
-	}
-	free(input);
-	free(usedOptions);
+	free(optionsUsed);
 
 	if (inputFile == NULL) { invalidSyntax(__LINE__); }
 	checkSettings();
@@ -140,47 +140,52 @@ char* argumentParser(int argc, unichar** argv)
 
 static void checkSettings(void)
 {
-	if (colorMode == CM_WINAPI_GRAY ||
-		colorMode == CM_WINAPI_16)
+	if (settings.colorMode == CM_WINAPI_GRAY ||
+		settings.colorMode == CM_WINAPI_16)
 	{
 		#ifndef _WIN32
 		error("WinAPI color mode not supported on Linux!", "argParser.c", __LINE__);
 		#endif
 	}
-	if (setColorMode == SCM_WINAPI)
+
+	if (settings.setColorMode == SCM_WINAPI)
 	{
 		#ifndef _WIN32
 		error("WinAPI \"set color\" mode not supported on Linux!", "argParser.c", __LINE__);
 		#endif
 	}
-	if (setColorMode == SCM_WINAPI &&
-		colorMode != CM_WINAPI_GRAY &&
-		colorMode != CM_CSTD_GRAY)
+
+	if (settings.setColorMode == SCM_WINAPI &&
+		settings.colorMode != CM_WINAPI_GRAY &&
+		settings.colorMode != CM_CSTD_GRAY)
 	{
 		error("\"Set color\" works only with grayscale color mode!", "argParser.c", __LINE__);
 	}
-	if (setColorMode == SCM_WINAPI &&
-		colorMode != CM_WINAPI_GRAY &&
-		colorMode != CM_CSTD_GRAY)
+
+	if (settings.setColorMode == SCM_WINAPI &&
+		settings.colorMode != CM_WINAPI_GRAY &&
+		settings.colorMode != CM_CSTD_GRAY)
 	{
 		error("WinAPI \"set color\" mode mode works only with grayscale color mode!", "argParser.c", __LINE__);
 	}
-	if ((setColorMode == SCM_CSTD_256 ||
-		setColorMode == SCM_CSTD_RGB) &&
-		colorMode != CM_CSTD_GRAY)
+
+	if ((settings.setColorMode == SCM_CSTD_256 ||
+		settings.setColorMode == SCM_CSTD_RGB) &&
+		settings.colorMode != CM_CSTD_GRAY)
 	{
 		error("C std \"set color\" mode works only with \"cstd-gray\" color mode!", "argParser.c", __LINE__);
 	}
-	if (singleCharMode &&
-		(colorMode == CM_WINAPI_GRAY ||
-			colorMode == CM_CSTD_GRAY))
+
+	if (settings.singleCharMode &&
+		(settings.colorMode == CM_WINAPI_GRAY ||
+			settings.colorMode == CM_CSTD_GRAY))
 	{
 		error("Single character mode requires colors!", "argParser.c", __LINE__);
 	}
 
-	if (singleCharMode && brightnessRand)
+	if (settings.singleCharMode && settings.brightnessRand)
 	{
-		if (brightnessRand < 0) { brightnessRand = -brightnessRand; }
+		if (settings.brightnessRand < 0) { settings.brightnessRand = -settings.brightnessRand; }
 	}
 }
 
@@ -198,12 +203,12 @@ static int opColors(int argc, char** argv)
 	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
 
 	strToLower(argv[0]);
-	if (!strcmp(argv[0], "winapi-gray")) { colorMode = CM_WINAPI_GRAY; }
-	else if (!strcmp(argv[0], "winapi-16")) { colorMode = CM_WINAPI_16; }
-	else if (!strcmp(argv[0], "cstd-gray")) { colorMode = CM_CSTD_GRAY; }
-	else if (!strcmp(argv[0], "cstd-16")) { colorMode = CM_CSTD_16; }
-	else if (!strcmp(argv[0], "cstd-256")) { colorMode = CM_CSTD_256; }
-	else if (!strcmp(argv[0], "cstd-rgb")) { colorMode = CM_CSTD_RGB; }
+	if (!strcmp(argv[0], "winapi-gray")) { settings.colorMode = CM_WINAPI_GRAY; }
+	else if (!strcmp(argv[0], "winapi-16")) { settings.colorMode = CM_WINAPI_16; }
+	else if (!strcmp(argv[0], "cstd-gray")) { settings.colorMode = CM_CSTD_GRAY; }
+	else if (!strcmp(argv[0], "cstd-16")) { settings.colorMode = CM_CSTD_16; }
+	else if (!strcmp(argv[0], "cstd-256")) { settings.colorMode = CM_CSTD_256; }
+	else if (!strcmp(argv[0], "cstd-rgb")) { settings.colorMode = CM_CSTD_RGB; }
 	else { error("Invalid color mode!", "argParser.c", __LINE__); }
 
 	return 1;
@@ -212,17 +217,17 @@ static int opColors(int argc, char** argv)
 static int opVolume(int argc, char** argv)
 {
 	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
-	volume = atof(argv[0]);
-	if (volume < 0.0 || volume > 1.0) { error("Invalid volume!", "argParser.c", __LINE__); }
+	settings.volume = atof(argv[0]);
+	if (settings.volume < 0.0 || settings.volume > 1.0) { error("Invalid volume!", "argParser.c", __LINE__); }
 	return 1;
 }
 
 static int opSize(int argc, char** argv)
 {
 	if (argc < 2 || argv[0][0] == '-' || argv[1][0] == '-') { invalidSyntax(__LINE__); }
-	argW = atoi(argv[0]);
-	argH = atoi(argv[1]);
-	if ((argW != 0 || argH != 0) && (argW < 4 || argH < 4))
+	settings.argW = atoi(argv[0]);
+	settings.argH = atoi(argv[1]);
+	if ((settings.argW != 0 || settings.argH != 0) && (settings.argW < 4 || settings.argH < 4))
 	{
 		error("Invalid size!", "argParser.c", __LINE__);
 	}
@@ -231,7 +236,7 @@ static int opSize(int argc, char** argv)
 
 static int opFill(int argc, char** argv)
 {
-	fillArea = 1;
+	settings.fillArea = true;
 	return 0;
 }
 
@@ -254,17 +259,18 @@ static int opHelp(int argc, char** argv)
 	if (argc == 1 && argv[0][0] != '-')
 	{
 		strToLower(argv[0]);
-		if (!strcmp(argv[0], "basic")) { showHelp(1, 0, 0, 0); }
-		else if (!strcmp(argv[0], "advanced")) { showHelp(0, 1, 0, 0); }
-		else if (!strcmp(argv[0], "color-modes")) { showHelp(0, 0, 1, 0); }
-		else if (!strcmp(argv[0], "keyboard")) { showHelp(0, 0, 0, 1); }
-		else if (!strcmp(argv[0], "full")) { showHelp(1, 1, 1, 1); }
+		if (!strcmp(argv[0], "basic"))              { showHelp(1, 0, 0, 0, 0); }
+		else if (!strcmp(argv[0], "advanced"))      { showHelp(0, 1, 0, 0, 0); }
+		else if (!strcmp(argv[0], "color-modes"))   { showHelp(0, 0, 1, 0, 0); }
+		else if (!strcmp(argv[0], "scaling-modes")) { showHelp(0, 0, 0, 1, 0); }
+		else if (!strcmp(argv[0], "keyboard"))      { showHelp(0, 0, 0, 0, 1); }
+		else if (!strcmp(argv[0], "full"))          { showHelp(1, 1, 1, 1, 1); }
 		else { error("Invalid help topic!", "argParser.c", __LINE__); }
 		return 1;
 	}
 	else if (argc == 0)
 	{
-		showHelp(1, 0, 0, 1);
+		showHelp(1, 0, 0, 0, 1);
 		puts("[To see full help use \"conpl -h full\"]");
 	}
 	else
@@ -279,16 +285,16 @@ static int opInterlaced(int argc, char** argv)
 	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
 	if (argc > 1 && argv[1][0] != '-')
 	{
-		scanlineHeight = atoi(argv[1]);
-		if (scanlineHeight < 1) { error("Invalid scanline height!", "argParser.c", __LINE__); }
-		scanlineCount = atoi(argv[0]);
-		if (scanlineCount < 1) { error("Invalid interlacing!", "argParser.c", __LINE__); }
+		settings.scanlineHeight = atoi(argv[1]);
+		if (settings.scanlineHeight < 1) { error("Invalid scanline height!", "argParser.c", __LINE__); }
+		settings.scanlineCount = atoi(argv[0]);
+		if (settings.scanlineCount < 1) { error("Invalid interlacing!", "argParser.c", __LINE__); }
 		return 2;
 	}
 	else
 	{
-		scanlineCount = atoi(argv[0]);
-		if (scanlineCount < 1) { error("Invalid interlacing!", "argParser.c", __LINE__); }
+		settings.scanlineCount = atoi(argv[0]);
+		if (settings.scanlineCount < 1) { error("Invalid interlacing!", "argParser.c", __LINE__); }
 		return 1;
 	}
 }
@@ -299,22 +305,22 @@ static int opSetColor(int argc, char** argv)
 
 	if (argv[0][0] >= '0' && argv[0][0] <= '9')
 	{
-		setColorMode = SCM_WINAPI;
-		setColorVal = atoi(argv[0]);
+		settings.setColorMode = SCM_WINAPI;
+		settings.setColorVal1 = atoi(argv[0]);
 	}
 	else if (argv[0][0] == '@')
 	{
-		setColorMode = SCM_CSTD_256;
-		setColorVal = atoi(argv[0] + 1);
-		if (setColorVal < 0 || setColorVal > 255)
+		settings.setColorMode = SCM_CSTD_256;
+		settings.setColorVal1 = atoi(argv[0] + 1);
+		if (settings.setColorVal1 < 0 || settings.setColorVal1 > 255)
 		{
 			error("Invalid color!", "argParser.c", __LINE__);
 		}
 		
 		if (argc > 1 && argv[1][0] != '-')
 		{
-			setColorVal2 = atoi(argv[1]);
-			if (setColorVal2 < 0 || setColorVal2 > 255)
+			settings.setColorVal2 = atoi(argv[1]);
+			if (settings.setColorVal2 < 0 || settings.setColorVal2 > 255)
 			{
 				error("Invalid color!", "argParser.c", __LINE__);
 			}
@@ -323,17 +329,17 @@ static int opSetColor(int argc, char** argv)
 	}
 	else if (argv[0][0] == '#')
 	{
-		setColorMode = SCM_CSTD_RGB;
-		setColorVal = strtol(argv[0] + 1, NULL, 16);
-		if (setColorVal < 0 || setColorVal > 0xFFFFFF)
+		settings.setColorMode = SCM_CSTD_RGB;
+		settings.setColorVal1 = strtol(argv[0] + 1, NULL, 16);
+		if (settings.setColorVal1 < 0 || settings.setColorVal1 > 0xFFFFFF)
 		{
 			error("Invalid color!", "argParser.c", __LINE__);
 		}
 
 		if (argc > 1 && argv[1][0] != '-')
 		{
-			setColorVal2 = strtol(argv[1], NULL, 16);
-			if (setColorVal2 < 0 || setColorVal2 > 0xFFFFFF)
+			settings.setColorVal2 = strtol(argv[1], NULL, 16);
+			if (settings.setColorVal2 < 0 || settings.setColorVal2 > 0xFFFFFF)
 			{
 				error("Invalid color!", "argParser.c", __LINE__);
 			}
@@ -356,21 +362,21 @@ static int opCharset(int argc, char** argv)
 	if (argv[0][0] == '#')
 	{
 		strToLower(argv[0]);
-		if (!strcmp(argv[0], "#long")) { charset = CHARSET_LONG; }
-		else if (!strcmp(argv[0], "#short")) { charset = CHARSET_SHORT; }
-		else if (!strcmp(argv[0], "#2")) { charset = CHARSET_2; }
-		else if (!strcmp(argv[0], "#blocks")) { charset = CHARSET_BLOCKS; }
-		else if (!strcmp(argv[0], "#outline")) { charset = CHARSET_OUTLINE; }
-		else if (!strcmp(argv[0], "#bold-outline")) { charset = CHARSET_BOLD_OUTLINE; }
+		if (!strcmp(argv[0], "#long")) { settings.charset = CHARSET_LONG; }
+		else if (!strcmp(argv[0], "#short")) { settings.charset = CHARSET_SHORT; }
+		else if (!strcmp(argv[0], "#2")) { settings.charset = CHARSET_2; }
+		else if (!strcmp(argv[0], "#blocks")) { settings.charset = CHARSET_BLOCKS; }
+		else if (!strcmp(argv[0], "#outline")) { settings.charset = CHARSET_OUTLINE; }
+		else if (!strcmp(argv[0], "#bold-outline")) { settings.charset = CHARSET_BOLD_OUTLINE; }
 		else { error("Invalid predefined charset name!", "argParser.c", __LINE__); }
-		charsetSize = (int)strlen(charset);
+		settings.charsetSize = (int)strlen(settings.charset);
 	}
 	else
 	{
 		FILE* charsetFile = fopen(argv[0], "rb");
 		if (!charsetFile) { error("Failed to open charset file!", "argParser.c", __LINE__); }
-		charset = (char*)malloc(CHARSET_MAX_SIZE * sizeof(char));
-		charsetSize = (int)fread(charset, sizeof(char), CHARSET_MAX_SIZE, charsetFile);
+		settings.charset = (char*)malloc(CHARSET_MAX_SIZE * sizeof(char));
+		settings.charsetSize = (int)fread(settings.charset, sizeof(char), CHARSET_MAX_SIZE, charsetFile);
 		fclose(charsetFile);
 	}
 	return 1;
@@ -378,7 +384,7 @@ static int opCharset(int argc, char** argv)
 
 static int opSingleChar(int argc, char** argv)
 {
-	singleCharMode = 1;
+	settings.singleCharMode = true;
 	return 0;
 }
 
@@ -387,18 +393,32 @@ static int opRand(int argc, char** argv)
 	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
 	srand(time(NULL));
 
-	if (argv[0][0] == '@') { brightnessRand = -atoi(argv[0] + 1); }
-	else { brightnessRand = atoi(argv[0]); }
+	if (argv[0][0] == '@') { settings.brightnessRand = -atoi(argv[0] + 1); }
+	else { settings.brightnessRand = atoi(argv[0]); }
 
-	if (brightnessRand < -255 || brightnessRand > 255) { error("Invalid rand value!", "argParser.c", __LINE__); }
+	if (settings.brightnessRand < -255 || settings.brightnessRand > 255) { error("Invalid rand value!", "argParser.c", __LINE__); }
+	return 1;
+}
+
+static int opScalingMode(int argc, char** argv)
+{
+	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
+
+	strToLower(argv[0]);
+	if (!strcmp(argv[0], "nearest")) { settings.scalingMode = SWS_POINT; }
+	else if (!strcmp(argv[0], "fast-bilinear")) { settings.scalingMode = SWS_FAST_BILINEAR; }
+	else if (!strcmp(argv[0], "bilinear")) { settings.scalingMode = SWS_BILINEAR; }
+	else if (!strcmp(argv[0], "bicubic")) { settings.scalingMode = SWS_BICUBIC; }
+	else { error("Invalid scaling mode!", "argParser.c", __LINE__); }
+
 	return 1;
 }
 
 static int opFontRatio(int argc, char** argv)
 {
 	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
-	constFontRatio = atof(argv[0]);
-	if (constFontRatio <= 0.0) { error("Invalid font ratio!", "argParser.c", __LINE__); }
+	settings.constFontRatio = atof(argv[0]);
+	if (settings.constFontRatio <= 0.0) { error("Invalid font ratio!", "argParser.c", __LINE__); }
 	return 1;
 }
 
@@ -407,29 +427,56 @@ static int opSync(int argc, char** argv)
 	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
 
 	strToLower(argv[0]);
-	if (!strcmp(argv[0], "disabled")) { syncMode = SM_DISABLED; }
-	else if (!strcmp(argv[0], "draw-all")) { syncMode = SM_DRAW_ALL; }
-	else if (!strcmp(argv[0], "enabled")) { syncMode = SM_ENABLED; }
+	if (!strcmp(argv[0], "disabled")) { settings.syncMode = SM_DISABLED; }
+	else if (!strcmp(argv[0], "draw-all")) { settings.syncMode = SM_DRAW_ALL; }
+	else if (!strcmp(argv[0], "enabled")) { settings.syncMode = SM_ENABLED; }
 	else { error("Invalid synchronization mode!", "argParser.c", __LINE__); }
 
 	return 1;
 }
 
+static int opVideoFilters(int argc, char** argv)
+{
+	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
+	settings.videoFilters = argv[0];
+	return 1;
+}
+
+static int opScaledVideoFilters(int argc, char** argv)
+{
+	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
+	settings.scaledVideoFilters = argv[0];
+	return 1;
+}
+
+static int opAudioFilters(int argc, char** argv)
+{
+	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
+	settings.audioFilters = argv[0];
+	return 1;
+}
+
 static int opDisableCLS(int argc, char** argv)
 {
-	disableCLS = 1;
+	settings.disableCLS = true;
 	return 0;
 }
 
 static int opDisableAudio(int argc, char** argv)
 {
-	disableAudio = 1;
+	settings.disableAudio = true;
 	return 0;
 }
 
 static int opDisableKeys(int argc, char** argv)
 {
-	disableKeyboard = 1;
+	settings.disableKeyboard = true;
+	return 0;
+}
+
+static int opLibavLogs(int argc, char** argv)
+{
+	settings.libavLogs = true;
 	return 0;
 }
 
