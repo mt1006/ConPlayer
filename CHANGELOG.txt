@@ -1,3 +1,13 @@
+-Added "--color-proc" option with 3 modes: "both" (default), "char-only" and "none".
+-Added "--preload" option.
+-Added "--fake-console" option.
+-Added "--opengl-settings" option.
+-Removed "--single-char" option (replaced with "--color-proc none").
+-You can now provide two filenames or stream URLs as input, one for video and one for audio.
+-Putting "$" before link as the "--input" argument now extracts stream URLs with yt-dlp.
+-Input errors are now more descriptive.
+-Changes to "--help" option parameters.
+
 ===Version 1.4===
 -Added options to apply FFmpeg filters - "--video-filters", "--scaled-video-filters", "--audio-filters".
 -Added "--scaling-mode" option.

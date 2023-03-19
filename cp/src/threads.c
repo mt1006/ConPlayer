@@ -8,10 +8,10 @@ typedef struct
 } ConsoleFrame;
 
 const int SLEEP_ON_FREEZE = 4;
-bool freezeThreads = false;
-bool mainFreezed = false;
-bool procFreezed = false;
-bool drawFreezed = false;
+volatile bool freezeThreads = false;
+volatile bool mainFreezed = false;
+volatile bool procFreezed = false;
+volatile bool drawFreezed = false;
 
 static const double TIME_TO_RESET_TIMER = 0.5;
 
@@ -23,9 +23,9 @@ static ThreadIDType keyboardThreadID = 0;
 static double startTime;
 static int frameCounter;
 static int64_t drawFrameTime = 0;
-static bool paused = false;
-static ConsoleFrame consoleFrame;
-static bool waitingForFrame = false;
+static volatile bool paused = false;
+static volatile ConsoleFrame consoleFrame;
+static volatile bool waitingForFrame = false;
 
 static ThreadRetType CP_CALL_CONV procThread(void* ptr);
 static ThreadRetType CP_CALL_CONV drawThread(void* ptr);
@@ -94,7 +94,7 @@ static ThreadRetType CP_CALL_CONV drawThread(void* ptr)
 			{
 				drawFrameTime = frame->time;
 				drawFrame(frame->output, frame->outputLineOffsets,
-					frame->frameW, frame->frameH);
+					frame->w, frame->h);
 			}
 		}
 		else
@@ -118,25 +118,25 @@ static ThreadRetType CP_CALL_CONV drawThread(void* ptr)
 				if (settings.syncMode == SM_DRAW_ALL)
 				{
 					drawFrame(frame->output, frame->outputLineOffsets,
-						frame->frameW, frame->frameH);
+						frame->w, frame->h);
 				}
 				else
 				{
 					if (waitingForFrame)
 					{
-						int outputArraySize = (int)getOutputArraySize(frame->frameW, frame->frameH);
-						int lineOffsetsArraySize = (frame->frameH + 1) * sizeof(int);
+						int outputArraySize = (int)getOutputArraySize(frame->w, frame->h);
+						int lineOffsetsArraySize = (frame->h + 1) * sizeof(int);
 
-						if (frame->frameW != consoleFrame.w ||
-							frame->frameH != consoleFrame.h)
+						if (frame->w != consoleFrame.w ||
+							frame->h != consoleFrame.h)
 						{
 							if (consoleFrame.output) { free(consoleFrame.output); }
 							if (consoleFrame.outputLineOffsets) { free(consoleFrame.outputLineOffsets); }
 
 							consoleFrame.output = malloc(outputArraySize);
 							consoleFrame.outputLineOffsets = (int*)malloc(lineOffsetsArraySize);
-							consoleFrame.w = frame->frameW;
-							consoleFrame.h = frame->frameH;
+							consoleFrame.w = frame->w;
+							consoleFrame.h = frame->h;
 						}
 
 						memcpy(consoleFrame.output, frame->output, outputArraySize);
@@ -175,7 +175,6 @@ static ThreadRetType CP_CALL_CONV consoleThread(void* ptr)
 static ThreadRetType CP_CALL_CONV audioThread(void* ptr)
 {
 	audioLoop();
-
 	CP_END_THREAD
 }
 
@@ -192,7 +191,7 @@ static ThreadRetType CP_CALL_CONV keyboardThread(void* ptr)
 	double keyTime = 0.0;
 	double mutedVolume = 0.0;
 
-	while (1)
+	while (true)
 	{
 		unsigned char key = _getch();
 
@@ -264,8 +263,8 @@ static void seek(int64_t timestamp)
 	initQueue();
 	avSeek(timestamp);
 
-	freezeThreads = 0;
-	mainFreezed = 0;
-	procFreezed = 0;
-	drawFreezed = 0;
+	freezeThreads = false;
+	mainFreezed = false;
+	procFreezed = false;
+	drawFreezed = false;
 }

@@ -148,6 +148,7 @@ static void initFilters(const char* args, char* srcFilterName, const char* sinkF
 	inputs->filter_ctx = *buffersink;
 	inputs->pad_idx = 0;
 	inputs->next = NULL;
+	//(*buffersink)->outputs[0]
 
 	if (avfilter_graph_parse_ptr(*filterGraph,
 		filters, &inputs, &outputs, NULL) < 0 ||

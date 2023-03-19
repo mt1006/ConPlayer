@@ -2,14 +2,14 @@
 
 typedef struct 
 {
-	int conW;
-	int conH;
+	int w;
+	int h;
 	double fontRatio;
 } ConsoleInfo;
 
 HANDLE outputHandle = NULL;
 
-static void drawWithWinAPI(CHAR_INFO* output, int fw, int fh);
+static void drawWithWinAPI(CHAR_INFO* output, int w, int h);
 static void getConsoleInfo(ConsoleInfo* consoleInfo);
 static void setConstColor(void);
 
@@ -18,6 +18,8 @@ void initDrawFrame(void)
 	if (vidW == -1 || vidH == -1) { return; }
 
 	#ifdef _WIN32
+	if (settings.useFakeConsole) { SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE); }
+
 	getConsoleWindow();
 	outputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -27,35 +29,33 @@ void initDrawFrame(void)
 		settings.setColorMode == SCM_CSTD_256 ||
 		settings.setColorMode == SCM_CSTD_RGB)
 	{
-		DWORD mode;
-		GetConsoleMode(outputHandle, &mode);
-		mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-		SetConsoleMode(outputHandle, mode);
-		ansiEnabled = true;
+		enableANSI();
 	}
 	#endif
 
+	if (settings.useFakeConsole) { refreshFont(); }
 	refreshSize();
 }
 
 void refreshSize(void)
 {
-	static int firstCall = 1;
-	static int setNewSize = 0;
-	static int lastW = 0, lastH = 0;
+	static bool firstCall = true;
+	static bool setNewSize = false;
+	static int oldW = 0, oldH = 0;
 	static double fontRatio = 0.0;
+	static ConsoleInfo oldConsoleInfo = { -1,-1,-1.0 };
 
 	ConsoleInfo consoleInfo;
 	getConsoleInfo(&consoleInfo);
 
-	int newW = lastW, newH = lastH;
+	int newW = oldW, newH = oldH;
 
 	if (settings.argW != -1 && settings.argH != -1)
 	{
 		if (settings.argW == 0 && settings.argH == 0)
 		{
-			settings.argW = consoleInfo.conW;
-			settings.argH = consoleInfo.conH;
+			settings.argW = consoleInfo.w;
+			settings.argH = consoleInfo.h;
 		}
 
 		if (settings.fillArea)
@@ -90,77 +90,84 @@ void refreshSize(void)
 	{
 		if (settings.fillArea)
 		{
-			if (conW != consoleInfo.conW || conH != consoleInfo.conH)
+			if (consoleInfo.w != oldConsoleInfo.w ||
+				consoleInfo.h != oldConsoleInfo.h)
 			{
-				conW = consoleInfo.conW;
-				conH = consoleInfo.conH;
-				newW = consoleInfo.conW;
-				newH = consoleInfo.conH;
+				newW = consoleInfo.w;
+				newH = consoleInfo.h;
 			}
 		}
-		else if (conW != consoleInfo.conW || conH != consoleInfo.conH ||
+		else if (consoleInfo.w != oldConsoleInfo.w ||
+			consoleInfo.h != oldConsoleInfo.h ||
 			fontRatio != consoleInfo.fontRatio)
-		{
-			conW = consoleInfo.conW;
-			conH = consoleInfo.conH;
-			
+		{	
 			if (settings.constFontRatio == 0.0) { fontRatio = consoleInfo.fontRatio; }
 			else { fontRatio = settings.constFontRatio; }
 
 			double vidRatio = (double)vidW / (double)vidH;
-			double conRatio = ((double)conW / (double)conH) * fontRatio;
+			double conRatio = ((double)consoleInfo.w / (double)consoleInfo.h) * fontRatio;
+
 			if (vidRatio > conRatio)
 			{
-				newW = conW;
-				newH = (int)((conRatio / vidRatio) * conH);
+				newW = consoleInfo.w;
+				newH = (int)((conRatio / vidRatio) * consoleInfo.h);
 			}
 			else
 			{
-				newW = (int)((vidRatio / conRatio) * conW);
-				newH = conH;
+				newW = (int)((vidRatio / conRatio) * consoleInfo.w);
+				newH = consoleInfo.h;
 			}
 		}
 	}
 
 	if (firstCall)
 	{
-		w = newW;
-		h = newH;
-		lastW = w;
-		lastH = h;
-		firstCall = 0;
+		conW = newW;
+		conH = newH;
+		oldW = conW;
+		oldH = conH;
+		firstCall = false;
 	}
 	else
 	{
-		if (newW != lastW || newH != lastH)
+		if (newW != oldW || newH != oldH)
 		{
-			lastW = newW;
-			lastH = newH;
-			setNewSize = 1;
+			oldW = newW;
+			oldH = newH;
+			setNewSize = true;
 		}
 		else if (setNewSize)
 		{
-			w = newW;
-			h = newH;
-			setNewSize = 0;
+			conW = newW;
+			conH = newH;
+			setNewSize = true;
 		}
 	}
+
+	oldConsoleInfo = consoleInfo;
 }
 
-void drawFrame(void* output, int* lineOffsets, int fw, int fh)
+void drawFrame(void* output, int* lineOffsets, int w, int h)
 {
 	static int scanline = 0;
-	static int lastFW = 0, lastFH = 0;
-	if ((lastFW != fw || lastFH != fh) && !settings.disableCLS)
+	static int lastW = -1, lastH = -1;
+
+	if (settings.useFakeConsole)
 	{
-		lastFW = fw;
-		lastFH = fh;
+		drawWithOpenGL((GlConsoleChar*)output, w, h);
+		return;
+	}
+
+	if ((lastW != w || lastH != h) && !settings.disableCLS)
+	{
+		lastW = w;
+		lastH = h;
 		clearScreen();
 	}
 
 	if (settings.colorMode == CM_WINAPI_GRAY || settings.colorMode == CM_WINAPI_16)
 	{
-		drawWithWinAPI((CHAR_INFO*)output, fw, fh);
+		drawWithWinAPI((CHAR_INFO*)output, w, h);
 		return;
 	}
 
@@ -169,16 +176,16 @@ void drawFrame(void* output, int* lineOffsets, int fw, int fh)
 	if (settings.scanlineCount == 1)
 	{
 		if (!settings.disableCLS) { setCursorPos(0, 0); }
-		fwrite((char*)output, 1, lineOffsets[fh], stdout);
+		fwrite((char*)output, 1, lineOffsets[h], stdout);
 	}
 	else
 	{
-		for (int i = 0; i < fh; i += settings.scanlineCount * settings.scanlineHeight)
+		for (int i = 0; i < h; i += settings.scanlineCount * settings.scanlineHeight)
 		{
 			int sy = i + (scanline * settings.scanlineHeight);
 			int sh = settings.scanlineHeight;
-			if (sy >= fh) { break; }
-			else if (sy + sh > fh) { sh = fh - sy; }
+			if (sy >= h) { break; }
+			else if (sy + sh > h) { sh = h - sy; }
 
 			if (!settings.disableCLS) { setCursorPos(0, sy); }
 			fwrite((char*)output + lineOffsets[sy], 1, lineOffsets[sy + sh] - lineOffsets[sy], stdout);
@@ -189,36 +196,38 @@ void drawFrame(void* output, int* lineOffsets, int fw, int fh)
 	}
 }
 
-static void drawWithWinAPI(CHAR_INFO* output, int fw, int fh)
+static void drawWithWinAPI(CHAR_INFO* output, int w, int h)
 {
 	#ifdef _WIN32
+
 	static int scanline = 0;
 
 	if (settings.scanlineCount == 1)
 	{
-		COORD charBufSize = { fw,fh };
+		COORD charBufSize = { w,h };
 		COORD startCharPos = { 0,0 };
-		SMALL_RECT writeRect = { 0,0,fw,fh };
+		SMALL_RECT writeRect = { 0,0,w,h };
 		WriteConsoleOutputA(outputHandle, output, charBufSize, startCharPos, &writeRect);
 	}
 	else
 	{
-		for (int i = 0; i < fh; i += settings.scanlineCount * settings.scanlineHeight)
+		for (int i = 0; i < h; i += settings.scanlineCount * settings.scanlineHeight)
 		{
 			int sy = i + (scanline * settings.scanlineHeight);
 			int sh = settings.scanlineHeight;
-			if (sy >= fh) { break; }
-			else if (sy + sh > fh) { sh = fh - sy; }
+			if (sy >= h) { break; }
+			else if (sy + sh > h) { sh = h - sy; }
 
-			COORD charBufSize = { fw,fh };
+			COORD charBufSize = { w,h };
 			COORD startCharPos = { 0,sy };
-			SMALL_RECT writeRect = { 0,sy,fw,sy + sh };
+			SMALL_RECT writeRect = { 0,sy,w,sy + sh };
 			WriteConsoleOutputA(outputHandle, output, charBufSize, startCharPos, &writeRect);
 		}
 
 		scanline++;
 		if (scanline == settings.scanlineCount) { scanline = 0; }
 	}
+
 	#endif
 }
 
@@ -226,68 +235,82 @@ static void getConsoleInfo(ConsoleInfo* consoleInfo)
 {
 	const double DEFAULT_FONT_RATIO = 8.0 / 18.0;
 
-	int fullConW, fullConH;
+	int fullW, fullH;
 	double fontRatio;
 
 	#ifdef _WIN32
 
-	CONSOLE_SCREEN_BUFFER_INFOEX consoleBufferInfo;
-	consoleBufferInfo.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
-	GetConsoleScreenBufferInfoEx(outputHandle, &consoleBufferInfo);
-
-	fullConW = consoleBufferInfo.srWindow.Right - consoleBufferInfo.srWindow.Left + 1;
-	fullConH = consoleBufferInfo.srWindow.Bottom - consoleBufferInfo.srWindow.Top + 1;
-
-	RECT clientRect = { 0 };
-	GetClientRect(conHWND, &clientRect);
-
-	if (clientRect.bottom == 0 || fullConW == 0 || fullConH == 0)
+	if (settings.useFakeConsole)
 	{
-		CONSOLE_FONT_INFOEX consoleFontInfo;
-		consoleFontInfo.cbSize = sizeof(CONSOLE_FONT_INFOEX);
-		GetCurrentConsoleFontEx(outputHandle, FALSE, &consoleFontInfo);
+		while (volGlCharW == 0.0f) { Sleep(0); }
 
-		if (consoleFontInfo.dwFontSize.X == 0 ||
-			consoleFontInfo.dwFontSize.Y == 0)
-		{
-			fontRatio = DEFAULT_FONT_RATIO;
-		}
-		else
-		{
-			fontRatio = (double)consoleFontInfo.dwFontSize.X /
-				(double)consoleFontInfo.dwFontSize.Y;
-		}
+		RECT clientRect = { 0 };
+		GetClientRect(conHWND, &clientRect);
+
+		fullW = (int)round((double)clientRect.right / (double)volGlCharW);
+		fullH = (int)round((double)clientRect.bottom / (double)volGlCharH);
+		fontRatio = (double)volGlCharW / (double)volGlCharH;
 	}
 	else
 	{
-		if (wtDragBarHWND && IsWindowVisible(wtDragBarHWND))
-		{
-			RECT wtDragBarRect;
-			GetClientRect(wtDragBarHWND, &wtDragBarRect);
-			clientRect.bottom -= wtDragBarRect.bottom;
-		}
+		CONSOLE_SCREEN_BUFFER_INFOEX consoleBufferInfo;
+		consoleBufferInfo.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
+		GetConsoleScreenBufferInfoEx(outputHandle, &consoleBufferInfo);
 
-		fontRatio = ((double)clientRect.right / (double)fullConW) /
-			((double)clientRect.bottom / (double)fullConH);
+		fullW = consoleBufferInfo.srWindow.Right - consoleBufferInfo.srWindow.Left + 1;
+		fullH = consoleBufferInfo.srWindow.Bottom - consoleBufferInfo.srWindow.Top + 1;
+
+		RECT clientRect = { 0 };
+		GetClientRect(conHWND, &clientRect);
+
+		if (clientRect.bottom == 0 || fullW == 0 || fullH == 0)
+		{
+			CONSOLE_FONT_INFOEX consoleFontInfo;
+			consoleFontInfo.cbSize = sizeof(CONSOLE_FONT_INFOEX);
+			GetCurrentConsoleFontEx(outputHandle, FALSE, &consoleFontInfo);
+
+			if (consoleFontInfo.dwFontSize.X == 0 ||
+				consoleFontInfo.dwFontSize.Y == 0)
+			{
+				fontRatio = DEFAULT_FONT_RATIO;
+			}
+			else
+			{
+				fontRatio = (double)consoleFontInfo.dwFontSize.X /
+					(double)consoleFontInfo.dwFontSize.Y;
+			}
+		}
+		else
+		{
+			if (wtDragBarHWND && IsWindowVisible(wtDragBarHWND))
+			{
+				RECT wtDragBarRect;
+				GetClientRect(wtDragBarHWND, &wtDragBarRect);
+				clientRect.bottom -= wtDragBarRect.bottom;
+			}
+
+			fontRatio = ((double)clientRect.right / (double)fullW) /
+				((double)clientRect.bottom / (double)fullH);
+		}
 	}
 
 	#else
 
 	struct winsize winSize;
 	ioctl(0, TIOCGWINSZ, &winSize);
-	fullConW = winSize.ws_col;
-	fullConH = winSize.ws_row;
+	fullW = winSize.ws_col;
+	fullH = winSize.ws_row;
 	fontRatio = DEFAULT_FONT_RATIO;
 
 	#endif
 
-	if (fullConW < 4) { fullConW = 4; }
-	if (fullConH < 4) { fullConH = 4; }
+	if (fullW < 4) { fullW = 4; }
+	if (fullH < 4) { fullH = 4; }
 
-	if (settings.colorMode != CM_WINAPI_GRAY && settings.colorMode != CM_WINAPI_16) { fullConW--; }
+	if (settings.colorMode != CM_WINAPI_GRAY && settings.colorMode != CM_WINAPI_16) { fullW--; }
 
-	consoleInfo->conW = fullConW;
-	consoleInfo->conH = fullConH;
+	consoleInfo->w = fullW;
+	consoleInfo->h = fullH;
 	consoleInfo->fontRatio = fontRatio;
 }
 

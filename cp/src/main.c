@@ -3,7 +3,6 @@
 const int QUEUE_SIZE = 64;
 
 HWND conHWND = NULL, wtDragBarHWND = NULL;
-int w = -1, h = -1;
 int conW = -1, conH = -1;
 int vidW = -1, vidH = -1;
 double fps = 0.0;
@@ -24,27 +23,29 @@ Settings settings =
 	.constFontRatio = 0.0,
 	.brightnessRand = 0,
 	.scalingMode = SWS_BICUBIC,
+	.colorProcMode = CPM_BOTH,
 	.syncMode = SM_ENABLED,
 	.videoFilters = NULL,
 	.scaledVideoFilters = NULL,
 	.audioFilters = NULL,
+	.preload = false, // TODO: add to help
+	.useFakeConsole = false,
 	.disableKeyboard = false,
 	.disableCLS = false,
 	.disableAudio = false,
-	.singleCharMode = false,
 	.libavLogs = false
 };
 
-void load(char* inputFile)
+void load()
 {
 	if (settings.libavLogs) { av_log_set_level(AV_LOG_VERBOSE); }
 	else { av_log_set_level(AV_LOG_QUIET); }
-
 	Stream* audioStream;
 
 	puts("Loading...");
 
-	initDecodeFrame(inputFile, &audioStream);
+	if (settings.useFakeConsole) { initOpenGlConsole(); }
+	initDecodeFrame(inputFile, secondInputFile, &audioStream);
 	initDrawFrame();
 	initQueue();
 	if (!settings.disableAudio) { initAudio(audioStream); }
@@ -65,8 +66,8 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	char* inputFile = argumentParser(argc - 1, argv + 1);
-	if (inputFile) { load(inputFile); }
+	argumentParser(argc - 1, argv + 1);
+	if (inputFile) { load(); }
 
 	cpExit(0);
 	return 0;

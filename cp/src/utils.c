@@ -4,9 +4,6 @@
 #define CP_MAX_NEW_TITLE_LEN 128
 #define CP_WAIT_FOR_SET_TITLE 100
 
-//drawFrame.c
-extern HANDLE outputHandle;
-
 double getTime(void)
 {
 	#ifdef _WIN32
@@ -139,25 +136,43 @@ void setCursorPos(int x, int y)
 	#endif
 }
 
-size_t getOutputArraySize(int frameW, int frameH)
+void enableANSI(void)
+{
+	#ifdef _WIN32
+
+	DWORD mode;
+	GetConsoleMode(outputHandle, &mode);
+	mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+	SetConsoleMode(outputHandle, mode);
+	ansiEnabled = true;
+
+	#endif
+}
+
+size_t getOutputArraySize(int w, int h)
 {
 	const int CSTD_16_CODE_LEN = 6;   // "\x1B[??m?"
 	const int CSTD_256_CODE_LEN = 12; // "\x1B[38;5;???m?"
 	const int CSTD_RGB_CODE_LEN = 20; // "\x1B[38;2;???;???;???m?"
 
+	if (settings.useFakeConsole)
+	{
+		return w * h * sizeof(GlConsoleChar);
+	}
+
 	switch (settings.colorMode)
 	{
 	case CM_CSTD_GRAY:
-		return (frameW + 1) * frameH * sizeof(char);
+		return (w + 1) * h * sizeof(char);
 	case CM_CSTD_16:
-		return ((frameW * frameH * CSTD_16_CODE_LEN) + frameH) * sizeof(char);
+		return ((w * h * CSTD_16_CODE_LEN) + h) * sizeof(char);
 	case CM_CSTD_256:
-		return ((frameW * frameH * CSTD_256_CODE_LEN) + frameH) * sizeof(char);
+		return ((w * h * CSTD_256_CODE_LEN) + h) * sizeof(char);
 	case CM_CSTD_RGB:
-		return ((frameW * frameH * CSTD_RGB_CODE_LEN) + frameH) * sizeof(char);
+		return ((w * h * CSTD_RGB_CODE_LEN) + h) * sizeof(char);
 	case CM_WINAPI_GRAY:
 	case CM_WINAPI_16:
-		return frameW * frameH * sizeof(CHAR_INFO);
+		return w * h * sizeof(CHAR_INFO);
 	}
 }
 
@@ -185,7 +200,6 @@ int getWindowsArgv(char*** pargv)
 {
 	int argc;
 	wchar_t** argvw = CommandLineToArgvW(GetCommandLineW(), &argc);
-
 	char** argv = (char**)malloc(argc * sizeof(char*));
 
 	for (int i = 0; i < argc; i++)
@@ -201,6 +215,29 @@ int getWindowsArgv(char*** pargv)
 }
 
 #else
+
+FILE* _popen(const char* command, const char* type)
+{
+	return popen(command, type);
+}
+
+int _pclose(FILE* stream)
+{
+	return pclose(stream);
+}
+
+int _getch(void)
+{
+	static bool firstCall = true;
+
+	if (firstCall)
+	{
+		setTermios(false);
+		firstCall = false;
+	}
+
+	return getchar();
+}
 
 //https://stackoverflow.com/a/7469410/18214530
 void setTermios(bool deinit)
@@ -220,24 +257,10 @@ void setTermios(bool deinit)
 		tcgetattr(0, &old);
 		current = old;
 		current.c_lflag &= ~ICANON;
-		//current.c_lflag &= ~ECHO;
 		tcsetattr(0, TCSANOW, &current);
 
 		termiosInitialized = 1;
 	}
-}
-
-int _getch(void)
-{
-	static bool firstCall = true;
-	
-	if (firstCall)
-	{
-		setTermios(false);
-		firstCall = false;
-	}
-
-	return getchar();
 }
 
 void Sleep(DWORD ms)

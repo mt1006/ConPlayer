@@ -5,6 +5,9 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="src\gl">
+      <UniqueIdentifier>{12db2855-2db4-4803-99aa-e2bae6e38135}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\audio.c">
@@ -28,9 +31,6 @@
     <ClCompile Include="src\threads.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils.c">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\processFrame.c">
       <Filter>src</Filter>
     </ClCompile>
@@ -39,6 +39,18 @@
     </ClCompile>
     <ClCompile Include="src\avFilters.c">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gl\glConsole.c">
+      <Filter>src\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gl\glShaders.c">
+      <Filter>src\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gl\glOptions.c">
+      <Filter>src\gl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

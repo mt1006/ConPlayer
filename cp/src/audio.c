@@ -26,29 +26,29 @@ static const int SAMPLE_RATE = 48000;
 
 #endif
 
-static ao_sample_format aoSampleFormat;
-static ao_device* aoDevice = NULL;
-
-static int initialized = 0;
-static int libInitialized = 0;
+static bool initialized = 0;
 static SwrContext* resampleContext = NULL;
 
 static const int AUDIO_QUEUE_SIZE = 128;
-static AudioQueue audioQueue;
+static volatile AudioQueue audioQueue;
+
+static ao_sample_format aoSampleFormat;
+static ao_device* aoDevice = NULL;
 
 static bool initAudioLib(void);
 
 void initAudio(Stream* avAudioStream)
 {
+	if (!avAudioStream) { return; }
 	if (!initAudioLib()) { return; }
 
 	resampleContext = swr_alloc_set_opts(NULL,
-		av_get_default_channel_layout(CHANNELS),                              //out_channel_layout
-		SAMPLE_FORMAT_AV,                                                     //out_sample_fmt
-		SAMPLE_RATE,                                                          //out_sample_rate
-		av_get_default_channel_layout(avAudioStream->codecContext->channels), //in_channel_layout
-		avAudioStream->codecContext->sample_fmt,                              //in_sample_fmt
-		avAudioStream->codecContext->sample_rate,                             //in_sample_rate
+		av_get_default_channel_layout(CHANNELS),                               //out_channel_layout
+		SAMPLE_FORMAT_AV,                                                      //out_sample_fmt
+		SAMPLE_RATE,                                                           //out_sample_rate
+		av_get_default_channel_layout(avAudioStream->codecContext->channels),  //in_channel_layout
+		avAudioStream->codecContext->sample_fmt,                               //in_sample_fmt
+		avAudioStream->codecContext->sample_rate,                              //in_sample_rate
 		0, NULL);
 	int swrRetVal = swr_init(resampleContext);
 	if (swrRetVal < 0) { return; }
@@ -59,7 +59,7 @@ void initAudio(Stream* avAudioStream)
 	audioQueue.audioSamplesNum = (int*)malloc(AUDIO_QUEUE_SIZE * sizeof(int));
 	audioQueue.audioFramesSize = (int*)calloc(AUDIO_QUEUE_SIZE, sizeof(int));
 
-	initialized = 1;
+	initialized = true;
 }
 
 void addAudioFrame(AVFrame* frame)
@@ -90,8 +90,9 @@ void addAudioFrame(AVFrame* frame)
 void audioLoop(void)
 {
 	const int TIME_TO_SLEEP = 8;
+	if (!initialized) { return; }
 
-	while (1)
+	while (true)
 	{
 		if (audioQueue.front != audioQueue.back)
 		{

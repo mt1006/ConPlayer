@@ -36,7 +36,7 @@ Demonstration: https://www.youtube.com/watch?v=nbUKhalJATk
                      Examples:
                       conpl video.mp4
  -c [mode]           Sets color mode. By default "cstd-256".
-  (--colors)         To get list of all avaible color modes use "conpl -h color-modes".
+  (--colors)         To get list of all available color modes use "conpl -h color-modes".
                      Examples:
                       conpl video.mp4 -c winapi-16
  -vol [volume]       Sets audio volume. By default "0.5".
@@ -95,7 +95,7 @@ Demonstration: https://www.youtube.com/watch?v=nbUKhalJATk
                       conpl video.mp4 -r @40
                       conpl video.mp4 -c cstd-rgb -sch -r 56
  -sm [mode]          Sets scaling mode. Default scaling mode is "bicubic".
-  (--scaling-mode)   To get list of all avaible scaling modes use "conpl -h scaling-modes".
+  (--scaling-mode)   To get list of all available scaling modes use "conpl -h scaling-modes".
                      Examples:
                       conpl video.mp4 -sm nearest
  -fr [ratio]         Sets constant font ratio (x/y).

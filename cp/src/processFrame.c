@@ -9,14 +9,23 @@ static const uint8_t CMD_COLORS_16[16][3] =
 	{231,72,86},{180,0,158},{249,241,165},{242,242,242}
 };
 
+static void processImage(Frame* frame, int x, int y, int w, int h, uint8_t* output, int* outputLineOffsets);
 static void processForWinAPI(Frame* frame);
+static void processForGlConsole(Frame* frame);
 static uint8_t procColor(uint8_t* r, uint8_t* g, uint8_t* b);
 static void procRand(uint8_t* val);
 static uint8_t findNearestColor16(uint8_t r, uint8_t g, uint8_t b);
 static uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b);
+static void rgbFromAnsi256(uint8_t ansi, uint8_t* r, uint8_t* g, uint8_t* b);
 
 void processFrame(Frame* frame)
 {
+	if (settings.useFakeConsole)
+	{
+		processForGlConsole(frame);
+		return;
+	}
+
 	if (settings.colorMode == CM_WINAPI_GRAY ||
 		settings.colorMode == CM_WINAPI_16)
 	{
@@ -24,30 +33,37 @@ void processFrame(Frame* frame)
 		return;
 	}
 
-	uint8_t* output = (uint8_t*)frame->output;
+	processImage(frame, 0, 0, frame->w, frame->h,
+		(uint8_t*)frame->output, frame->outputLineOffsets);
+}
 
+static void processImage(Frame* frame, int x, int y, int w, int h, uint8_t* output, int* outputLineOffsets)
+{
 	if (settings.colorMode == CM_CSTD_16 ||
 		settings.colorMode == CM_CSTD_256 ||
 		settings.colorMode == CM_CSTD_RGB)
 	{
-		frame->outputLineOffsets[0] = 0;
-		for (int i = 0; i < frame->frameH; i++)
+		outputLineOffsets[0] = 0;
+		int yPos = y;
+
+		for (int i = 0; i < h; i++)
 		{
 			uint8_t oldColor = -1;
 			uint8_t oldR = -1, oldG = -1, oldB = -1;
 			int isFirstChar = 1;
 
-			int offset = frame->outputLineOffsets[i];
+			int offset = outputLineOffsets[i];
+			int xPos = x;
 
-			for (int j = 0; j < frame->frameW; j++)
+			for (int j = 0; j < w; j++)
 			{
-				uint8_t valR = frame->videoFrame[(j * 3) + (i * frame->videoLinesize)];
-				uint8_t valG = frame->videoFrame[(j * 3) + (i * frame->videoLinesize) + 1];
-				uint8_t valB = frame->videoFrame[(j * 3) + (i * frame->videoLinesize) + 2];
+				uint8_t valR = frame->videoFrame[(xPos * 3) + (yPos * frame->videoLinesize)];
+				uint8_t valG = frame->videoFrame[(xPos * 3) + (yPos * frame->videoLinesize) + 1];
+				uint8_t valB = frame->videoFrame[(xPos * 3) + (yPos * frame->videoLinesize) + 2];
 
 				uint8_t val, color;
 
-				if (settings.singleCharMode) { val = 255; }
+				if (settings.colorProcMode == CPM_NONE) { val = 255; }
 				else { val = procColor(&valR, &valG, &valB); }
 
 				if (settings.brightnessRand) { procRand(&val); }
@@ -142,38 +158,47 @@ void processFrame(Frame* frame)
 				}
 
 				isFirstChar = 0;
+				xPos++;
 			}
 
 			output[offset] = '\n';
-			frame->outputLineOffsets[i + 1] = offset + 1;
+			outputLineOffsets[i + 1] = offset + 1;
+			yPos++;
 		}
 
 		if (!settings.disableCLS)
 		{
-			output[frame->outputLineOffsets[frame->frameH] - 1] = '\0';
-			frame->outputLineOffsets[frame->frameH]--;
+			output[outputLineOffsets[h] - 1] = '\0';
+			outputLineOffsets[h]--;
 		}
 	}
 	else
 	{
-		int fullW = frame->frameW + 1;
-		frame->outputLineOffsets[0] = 0;
-		for (int i = 0; i < frame->frameH; i++)
+		int fullW = w + 1;
+		outputLineOffsets[0] = 0;
+		int yPos = y;
+
+		for (int i = 0; i < h; i++)
 		{
-			for (int j = 0; j < frame->frameW; j++)
+			int xPos = x;
+
+			for (int j = 0; j < w; j++)
 			{
-				uint8_t val = frame->videoFrame[(i * frame->videoLinesize) + j];
+				uint8_t val = frame->videoFrame[(yPos * frame->videoLinesize) + xPos];
 				if (settings.brightnessRand) { procRand(&val); }
 				output[(i * fullW) + j] = settings.charset[(val * settings.charsetSize) / 256];
+				xPos++;
 			}
-			output[(i * fullW) + frame->frameW] = '\n';
-			frame->outputLineOffsets[i + 1] = ((i + 1) * fullW);
+
+			output[(i * fullW) + w] = '\n';
+			outputLineOffsets[i + 1] = ((i + 1) * fullW);
+			yPos++;
 		}
 
 		if (!settings.disableCLS)
 		{
-			output[((frame->frameH - 1) * fullW) + frame->frameW] = '\0';
-			frame->outputLineOffsets[frame->frameH]--;
+			output[((h - 1) * fullW) + w] = '\0';
+			outputLineOffsets[h]--;
 		}
 	}
 }
@@ -181,12 +206,16 @@ void processFrame(Frame* frame)
 static void processForWinAPI(Frame* frame)
 {
 	#ifdef _WIN32
+
 	CHAR_INFO* output = (CHAR_INFO*)frame->output;
+	int w = frame->w;
+	int h = frame->h;
+
 	if (settings.colorMode == CM_WINAPI_16)
 	{
-		for (int i = 0; i < frame->frameH; i++)
+		for (int i = 0; i < h; i++)
 		{
-			for (int j = 0; j < frame->frameW; j++)
+			for (int j = 0; j < w; j++)
 			{
 				uint8_t valR = frame->videoFrame[(j * 3) + (i * frame->videoLinesize)];
 				uint8_t valG = frame->videoFrame[(j * 3) + (i * frame->videoLinesize) + 1];
@@ -194,62 +223,120 @@ static void processForWinAPI(Frame* frame)
 
 				uint8_t val;
 				
-				if (settings.singleCharMode) { val = 255; }
+				if (settings.colorProcMode == CPM_NONE) { val = 255; }
 				else { val = procColor(&valR, &valG, &valB); }
 
 				if (settings.brightnessRand) { procRand(&val); }
 
-				output[(i * frame->frameW) + j].Char.AsciiChar = settings.charset[(val * settings.charsetSize) / 256];
-				output[(i * frame->frameW) + j].Attributes = findNearestColor16(valR, valG, valB);
+				output[(i * w) + j].Char.AsciiChar = settings.charset[(val * settings.charsetSize) / 256];
+				output[(i * w) + j].Attributes = findNearestColor16(valR, valG, valB);
 			}
 		}
 	}
 	else
 	{
-		for (int i = 0; i < frame->frameH; i++)
+		for (int i = 0; i < h; i++)
 		{
-			for (int j = 0; j < frame->frameW; j++)
+			for (int j = 0; j < w; j++)
 			{
 				uint8_t val = frame->videoFrame[j + i * frame->videoLinesize];
 				if (settings.brightnessRand) { procRand(&val); }
-				output[(i * frame->frameW) + j].Char.AsciiChar = settings.charset[(val * settings.charsetSize) / 256];
+				output[(i * w) + j].Char.AsciiChar = settings.charset[(val * settings.charsetSize) / 256];
 				
 				if (settings.setColorMode == SCM_WINAPI)
 				{
-					output[(i * frame->frameW) + j].Attributes = settings.setColorVal1;
+					output[(i * w) + j].Attributes = settings.setColorVal1;
 				}
 				else
 				{
-					output[(i * frame->frameW) + j].Attributes =
+					output[(i * w) + j].Attributes =
 						FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
 				}
 			}
 		}
 	}
+
 	#endif
+}
+
+static void processForGlConsole(Frame* frame)
+{
+	GlConsoleChar* output = (GlConsoleChar*)frame->output;
+	int w = frame->w;
+	int h = frame->h;
+
+	for (int i = 0; i < h; i++)
+	{
+		for (int j = 0; j < w; j++)
+		{
+			uint8_t val, valR, valG, valB;
+
+			if (settings.colorMode == CM_WINAPI_GRAY || settings.colorMode == CM_CSTD_GRAY)
+			{
+				val = frame->videoFrame[(i * frame->videoLinesize) + j];
+				valR = CMD_COLORS_16[7][0];
+				valG = CMD_COLORS_16[7][1];
+				valB = CMD_COLORS_16[7][2];
+			}
+			else
+			{
+				valR = frame->videoFrame[(j * 3) + (i * frame->videoLinesize)];
+				valG = frame->videoFrame[(j * 3) + (i * frame->videoLinesize) + 1];
+				valB = frame->videoFrame[(j * 3) + (i * frame->videoLinesize) + 2];
+
+				if (settings.colorProcMode == CPM_NONE) { val = 255; }
+				else { val = procColor(&valR, &valG, &valB); }
+
+				if (settings.colorMode == CM_CSTD_256)
+				{
+					rgbFromAnsi256(rgbToAnsi256(valR, valG, valB), &valR, &valG, &valB);
+				}
+			}
+
+			if (settings.brightnessRand) { procRand(&val); }
+
+			//double pos = ((double)val / 255.0) * (settings.charsetSize - 1);
+			//double dec = pos - floor(pos);
+			//int charPos;
+
+			//if ((rand() % 1000) < (int)(dec * 1000.0)) { charPos = (int)ceil(pos); }
+			//else { charPos = (int)floor(pos); }
+			// 
+			//if (charPos >= settings.charsetSize) { error("vsddsfsfd", "fdfds", 0); }
+			//output[(i * w) + j].ch = settings.charset[charPos];
+
+			output[(i * w) + j].ch = settings.charset[(val * settings.charsetSize) / 256];
+			output[(i * w) + j].r = valR;
+			output[(i * w) + j].g = valG;
+			output[(i * w) + j].b = valB;
+		}
+	}
 }
 
 static uint8_t procColor(uint8_t* r, uint8_t* g, uint8_t* b)
 {
 	uint8_t valR = *r, valG = *g, valB = *b;
 
-	if (valR >= valG && valR >= valB)
+	if (settings.colorProcMode == CPM_BOTH)
 	{
-		*r = 255;
-		*g = (uint8_t)(255.0f * ((float)valG / (float)valR));
-		*b = (uint8_t)(255.0f * ((float)valB / (float)valR));
-	}
-	else if (valG >= valR && valG >= valB)
-	{
-		*r = (uint8_t)(255.0f * ((float)valR / (float)valG));
-		*g = 255;
-		*b = (uint8_t)(255.0f * ((float)valB / (float)valG));
-	}
-	else
-	{
-		*r = (uint8_t)(255.0f * ((float)valR / (float)valB));
-		*g = (uint8_t)(255.0f * ((float)valG / (float)valB));
-		*b = 255;
+		if (valR >= valG && valR >= valB)
+		{
+			*r = 255;
+			*g = (uint8_t)(255.0f * ((float)valG / (float)valR));
+			*b = (uint8_t)(255.0f * ((float)valB / (float)valR));
+		}
+		else if (valG >= valR && valG >= valB)
+		{
+			*r = (uint8_t)(255.0f * ((float)valR / (float)valG));
+			*g = 255;
+			*b = (uint8_t)(255.0f * ((float)valB / (float)valG));
+		}
+		else
+		{
+			*r = (uint8_t)(255.0f * ((float)valR / (float)valB));
+			*g = (uint8_t)(255.0f * ((float)valG / (float)valB));
+			*b = 255;
+		}
 	}
 
 	return (uint8_t)((double)valR * 0.299 + (double)valG * 0.587 + (double)valB * 0.114);
@@ -257,7 +344,7 @@ static uint8_t procColor(uint8_t* r, uint8_t* g, uint8_t* b)
 
 static void procRand(uint8_t* val)
 {
-	if (settings.singleCharMode)
+	if (settings.colorProcMode == CPM_NONE)
 	{
 		*val -= rand() % (settings.brightnessRand + 1);
 	}
@@ -304,7 +391,7 @@ static uint8_t findNearestColor16(uint8_t r, uint8_t g, uint8_t b)
 
 static uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b)
 {
-	// https://stackoverflow.com/questions/15682537/ansi-color-specific-rgb-sequence-bash
+	// https://stackoverflow.com/a/26665998
 	if (r == g && g == b)
 	{
 		if (r < 8) { return 16; }
@@ -313,7 +400,23 @@ static uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b)
 	}
 
 	return (uint8_t)(16.0
-		+ (36.0 * round((double)r / 255.0 * 5.0))
-		+ (6.0 * round((double)g / 255.0 * 5.0))
-		+ round((double)b / 255.0 * 5.0));
+		+ (36.0 * round((double)r / 51.0))  // 51 = 255/5
+		+ (6.0 * round((double)g / 51.0))
+		+ round((double)b / 51.0));
+}
+
+static void rgbFromAnsi256(uint8_t ansi, uint8_t* r, uint8_t* g, uint8_t* b)
+{
+	if (ansi < 16) { error("ANSI code smaller than 16!", "processFrame.c", __LINE__); }
+	
+	if (ansi > 232)
+	{
+		uint8_t val = (uint8_t)((double)(ansi - 232) * (240.0 / 23.0)) + 8;
+	}
+	else
+	{
+		*r = ((ansi - 16) / 36) * 51;
+		*g = (((ansi - 16) % 36) / 6) * 51;
+		*b = ((ansi - 16) % 6) * 51;
+	}
 }

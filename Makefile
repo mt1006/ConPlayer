@@ -7,7 +7,7 @@ C_COMPILER = gcc
 COMPILER_FLAGS = -O2 -w
 OUTPUT_NAME = conpl
 
-FILES = cp/src/argParser.c cp/src/audio.c cp/src/avFilters.c cp/src/decodeFrame.c cp/src/drawFrame.c cp/src/help.c cp/src/main.c cp/src/processFrame.c cp/src/queue.c cp/src/threads.c cp/src/utils.c
+FILES = cp/src/argParser.c cp/src/audio.c cp/src/avFilters.c cp/src/decodeFrame.c cp/src/drawFrame.c cp/src/help.c cp/src/main.c cp/src/processFrame.c cp/src/queue.c cp/src/threads.c cp/src/utils.c cp/src/gl/glConsole.c cp/src/gl/glOptions.c cp/src/gl/glShaders.c
 LIBRARIES = -lm -lpthread -lavcodec -lavformat -lavfilter -lavutil -lswresample -lswscale -lao
 
 
