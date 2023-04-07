@@ -23,18 +23,18 @@ void processFrame(Frame* frame)
 	if (settings.useFakeConsole)
 	{
 		processForGlConsole(frame);
-		return;
 	}
-
-	if (settings.colorMode == CM_WINAPI_GRAY ||
+	else if (settings.colorMode == CM_WINAPI_GRAY ||
 		settings.colorMode == CM_WINAPI_16)
 	{
 		processForWinAPI(frame);
-		return;
+	}
+	else
+	{
+		processImage(frame, 0, 0, frame->w, frame->h,
+			(uint8_t*)frame->output, frame->outputLineOffsets);
 	}
 
-	processImage(frame, 0, 0, frame->w, frame->h,
-		(uint8_t*)frame->output, frame->outputLineOffsets);
 }
 
 static void processImage(Frame* frame, int x, int y, int w, int h, uint8_t* output, int* outputLineOffsets)

@@ -4,27 +4,39 @@ static const double CONSOLE_REFRESH_PERIOD = 0.2;
 
 static Stream videoStream = { -1 };
 static Stream audioStream = { -1 };
+
 static enum AVPixelFormat destFormat;
+
 static AVFormatContext* formatContext;
 static AVFormatContext* secondFormatContext = NULL;
 static AVFormatContext* audioContext;
 static AVFormatContext* videoContext;
-static struct SwsContext* swsContext = NULL;
-static uint8_t* scaledFrameBuffer = NULL;
+
+static AVFrame* decodedFrame;
+static AVFrame* rgbFrame;       // for video with first stage shaders enabled
+static AVFrame* filterFrame;    // for FFmpeg filters
+static AVFrame* scaledFrame;    // for video
+
+static struct SwsContext* rgbContext = NULL;
+static struct SwsContext* scalingContext = NULL;
+
 static int lastFrame = -1;
 static volatile bool useAVSeek = false;
 static volatile int64_t seekTimestamp = 0;
 
+
 static AVFormatContext* loadContextAndStreams(const char* file);
-static void decodeVideoPacket(AVPacket* packet, AVFrame* videoFrame, AVFrame* filterFrame, AVFrame* scaledFrame);
-static void decodeAudioPacket(AVPacket* packet, AVFrame* audioFrame, AVFrame* filterFrame);
+static void decodeVideoPacket(AVPacket* packet);
+static void decodeAudioPacket(AVPacket* packet);
 static void addVideoFrame(AVFrame* frame);
-static void refreshFrameSize(AVFrame* inputFrame, AVFrame* outputFrame);
+static void refeshRgbFrame(AVFrame* inputFrame);
+static void refreshScaledFrame(AVFrame* swsInputFrame);
+static scaleFrame(struct SwsContext* context, AVFrame* inputFrame, AVFrame* outputFrame);
+
 
 uint8_t* buffer;
 size_t bufferSize, bufferSizeOld;
 int64_t pos;
-
 
 //=========
 // Temp code:
@@ -138,6 +150,13 @@ void initDecodeFrame(const char* file, const char* secondFile, Stream** outAudio
 
 	if (audioStream.index != -1) { *outAudioStream = &audioStream; }
 	else { *outAudioStream = NULL; }
+
+	decodedFrame = av_frame_alloc();
+	rgbFrame = av_frame_alloc();
+	filterFrame = av_frame_alloc();
+	scaledFrame = av_frame_alloc();
+
+	//shStage1_init();
 }
 
 void readFrames(void)
@@ -145,20 +164,17 @@ void readFrames(void)
 	double lastConRefresh = 0.0;
 
 	AVPacket* packet = av_packet_alloc();
-	AVFrame* frame = av_frame_alloc();
-	AVFrame* filterFrame = av_frame_alloc();
-	AVFrame* scaledFrame = av_frame_alloc();
 	double lastDTS = DBL_MIN;
 	int err1 = 0, err2 = 0;
 
 	while (true)
 	{
-		if (settings.useFakeConsole) { peekMessages(); }
+		if (settings.useFakeConsole) { peekMainMessages(); }
 
 		while (freezeThreads)
 		{
 			mainFreezed = true;
-			if (settings.useFakeConsole) { peekMessages(); }
+			if (settings.useFakeConsole) { peekMainMessages(); }
 			Sleep(SLEEP_ON_FREEZE);
 		}
 
@@ -186,13 +202,13 @@ void readFrames(void)
 			{
 				if (packet->stream_index == videoStream.index && formatContext == videoContext)
 				{
-					decodeVideoPacket(packet, frame, filterFrame, scaledFrame);
+					decodeVideoPacket(packet);
 					dts = (double)packet->dts * (double)videoStream.stream->time_base.num /
 						(double)videoStream.stream->time_base.den;
 				}
 				else if (packet->stream_index == audioStream.index && formatContext == audioContext)
 				{
-					decodeAudioPacket(packet, frame, filterFrame);
+					decodeAudioPacket(packet);
 					dts = (double)packet->dts * (double)audioStream.stream->time_base.num /
 						(double)audioStream.stream->time_base.den;
 				}
@@ -216,13 +232,13 @@ void readFrames(void)
 			{
 				if (packet->stream_index == videoStream.index && secondFormatContext == videoContext)
 				{
-					decodeVideoPacket(packet, frame, filterFrame, scaledFrame);
+					decodeVideoPacket(packet);
 					dts = (double)packet->dts * (double)videoStream.stream->time_base.num /
 						(double)videoStream.stream->time_base.den;
 				}
 				else if (packet->stream_index == audioStream.index && secondFormatContext == audioContext)
 				{
-					decodeAudioPacket(packet, frame, filterFrame);
+					decodeAudioPacket(packet);
 					dts = (double)packet->dts * (double)audioStream.stream->time_base.num /
 						(double)audioStream.stream->time_base.den;
 				}
@@ -242,16 +258,13 @@ void readFrames(void)
 		if (!decoded) { break; }
 	}
 
-	av_frame_free(&scaledFrame);
-	av_frame_free(&filterFrame);
-	av_frame_free(&frame);
 	av_packet_free(&packet);
 
 	printf("%d (%d) / %d (%d)\n", (-err1) & 0xFF, err1, (-err2) & 0xFF, err2);
 	decodeEnd = true;
 	while (true)
 	{
-		if (settings.useFakeConsole) { peekMessages(); }
+		if (settings.useFakeConsole) { peekMainMessages(); }
 		Sleep(30);
 	}
 }
@@ -322,29 +335,37 @@ static AVFormatContext* loadContextAndStreams(const char* file)
 	return ctx;
 }
 
-static void decodeVideoPacket(AVPacket* packet, AVFrame* videoFrame, AVFrame* filterFrame, AVFrame* scaledFrame)
+static void decodeVideoPacket(AVPacket* packet)
 {
 	if (avcodec_send_packet(videoStream.codecContext, packet) < 0) { return; }
 
-	while (avcodec_receive_frame(videoStream.codecContext, videoFrame) >= 0)
+	while (avcodec_receive_frame(videoStream.codecContext, decodedFrame) >= 0)
 	{
+		AVFrame* inputFrame = decodedFrame;
+
+		/*if (shStage1_enabled)
+		{
+			refeshRgbFrame(decodedFrame);
+			scaleFrame(rgbContext, decodedFrame, rgbFrame);
+			shStage1_apply(rgbFrame);
+			inputFrame = rgbFrame;
+		}*/
+
 		if (settings.videoFilters && settings.scaledVideoFilters)
 		{
-			applyFiltersV(videoFrame);
+			applyFiltersV(inputFrame);
 
 			while (getFilteredFrameV(filterFrame))
 			{
-				refreshFrameSize(filterFrame, scaledFrame);
-				sws_scale(swsContext, filterFrame->data, filterFrame->linesize, 0,
-					filterFrame->height, scaledFrame->data, scaledFrame->linesize);
-				av_frame_copy_props(scaledFrame, filterFrame);
+				refreshScaledFrame(filterFrame);
+				scaleFrame(scalingContext, filterFrame, scaledFrame);
 				av_frame_unref(filterFrame);
 
 				applyFiltersSV(scaledFrame);
 
 				while (getFilteredFrameSV(filterFrame))
 				{
-					filterFrame->pts = videoFrame->pts;
+					filterFrame->pts = inputFrame->pts;
 					addVideoFrame(filterFrame);
 					av_frame_unref(filterFrame);
 				}
@@ -352,14 +373,13 @@ static void decodeVideoPacket(AVPacket* packet, AVFrame* videoFrame, AVFrame* fi
 		}
 		else if (settings.videoFilters)
 		{
-			applyFiltersV(videoFrame);
+			applyFiltersV(inputFrame);
 
 			while (getFilteredFrameV(filterFrame))
 			{
-				refreshFrameSize(filterFrame, scaledFrame);
-				sws_scale(swsContext, filterFrame->data, filterFrame->linesize, 0,
-					filterFrame->height, scaledFrame->data, scaledFrame->linesize);
-				scaledFrame->pts = videoFrame->pts;
+				refreshScaledFrame(filterFrame);
+				scaleFrame(scalingContext, filterFrame, scaledFrame);
+				scaledFrame->pts = inputFrame->pts;
 				addVideoFrame(scaledFrame);
 
 				av_frame_unref(filterFrame);
@@ -367,41 +387,38 @@ static void decodeVideoPacket(AVPacket* packet, AVFrame* videoFrame, AVFrame* fi
 		}
 		else if (settings.scaledVideoFilters)
 		{
-			refreshFrameSize(videoFrame, scaledFrame);
-			sws_scale(swsContext, videoFrame->data, videoFrame->linesize, 0, videoFrame->height,
-				scaledFrame->data, scaledFrame->linesize);
-			av_frame_copy_props(scaledFrame, videoFrame);
+			refreshScaledFrame(inputFrame);
+			scaleFrame(scalingContext, inputFrame, scaledFrame);
 
 			applyFiltersSV(scaledFrame);
 
 			while (getFilteredFrameSV(filterFrame))
 			{
-				filterFrame->pts = videoFrame->pts;
+				filterFrame->pts = inputFrame->pts;
 				addVideoFrame(filterFrame);
 				av_frame_unref(filterFrame);
 			}
 		}
 		else
 		{
-			refreshFrameSize(videoFrame, scaledFrame);
-			sws_scale(swsContext, videoFrame->data, videoFrame->linesize, 0,
-				videoFrame->height, scaledFrame->data, scaledFrame->linesize);
-			scaledFrame->pts = videoFrame->pts;
+			refreshScaledFrame(inputFrame);
+			scaleFrame(scalingContext, inputFrame, scaledFrame);
+			scaledFrame->pts = inputFrame->pts;
 			addVideoFrame(scaledFrame);
 		}
 	}
 }
 
-static void decodeAudioPacket(AVPacket* packet, AVFrame* audioFrame, AVFrame* filterFrame)
+static void decodeAudioPacket(AVPacket* packet)
 {
 	if (settings.disableAudio) { return; }
 	if (avcodec_send_packet(audioStream.codecContext, packet) < 0) { return; }
 
-	while (avcodec_receive_frame(audioStream.codecContext, audioFrame) >= 0)
+	while (avcodec_receive_frame(audioStream.codecContext, decodedFrame) >= 0)
 	{
 		if (settings.audioFilters)
 		{
-			applyFiltersA(audioFrame);
+			applyFiltersA(decodedFrame);
 
 			while (getFilteredFrameA(filterFrame))
 			{
@@ -411,7 +428,7 @@ static void decodeAudioPacket(AVPacket* packet, AVFrame* audioFrame, AVFrame* fi
 		}
 		else
 		{
-			addAudioFrame(audioFrame);
+			addAudioFrame(decodedFrame);
 		}
 	}
 }
@@ -445,40 +462,86 @@ static void addVideoFrame(AVFrame* frame)
 	enqueueFrame(STAGE_LOADED_FRAME);
 }
 
-static void refreshFrameSize(AVFrame* inputFrame, AVFrame* outputFrame)
+static void refeshRgbFrame(AVFrame* inputFrame)
 {
 	static int lastFrameW = -1, lastFrameH = -1;
-	static int lastConsoleW = -1, lastConsoleH = -1;
 	static enum AVPixelFormat lastPixelFormat = AV_PIX_FMT_NONE;
+	static uint8_t* rgbFrameBuffer = NULL;
 
-	if (lastFrameW != inputFrame->width ||
-		lastFrameH != inputFrame->height ||
-		lastPixelFormat != inputFrame->format ||
-		lastConsoleW != conW ||
-		lastConsoleH != conH)
+	const enum AVPixelFormat RGB_PIXEL_FORMAT = AV_PIX_FMT_RGB24;
+
+	int w = inputFrame->width;
+	int h = inputFrame->height;
+	int format = inputFrame->format;
+
+	if (lastFrameW != w ||
+		lastFrameH != h ||
+		lastPixelFormat != format)
 	{
-		lastFrameW = inputFrame->width;
-		lastFrameH = inputFrame->height;
-		lastConsoleW = conW;
-		lastConsoleH = conH;
-		lastPixelFormat = inputFrame->format;
+		lastFrameW = w;
+		lastFrameH = h;
+		lastPixelFormat = format;
 
-		if (swsContext) { sws_freeContext(swsContext); }
+		if (rgbContext) { sws_freeContext(rgbContext); }
+		if (rgbFrameBuffer) { av_free(rgbFrameBuffer); }
+
+		rgbContext = sws_getContext(w, h, format, w, h, RGB_PIXEL_FORMAT, SWS_POINT, NULL, NULL, NULL);
+		rgbFrameBuffer = (uint8_t*)av_malloc(avpicture_get_size(RGB_PIXEL_FORMAT, w, h) * sizeof(uint8_t));
+
+		av_image_fill_arrays(rgbFrame->data, rgbFrame->linesize, rgbFrameBuffer, RGB_PIXEL_FORMAT, w, h, 1);
+		av_frame_copy_props(rgbFrame, inputFrame);
+
+		rgbFrame->width = w;
+		rgbFrame->height = h;
+		rgbFrame->format = RGB_PIXEL_FORMAT;
+		rgbFrame->sample_aspect_ratio = inputFrame->sample_aspect_ratio;
+	}
+}
+
+static void refreshScaledFrame(AVFrame* inputFrame)
+{
+	static int lastW = -1, lastH = -1;
+	static int lastConW = -1, lastConH = -1;
+	static enum AVPixelFormat lastPixelFormat = AV_PIX_FMT_NONE;
+	static uint8_t* scaledFrameBuffer = NULL;
+
+	int w = inputFrame->width;
+	int h = inputFrame->height;
+	int format = inputFrame->format;
+
+	if (lastW != w ||
+		lastH != h ||
+		lastPixelFormat != format ||
+		lastConW != conW ||
+		lastConH != conH)
+	{
+		lastW = w;
+		lastH = h;
+		lastConW = conW;
+		lastConH = conH;
+		lastPixelFormat = format;
+
+		if (scalingContext) { sws_freeContext(scalingContext); }
 		if (scaledFrameBuffer) { av_free(scaledFrameBuffer); }
 
-		swsContext = sws_getContext(inputFrame->width, inputFrame->height,
-			inputFrame->format, conW, conH, destFormat, settings.scalingMode, NULL, NULL, NULL);
+		scalingContext = sws_getContext(w, h, format, conW, conH, destFormat, settings.scalingMode, NULL, NULL, NULL);
 		scaledFrameBuffer = (uint8_t*)av_malloc(avpicture_get_size(destFormat, conW, conH) * sizeof(uint8_t));
 		
-		av_image_fill_arrays(outputFrame->data, outputFrame->linesize,
-			scaledFrameBuffer, destFormat, conW, conH, 1);
-		av_frame_copy_props(outputFrame, inputFrame);
+		av_image_fill_arrays(scaledFrame->data, scaledFrame->linesize, scaledFrameBuffer, destFormat, conW, conH, 1);
+		av_frame_copy_props(scaledFrame, inputFrame);
 
-		outputFrame->width = conW;
-		outputFrame->height = conH;
-		outputFrame->format = destFormat;
-		outputFrame->sample_aspect_ratio = inputFrame->sample_aspect_ratio;
+		scaledFrame->width = conW;
+		scaledFrame->height = conH;
+		scaledFrame->format = destFormat;
+		scaledFrame->sample_aspect_ratio = inputFrame->sample_aspect_ratio;
 
-		if (settings.scaledVideoFilters) { initFiltersSV(&videoStream, outputFrame); }
+		if (settings.scaledVideoFilters) { initFiltersSV(&videoStream, scaledFrame); }
 	}
+}
+
+static scaleFrame(struct SwsContext* context, AVFrame* inputFrame, AVFrame* outputFrame)
+{
+	sws_scale(context, inputFrame->data, inputFrame->linesize, 0,
+		inputFrame->height, outputFrame->data, outputFrame->linesize);
+	//av_frame_copy_props(outputFrame, inputFrame);
 }

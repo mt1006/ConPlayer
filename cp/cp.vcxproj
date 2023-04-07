@@ -134,7 +134,9 @@
     <ClCompile Include="src\drawFrame.c" />
     <ClCompile Include="src\gl\glConsole.c" />
     <ClCompile Include="src\gl\glOptions.c" />
-    <ClCompile Include="src\gl\glShaders.c" />
+    <ClCompile Include="src\gl\glUtils.c" />
+    <ClCompile Include="src\gl\shaders\glShaders.c" />
+    <ClCompile Include="src\gl\shaders\glShStage1.c" />
     <ClCompile Include="src\help.c" />
     <ClCompile Include="src\main.c" />
     <ClCompile Include="src\processFrame.c" />

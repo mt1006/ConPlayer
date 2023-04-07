@@ -1,4 +1,4 @@
-#include "../conplayer.h"
+#include "../../conplayer.h"
 
 #ifndef CP_DISABLE_OPENGL
 
@@ -314,6 +314,7 @@ void initShaders(void)
 	{
 		char* vshCode = buildShader(3, ST_VERTEX_SHADER);
 		char* fshCode = buildShader(3, ST_FRAGMENT_SHADER);
+		printf(fshCode);
 
 		GLuint vertexShader = f_glCreateShader(CP_GL_VERTEX_SHADER);
 		f_glShaderSource(vertexShader, 1, &vshCode, NULL);
@@ -414,7 +415,7 @@ void shAddShader(int stage, ShaderType type, ShaderPartType partType, char* shad
 			int len = ftell(file);
 			fseek(file, 0, SEEK_SET);
 
-			char* code = (char*)malloc(len * sizeof(char));
+			char* code = (char*)calloc(len, 1);
 			fread(code, sizeof(char), len, file);
 			fclose(file);
 
@@ -437,6 +438,8 @@ void shAddUniform(int stage, char* name, float val)
 	newUniformValue->value = val;
 	newUniformValue->stage = stage;
 }
+
+
 
 void shSetSize(int w, int h)
 {
@@ -580,7 +583,7 @@ static GLint getUniformLocation(GLuint program, const char* prefix, const char* 
 	strcat(fullName, name);
 
 	GLint location = f_glGetUniformLocation(program, fullName);
-	// If not used, uniform can be removed so we aren't checking for error (-1)
+	// If not used, uniform can be removed so it isn't checking for error (-1)
 
 	free(fullName);
 	return location;

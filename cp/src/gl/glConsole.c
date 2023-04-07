@@ -17,11 +17,9 @@ const int CHARACTER_COUNT = 256;
 volatile float volGlCharW = 0.0f, volGlCharH = 0.0f;
 
 static float glCharW = 0.0f, glCharH = 0.0f;
-static HWND conhostWindow, childWindow;
-static HDC hdc = NULL, textDC = NULL;
-static PIXELFORMATDESCRIPTOR pfd = { 0 };
-static int pfID;
-static HGLRC hglrc;
+static GlWindow glw;
+static HWND conhostWindow;
+static HDC textDC = NULL;
 static BITMAPINFO bmpInfo = { 0 };
 static HBRUSH bgBrush;
 static GlCharType* charset;
@@ -29,14 +27,11 @@ static float* texCoordArray = NULL;
 static int textureW = 0, textureH = 0;
 static float ratioW = 0.0f, ratioH = 0.0f;
 static HFONT textFont = NULL;
-static MSG msg;
 static bool charsetLoaded = false;
 static int fontW, fontH;
 static volatile bool reqRefreshFont = false;
 
 static HWND getConhostWindow(void);
-static void initWindow(void);
-static void initOpenGL(void);
 static void initCharset(void);
 static int CALLBACK enumFontsProc(ENUMLOGFONT* lpelf, NEWTEXTMETRIC* lpntm, DWORD FontType, LPARAM lParam);
 static int CALLBACK enumFontFamProc(ENUMLOGFONT* lpelf, NEWTEXTMETRIC* lpntm, DWORD FontType, LPARAM lParam);
@@ -46,18 +41,14 @@ static void createCharacter(char* text, GLuint textureID);
 static void setMatrix(void);
 static void refreshArrays(int w, int h);
 static void makeArraysAvailable(GlCharType* charType, int w, int h);
-static LRESULT CALLBACK windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-static int nextPowerOf2(int n);
 
 void initOpenGlConsole(void)
 {
 	getConsoleWindow();
 	conhostWindow = getConhostWindow();
 	if (!conhostWindow) { error("The current console process is not \"conhost.exe\"!", "gl/glConsole.c", __LINE__); }
-	hdc = GetDC(conhostWindow);
 
-	initWindow();
-	initOpenGL();
+	glw = initGlWindow(GLWT_MAIN_CHILD, 3);
 	initCharset();
 }
 
@@ -80,7 +71,7 @@ void refreshFont(void)
 
 	if (fontW != oldFontW || fontH != oldFontH)
 	{
-		EnumFontFamiliesA(hdc, "Terminal", &enumFontFamProc, 0);
+		EnumFontFamiliesA(glw.hdc, "Terminal", &enumFontFamProc, 0);
 		if (glCharW == 0.0f) { loadCharsetSize(); }
 		reqRefreshFont = true;
 
@@ -100,7 +91,7 @@ void drawWithOpenGL(GlConsoleChar* output, int w, int h)
 	
 	if (!drawCalled)
 	{
-		wglMakeCurrent(hdc, hglrc);
+		wglMakeCurrent(glw.hdc, glw.hglrc);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_BLEND);
 		glEnable(GL_TEXTURE_2D);
@@ -214,12 +205,9 @@ void drawWithOpenGL(GlConsoleChar* output, int w, int h)
 	glFlush();
 }
 
-void peekMessages(void)
+void peekMainMessages(void)
 {
-	while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE))
-	{
-		DispatchMessageA(&msg);
-	}
+	peekWindowMessages(&glw);
 }
 
 static HWND getConhostWindow(void)
@@ -238,52 +226,9 @@ static HWND getConhostWindow(void)
 	return NULL;
 }
 
-static void initWindow(void)
-{
-	static const char* WND_NAME = "ConPlayer_glWindow";
-
-	WNDCLASSEXA wcs = { 0 };
-	wcs.cbSize = sizeof(WNDCLASSEXA);
-	wcs.lpszClassName = WND_NAME;
-	wcs.hInstance = GetModuleHandleA(NULL);
-	wcs.hIcon = LoadIconA(NULL, IDI_APPLICATION);
-	wcs.hIconSm = LoadIconA(NULL, IDI_APPLICATION);
-	wcs.hCursor = LoadCursorA(NULL, IDC_ARROW);
-	wcs.hbrBackground = CreateSolidBrush(RGB(12, 12, 12));
-	wcs.lpfnWndProc = &windowProc;
-	RegisterClassExA(&wcs);
-
-	childWindow = CreateWindowExA(WS_EX_TRANSPARENT, WND_NAME,
-		WND_NAME, WS_BORDER, 0, 0, 400, 300,
-		NULL, NULL, GetModuleHandleA(NULL), NULL);
-
-	SetWindowLongA(childWindow, GWL_STYLE, WS_CHILD);
-
-	while (!hdc && GetMessageA(&msg, NULL, 0, 0))
-	{
-		DispatchMessageA(&msg);
-	}
-}
-
-static void initOpenGL(void)
-{
-	pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-	pfd.nVersion = 1;
-	pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
-	pfd.iPixelType = PFD_TYPE_RGBA;
-	pfd.cColorBits = 32;
-	pfd.cDepthBits = 24;
-	pfd.cStencilBits = 8;
-	pfd.iLayerType = PFD_MAIN_PLANE;
-
-	pfID = ChoosePixelFormat(hdc, &pfd);
-	SetPixelFormat(hdc, pfID, &pfd);
-	hglrc = wglCreateContext(hdc);
-}
-
 static void initCharset(void)
 {
-	textDC = CreateCompatibleDC(hdc);
+	textDC = CreateCompatibleDC(glw.hdc);
 	charset = (GlCharType*)calloc(CHARACTER_COUNT, sizeof(GlCharType));
 
 	bmpInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -293,7 +238,7 @@ static void initCharset(void)
 
 	bgBrush = CreateSolidBrush(RGB(12, 12, 12));
 
-	EnumFontFamiliesA(hdc, NULL, &enumFontsProc, 0);
+	EnumFontFamiliesA(glw.hdc, NULL, &enumFontsProc, 0);
 }
 
 static int CALLBACK enumFontsProc(ENUMLOGFONT* lpelf, NEWTEXTMETRIC* lpntm, DWORD FontType, LPARAM lParam)
@@ -365,10 +310,8 @@ static void loadCharset(void)
 
 		if (recalcTextureSize)
 		{
-			textureW = nextPowerOf2((int)glCharW);
-			textureH = nextPowerOf2((int)glCharH);
-			ratioW = glCharW / (float)textureW;
-			ratioH = 1.0f - (glCharH / (float)textureH);
+			calcTextureSize((int)glCharW, (int)glCharH,
+				&textureW, &textureH, &ratioW, &ratioH);
 		}
 	}
 
@@ -436,7 +379,7 @@ static void createCharacter(char* text, GLuint textureID)
 	bmpInfo.bmiHeader.biHeight = textureH;
 	bmpInfo.bmiHeader.biSizeImage = textureW * textureH * 4;
 
-	HBITMAP bitmap = CreateDIBSection(hdc, &bmpInfo, DIB_RGB_COLORS, &pixels, NULL, 0);
+	HBITMAP bitmap = CreateDIBSection(glw.hdc, &bmpInfo, DIB_RGB_COLORS, &pixels, NULL, 0);
 	DeleteObject(SelectObject(textDC, bitmap));
 
 	FillRect(textDC, &textRect, bgBrush);
@@ -448,11 +391,7 @@ static void createCharacter(char* text, GLuint textureID)
 		else { pixels[i * 4 + 3] = 0; }
 	}
 
-	glBindTexture(GL_TEXTURE_2D, textureID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureW, textureH,
-		0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	setTexture(pixels, textureW, textureH, GL_RGBA, textureID);
 }
 
 static void setMatrix(void)
@@ -465,7 +404,7 @@ static void setMatrix(void)
 	if (consoleRect.right != oldConsoleRect.right ||
 		consoleRect.bottom != oldConsoleRect.bottom)
 	{
-		SetWindowPos(childWindow, HWND_TOP, 0, 0,
+		SetWindowPos(glw.hwnd, HWND_TOP, 0, 0,
 			consoleRect.right, consoleRect.bottom, SWP_SHOWWINDOW);
 
 		glViewport(0, 0, consoleRect.right, consoleRect.bottom);
@@ -558,28 +497,6 @@ static void makeArraysAvailable(GlCharType* charType, int w, int h)
 	}
 }
 
-static LRESULT CALLBACK windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	if (msg == WM_CREATE)
-	{
-		SetParent(hwnd, conHWND);
-		hdc = GetDC(hwnd);
-	}
-	else if (msg == WM_SIZE)
-	{
-		ShowWindow(hwnd, SW_SHOWMAXIMIZED);
-	}
-
-	return DefWindowProcA(hwnd, msg, wParam, lParam);
-}
-
-static int nextPowerOf2(int n)
-{
-	int retVal = 1;
-	while (retVal < n) { retVal <<= 1; }
-	return retVal;
-}
-
 #else
 
 volatile float volGlCharW = 0.0f, volGlCharH = 0.0f;
@@ -587,6 +504,6 @@ volatile float volGlCharW = 0.0f, volGlCharH = 0.0f;
 void initOpenGlConsole(void) {}
 void refreshFont(void) {}
 void drawWithOpenGL(GlConsoleChar* output, int w, int h) {}
-void peekMessages(void) {}
+void peekMainMessages(void) {}
 
 #endif

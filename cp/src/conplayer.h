@@ -177,6 +177,13 @@ typedef enum
 	SS_PREDEF
 } ShaderSource;
 
+typedef enum
+{
+	GLWT_MAIN,
+	GLWT_MAIN_CHILD,
+	GLWT_DUMMY
+} GlWindowType;
+
 typedef struct
 {
 	Stage stage;
@@ -260,15 +267,18 @@ extern char* secondInputFile;
 //drawFrame.c
 extern HANDLE outputHandle;
 
-//gl/glConsole.c
-extern volatile float volGlCharW, volGlCharH;
-
 //thread.c
 extern const int SLEEP_ON_FREEZE;
 extern volatile bool freezeThreads;
 extern volatile bool mainFreezed;
 extern volatile bool procFreezed;
 extern volatile bool drawFreezed;
+
+//gl/glConsole.c
+extern volatile float volGlCharW, volGlCharH;
+
+//gl/shaders/
+extern bool shStage1_enabled;
 
 
 //argParser.c
@@ -303,21 +313,6 @@ extern bool applyFiltersA(AVFrame* audioFrame);
 extern bool getFilteredFrameV(AVFrame* filterFrame);
 extern bool getFilteredFrameSV(AVFrame* filterFrame);
 extern bool getFilteredFrameA(AVFrame* filterFrame);
-
-//gl/glConsole.c
-extern void initOpenGlConsole(void);
-extern void refreshFont(void);
-extern void drawWithOpenGL(GlConsoleChar* output, int w, int h);
-extern void peekMessages(void);
-
-//gl/glOptions.c
-extern int parseGlOptions(int argc, char** argv);
-
-//gl/glShaders.c
-extern void initShaders(void);
-extern void shAddShader(int stage, ShaderType type, ShaderPartType partType, char* shader, ShaderSource source, char* data);
-extern void shAddUniform(int stage, char* name, float val);
-extern void shSetSize(int w, int h);
 
 //threads.c
 extern void beginThreads(void);
@@ -355,4 +350,44 @@ extern int _pclose(FILE* stream);
 extern int _getch(void);
 extern void setTermios(bool deinit);
 extern void Sleep(DWORD ms);
+#endif
+
+
+//gl/glConsole.c
+extern void initOpenGlConsole(void);
+extern void refreshFont(void);
+extern void drawWithOpenGL(GlConsoleChar* output, int w, int h);
+extern void peekMainMessages(void);
+
+//gl/glOptions.c
+extern int parseGlOptions(int argc, char** argv);
+
+//gl/shaders/glShaders.c
+extern void initShaders(void);
+extern void shAddShader(int stage, ShaderType type, ShaderPartType partType, char* shader, ShaderSource source, char* data);
+extern void shAddUniform(int stage, char* name, float val);
+extern void shSetSize(int w, int h);
+
+//gl/shaders/glShStage1.c
+extern void shStage1_init(void);
+extern void shStage1_apply(AVFrame* videoFrame);
+
+#ifndef CP_DISABLE_OPENGL
+
+typedef struct
+{
+	HWND hwnd;
+	HDC hdc;
+	MSG msg;
+	HGLRC hglrc;
+} GlWindow;
+
+
+//gl/glUtils.c
+extern GlWindow initGlWindow(GlWindowType type, int stage);
+extern void peekWindowMessages(GlWindow* glw);
+extern GLuint createTexture(void);
+extern void setTexture(uint8_t* data, int w, int h, int format, GLuint id);
+extern void calcTextureSize(int w, int h, int* outW, int* outH, float* ratioW, float* ratioH);
+
 #endif

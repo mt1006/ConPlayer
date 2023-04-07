@@ -8,6 +8,9 @@
     <Filter Include="src\gl">
       <UniqueIdentifier>{12db2855-2db4-4803-99aa-e2bae6e38135}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\gl\shaders">
+      <UniqueIdentifier>{ab2a874a-ecda-4823-a44e-eaf0d2988ba7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\audio.c">
@@ -46,11 +49,17 @@
     <ClCompile Include="src\gl\glConsole.c">
       <Filter>src\gl</Filter>
     </ClCompile>
-    <ClCompile Include="src\gl\glShaders.c">
-      <Filter>src\gl</Filter>
-    </ClCompile>
     <ClCompile Include="src\gl\glOptions.c">
       <Filter>src\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gl\glUtils.c">
+      <Filter>src\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gl\shaders\glShaders.c">
+      <Filter>src\gl\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gl\shaders\glShStage1.c">
+      <Filter>src\gl\shaders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

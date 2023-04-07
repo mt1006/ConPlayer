@@ -55,8 +55,8 @@ static int opStageShader(int argc, char** argv, int stage, ShaderType type)
 {
 	char* str = (*argv) + 7;
 
-	if (!strncmp(str, ":add", 4)) { return opStageShaderAdd(argc, argv, stage, type, false); }
-	else if (!strncmp(str, ":add-file", 4)) { return opStageShaderAdd(argc, argv, stage, type, true); }
+	if (!strncmp(str, ":add-file", 9)) { return opStageShaderAdd(argc, argv, stage, type, true); }
+	else if (!strncmp(str, ":add", 4)) { return opStageShaderAdd(argc, argv, stage, type, false); }
 	else { unknownOption(argv, __LINE__); }
 
 	return 0;

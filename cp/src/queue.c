@@ -80,15 +80,19 @@ Frame* dequeueFrame(Stage fromStage, bool* threadFreezedFlag)
 			while (freezeThreads)
 			{
 				*threadFreezedFlag = true;
-				if (settings.useFakeConsole &&
-					threadFreezedFlag == &mainFreezed) { peekMessages(); }
+				if (settings.useFakeConsole && threadFreezedFlag == &mainFreezed)
+				{
+					peekMainMessages();
+				}
 				Sleep(SLEEP_ON_FREEZE);
 			}
 			return dequeueFrame(fromStage, threadFreezedFlag);
 		}
 
-		if (settings.useFakeConsole &&
-			threadFreezedFlag == &mainFreezed) { peekMessages(); }
+		if (settings.useFakeConsole && threadFreezedFlag == &mainFreezed)
+		{
+			peekMainMessages();
+		}
 		Sleep(TIME_TO_WAIT);
 	}
 
