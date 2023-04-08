@@ -125,8 +125,8 @@ void initDecodeFrame(const char* file, const char* secondFile, Stream** outAudio
 		{
 			error("Failed to open video codec", "decodeFrame.c", __LINE__);
 		}
-		vidW = videoStream.stream->codec->width;
-		vidH = videoStream.stream->codec->height;
+		vidW = videoStream.stream->codecpar->width;
+		vidH = videoStream.stream->codecpar->height;
 		fps = (double)videoStream.stream->r_frame_rate.num / (double)videoStream.stream->r_frame_rate.den;
 
 		if (settings.videoFilters) { initFiltersV(&videoStream); }
@@ -486,7 +486,7 @@ static void refeshRgbFrame(AVFrame* inputFrame)
 		if (rgbFrameBuffer) { av_free(rgbFrameBuffer); }
 
 		rgbContext = sws_getContext(w, h, format, w, h, RGB_PIXEL_FORMAT, SWS_POINT, NULL, NULL, NULL);
-		rgbFrameBuffer = (uint8_t*)av_malloc(avpicture_get_size(RGB_PIXEL_FORMAT, w, h) * sizeof(uint8_t));
+		rgbFrameBuffer = (uint8_t*)av_malloc(av_image_get_buffer_size(RGB_PIXEL_FORMAT, w, h, 1) * sizeof(uint8_t));
 
 		av_image_fill_arrays(rgbFrame->data, rgbFrame->linesize, rgbFrameBuffer, RGB_PIXEL_FORMAT, w, h, 1);
 		av_frame_copy_props(rgbFrame, inputFrame);
@@ -525,7 +525,7 @@ static void refreshScaledFrame(AVFrame* inputFrame)
 		if (scaledFrameBuffer) { av_free(scaledFrameBuffer); }
 
 		scalingContext = sws_getContext(w, h, format, conW, conH, destFormat, settings.scalingMode, NULL, NULL, NULL);
-		scaledFrameBuffer = (uint8_t*)av_malloc(avpicture_get_size(destFormat, conW, conH) * sizeof(uint8_t));
+		scaledFrameBuffer = (uint8_t*)av_malloc(av_image_get_buffer_size(destFormat, conW, conH, 1) * sizeof(uint8_t));
 		
 		av_image_fill_arrays(scaledFrame->data, scaledFrame->linesize, scaledFrameBuffer, destFormat, conW, conH, 1);
 		av_frame_copy_props(scaledFrame, inputFrame);
