@@ -31,6 +31,9 @@ void initDecodeFrame(const char* file, Stream** outAudioStream)
 		destFormat = AV_PIX_FMT_GRAY8;
 	}
 
+	av_register_all();
+	avcodec_register_all();
+
 	formatContext = avformat_alloc_context();
 	if (!formatContext) { error("Failed to allocate format context", "decodeFrame.c", __LINE__); }
 	if (avformat_open_input(&formatContext, file, NULL, NULL)) { error("Failed to open file!", "decodeFrame.c", __LINE__); }

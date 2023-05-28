@@ -27,11 +27,18 @@ void initDrawFrame(void)
 		settings.setColorMode == SCM_CSTD_256 ||
 		settings.setColorMode == SCM_CSTD_RGB)
 	{
-		DWORD mode;
+		/*DWORD mode;
 		GetConsoleMode(outputHandle, &mode);
 		mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 		SetConsoleMode(outputHandle, mode);
-		ansiEnabled = true;
+		ansiEnabled = true;*/
+
+		puts("Virtual terminal processing not supported on this build!");
+		puts("Color mode will be changed to \"winapi-16\".");
+		puts("Press any key to continue...");
+		getchar();
+
+		settings.colorMode = CM_WINAPI_16;
 	}
 	#endif
 
@@ -231,9 +238,8 @@ static void getConsoleInfo(ConsoleInfo* consoleInfo)
 
 	#ifdef _WIN32
 
-	CONSOLE_SCREEN_BUFFER_INFOEX consoleBufferInfo;
-	consoleBufferInfo.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
-	GetConsoleScreenBufferInfoEx(outputHandle, &consoleBufferInfo);
+	CONSOLE_SCREEN_BUFFER_INFO consoleBufferInfo;
+	GetConsoleScreenBufferInfo(outputHandle, &consoleBufferInfo);
 
 	fullConW = consoleBufferInfo.srWindow.Right - consoleBufferInfo.srWindow.Left + 1;
 	fullConH = consoleBufferInfo.srWindow.Bottom - consoleBufferInfo.srWindow.Top + 1;
@@ -243,9 +249,8 @@ static void getConsoleInfo(ConsoleInfo* consoleInfo)
 
 	if (clientRect.bottom == 0 || fullConW == 0 || fullConH == 0)
 	{
-		CONSOLE_FONT_INFOEX consoleFontInfo;
-		consoleFontInfo.cbSize = sizeof(CONSOLE_FONT_INFOEX);
-		GetCurrentConsoleFontEx(outputHandle, FALSE, &consoleFontInfo);
+		CONSOLE_FONT_INFO consoleFontInfo;
+		GetCurrentConsoleFont(outputHandle, FALSE, &consoleFontInfo);
 
 		if (consoleFontInfo.dwFontSize.X == 0 ||
 			consoleFontInfo.dwFontSize.Y == 0)

@@ -8,15 +8,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 /*
-*  vcpkg (windows):
-*    vcpkg install ffmpeg[gpl,freetype,fontconfig,fribidi,ass,opencl,dav1d]:x64-windows
-*    vcpkg install libao:x64-windows
-*  apt-get (Linux):
-*    sudo apt-get install libavcodec-dev
-*    sudo apt-get install libavformat-dev
-*    sudo apt-get install libavfilter-dev
-*    sudo apt-get install libswscale-dev
-*    sudo apt-get install libao-dev
+*  vcpkg (WinLegacy/IA-32):
+*    vcpkg install libao:x86-windows
 */
 
 #include <stdio.h>
@@ -24,16 +17,16 @@
 #include <string.h>
 #include <inttypes.h>
 #include <stdbool.h>
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
-#include <libavfilter/avfilter.h>
-#include <libavfilter/buffersrc.h>
-#include <libavfilter/buffersink.h>
-#include <libavutil/imgutils.h>
-#include <libavutil/opt.h>
-#include <libavutil/log.h>
-#include <libswresample/swresample.h>
-#include <libswscale/swscale.h>
+#include "libavcodec/avcodec.h"
+#include "libavformat/avformat.h"
+#include "libavfilter/avfilter.h"
+#include "libavfilter/buffersrc.h"
+#include "libavfilter/buffersink.h"
+#include "libavutil/imgutils.h"
+#include "libavutil/opt.h"
+#include "libavutil/log.h"
+#include "libswresample/swresample.h"
+#include "libswscale/swscale.h"
 #include <ao/ao.h>
 
 #ifdef _WIN32
@@ -42,7 +35,7 @@
 #include <process.h>
 #include <Windows.h>
 
-#define CP_OS "Windows"
+#define CP_OS "WinLegacy"
 
 #else
 
