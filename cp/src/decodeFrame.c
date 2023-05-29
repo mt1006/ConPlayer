@@ -33,6 +33,7 @@ void initDecodeFrame(const char* file, Stream** outAudioStream)
 
 	av_register_all();
 	avcodec_register_all();
+	avfilter_register_all();
 
 	formatContext = avformat_alloc_context();
 	if (!formatContext) { error("Failed to allocate format context", "decodeFrame.c", __LINE__); }

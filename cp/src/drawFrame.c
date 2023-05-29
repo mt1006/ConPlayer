@@ -35,7 +35,7 @@ void initDrawFrame(void)
 
 		puts("Virtual terminal processing not supported on this build!");
 		puts("Color mode will be changed to \"winapi-16\".");
-		puts("Press any key to continue...");
+		fputs("Press any key to continue...", stdout);
 		getchar();
 
 		settings.colorMode = CM_WINAPI_16;
