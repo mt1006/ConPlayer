@@ -33,7 +33,10 @@ void initDrawFrame(void)
 	}
 	#endif
 
+	#ifndef CP_DISABLE_OPENGL
 	if (settings.useFakeConsole) { refreshFont(); }
+	#endif
+
 	refreshSize();
 }
 
@@ -152,11 +155,13 @@ void drawFrame(void* output, int* lineOffsets, int w, int h)
 	static int scanline = 0;
 	static int lastW = -1, lastH = -1;
 
+	#ifndef CP_DISABLE_OPENGL
 	if (settings.useFakeConsole)
 	{
 		drawWithOpenGL((GlConsoleChar*)output, w, h);
 		return;
 	}
+	#endif
 
 	if ((lastW != w || lastH != h) && !settings.disableCLS)
 	{
@@ -242,6 +247,7 @@ static void getConsoleInfo(ConsoleInfo* consoleInfo)
 
 	if (settings.useFakeConsole)
 	{
+		#ifndef CP_DISABLE_OPENGL
 		while (volGlCharW == 0.0f) { Sleep(0); }
 
 		RECT clientRect = { 0 };
@@ -250,24 +256,19 @@ static void getConsoleInfo(ConsoleInfo* consoleInfo)
 		fullW = (int)round((double)clientRect.right / (double)volGlCharW);
 		fullH = (int)round((double)clientRect.bottom / (double)volGlCharH);
 		fontRatio = (double)volGlCharW / (double)volGlCharH;
+		#endif
 	}
 	else
 	{
-		CONSOLE_SCREEN_BUFFER_INFOEX consoleBufferInfo;
-		consoleBufferInfo.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
-		GetConsoleScreenBufferInfoEx(outputHandle, &consoleBufferInfo);
-
-		fullW = consoleBufferInfo.srWindow.Right - consoleBufferInfo.srWindow.Left + 1;
-		fullH = consoleBufferInfo.srWindow.Bottom - consoleBufferInfo.srWindow.Top + 1;
+		getConsoleSize(&fullW, &fullH);
 
 		RECT clientRect = { 0 };
 		GetClientRect(conHWND, &clientRect);
 
 		if (clientRect.bottom == 0 || fullW == 0 || fullH == 0)
 		{
-			CONSOLE_FONT_INFOEX consoleFontInfo;
-			consoleFontInfo.cbSize = sizeof(CONSOLE_FONT_INFOEX);
-			GetCurrentConsoleFontEx(outputHandle, FALSE, &consoleFontInfo);
+			CONSOLE_FONT_INFO consoleFontInfo;
+			GetCurrentConsoleFont(outputHandle, FALSE, &consoleFontInfo);
 
 			if (consoleFontInfo.dwFontSize.X == 0 ||
 				consoleFontInfo.dwFontSize.Y == 0)
@@ -296,10 +297,7 @@ static void getConsoleInfo(ConsoleInfo* consoleInfo)
 
 	#else
 
-	struct winsize winSize;
-	ioctl(0, TIOCGWINSZ, &winSize);
-	fullW = winSize.ws_col;
-	fullH = winSize.ws_row;
+	getConsoleSize(&fullW, &fullH);
 	fontRatio = DEFAULT_FONT_RATIO;
 
 	#endif

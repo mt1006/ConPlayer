@@ -261,6 +261,7 @@ static void processForWinAPI(Frame* frame)
 
 static void processForGlConsole(Frame* frame)
 {
+	#ifndef CP_DISABLE_OPENGL
 	GlConsoleChar* output = (GlConsoleChar*)frame->output;
 	int w = frame->w;
 	int h = frame->h;
@@ -311,6 +312,7 @@ static void processForGlConsole(Frame* frame)
 			output[(i * w) + j].b = valB;
 		}
 	}
+	#endif
 }
 
 static uint8_t procColor(uint8_t* r, uint8_t* g, uint8_t* b)

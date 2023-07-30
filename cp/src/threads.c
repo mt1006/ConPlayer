@@ -44,7 +44,7 @@ void beginThreads(void)
 	procThreadID = startThread(&procThread, NULL);
 	drawThreadID = startThread(&drawThread, NULL);
 	if (!settings.disableAudio) { audioThreadID = startThread(&audioThread, NULL); }
-	if (settings.syncMode == SM_ENABLED) { consoleThreadID = startThread(&consoleThread, NULL); }
+	if (settings.syncMode == SYNC_ENABLED) { consoleThreadID = startThread(&consoleThread, NULL); }
 	if (!settings.disableKeyboard) { keyboardThreadID = startThread(&keyboardThread, NULL); }
 }
 
@@ -88,7 +88,7 @@ static ThreadRetType CP_CALL_CONV drawThread(void* ptr)
 		}
 
 		Frame* frame = dequeueFrame(STAGE_PROCESSED_FRAME, &drawFreezed);
-		if (settings.syncMode == SM_DISABLED)
+		if (settings.syncMode == SYNC_DISABLED)
 		{
 			if (!frame->isAudio)
 			{
@@ -115,7 +115,7 @@ static ThreadRetType CP_CALL_CONV drawThread(void* ptr)
 					Sleep((DWORD)(timeToSleep * 1000.0));
 				}
 
-				if (settings.syncMode == SM_DRAW_ALL)
+				if (settings.syncMode == SYNC_DRAW_ALL)
 				{
 					drawFrame(frame->output, frame->outputLineOffsets,
 						frame->w, frame->h);
@@ -193,7 +193,7 @@ static ThreadRetType CP_CALL_CONV keyboardThread(void* ptr)
 
 	while (true)
 	{
-		unsigned char key = _getch();
+		unsigned char key = getChar(true);
 
 		double newKeyTime = getTime();
 		if (newKeyTime < keyTime + KEYBOARD_DELAY) { continue; }
@@ -211,11 +211,11 @@ static ThreadRetType CP_CALL_CONV keyboardThread(void* ptr)
 			paused = !paused;
 			break;
 
-		case '[':
+		case VK_LEFT:
 			seek(drawFrameTime - (int64_t)(SEEK1_SECONDS * AV_TIME_BASE));
 			break;
 
-		case ']':
+		case VK_RIGHT:
 			seek(drawFrameTime + (int64_t)(SEEK1_SECONDS * AV_TIME_BASE));
 			break;
 
@@ -227,14 +227,14 @@ static ThreadRetType CP_CALL_CONV keyboardThread(void* ptr)
 			seek(drawFrameTime + (int64_t)(SEEK2_SECONDS * AV_TIME_BASE));
 			break;
 
-		case 'l':
+		case VK_DOWN:
 			mutedVolume = 0.0;
 			newVolume -= VOLUME_CHANGE;
 			if (newVolume < 0.0) { newVolume = 0.0; }
 			settings.volume = newVolume;
 			break;
 
-		case 'o':
+		case VK_UP:
 			mutedVolume = 0.0;
 			newVolume += VOLUME_CHANGE;
 			if (newVolume > 1.0) { newVolume = 1.0; }

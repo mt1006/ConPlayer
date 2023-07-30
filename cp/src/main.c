@@ -22,9 +22,9 @@ Settings settings =
 	.setColorVal1 = 0, .setColorVal2 = 0,
 	.constFontRatio = 0.0,
 	.brightnessRand = 0,
-	.scalingMode = SWS_BICUBIC,
+	.scalingMode = SM_BICUBIC,
 	.colorProcMode = CPM_BOTH,
-	.syncMode = SM_ENABLED,
+	.syncMode = SYNC_ENABLED,
 	.videoFilters = NULL,
 	.scaledVideoFilters = NULL,
 	.audioFilters = NULL,
@@ -44,7 +44,10 @@ void load()
 
 	puts("Loading...");
 
+	#ifndef CP_DISABLE_OPENGL
 	if (settings.useFakeConsole) { initOpenGlConsole(); }
+	#endif
+
 	initDecodeFrame(inputFile, secondInputFile, &audioStream);
 	initDrawFrame();
 	initQueue();
@@ -60,13 +63,9 @@ int main(int argc, char** argv)
 	argc = getWindowsArgv(&argv);
 	#endif
 
-	if (argc < 2)
-	{
-		showNoArgsInfo();
-		return -1;
-	}
+	if (argc < 2) { uiShowRunScreen(); }
+	else { argumentParser(argc - 1, argv + 1); }
 
-	argumentParser(argc - 1, argv + 1);
 	if (inputFile) { load(); }
 
 	cpExit(0);

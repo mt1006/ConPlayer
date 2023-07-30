@@ -4,6 +4,10 @@
 #define CP_MAX_NEW_TITLE_LEN 128
 #define CP_WAIT_FOR_SET_TITLE 100
 
+#ifndef _WIN32
+static void setTermios(bool deinit);
+#endif
+
 double getTime(void)
 {
 	#ifdef _WIN32
@@ -136,6 +140,26 @@ void setCursorPos(int x, int y)
 	#endif
 }
 
+void getConsoleSize(int* w, int* h)
+{
+	#ifdef _WIN32
+
+	CONSOLE_SCREEN_BUFFER_INFO consoleBufferInfo;
+	GetConsoleScreenBufferInfo(outputHandle, &consoleBufferInfo);
+
+	*w = consoleBufferInfo.srWindow.Right - consoleBufferInfo.srWindow.Left + 1;
+	*h = consoleBufferInfo.srWindow.Bottom - consoleBufferInfo.srWindow.Top + 1;
+
+	#else
+
+	struct winsize winSize;
+	ioctl(0, TIOCGWINSZ, &winSize);
+	*w = winSize.ws_col;
+	*h = winSize.ws_row;
+
+	#endif
+}
+
 void enableANSI(void)
 {
 	#ifdef _WIN32
@@ -155,10 +179,12 @@ size_t getOutputArraySize(int w, int h)
 	const int CSTD_256_CODE_LEN = 12; // "\x1B[38;5;???m?"
 	const int CSTD_RGB_CODE_LEN = 20; // "\x1B[38;2;???;???;???m?"
 
+	#ifndef CP_DISABLE_OPENGL
 	if (settings.useFakeConsole)
 	{
 		return w * h * sizeof(GlConsoleChar);
 	}
+	#endif
 
 	switch (settings.colorMode)
 	{
@@ -196,10 +222,25 @@ void error(const char* description, const char* fileName, int line)
 
 #ifdef _WIN32
 
+static int parseWideStringAsArgv(LPCWSTR str, char*** pargv);
+
 int getWindowsArgv(char*** pargv)
 {
+	return parseWideStringAsArgv(GetCommandLineW(), pargv);
+}
+
+int parseStringAsArgv(char* str, char*** pargv)
+{
+	int wideLen = MultiByteToWideChar(CP_UTF8, 0, str, -1, NULL, 0);
+	LPCWSTR wstr = (char*)malloc(wideLen * sizeof(wchar_t));
+	MultiByteToWideChar(CP_UTF8, 0, str, -1, wstr, wideLen);
+	return parseWideStringAsArgv(wstr, pargv);
+}
+
+static int parseWideStringAsArgv(LPCWSTR str, char*** pargv)
+{
 	int argc;
-	wchar_t** argvw = CommandLineToArgvW(GetCommandLineW(), &argc);
+	wchar_t** argvw = CommandLineToArgvW(str, &argc);
 	char** argv = (char**)malloc(argc * sizeof(char*));
 
 	for (int i = 0; i < argc; i++)
@@ -214,33 +255,48 @@ int getWindowsArgv(char*** pargv)
 	return argc;
 }
 
+int getChar(bool wasdAsArrows)
+{
+	int ch = _getch();
+
+	if (wasdAsArrows)
+	{
+		switch (ch)
+		{
+		case 'w': return VK_UP;
+		case 'a': return VK_LEFT;
+		case 's': return VK_DOWN;
+		case 'd': return VK_RIGHT;
+		case 'q': return VK_PRIOR;
+		case 'e': return VK_NEXT;
+		case 'r': return VK_HOME;
+		case 'f': return VK_END;
+		}
+	}
+	
+	if (ch == 0 || ch == 0xE0)
+	{
+		//https://learn.microsoft.com/en-us/previous-versions/visualstudio/visual-studio-6.0/aa299374%28v=vs.60%29
+		switch (_getch())
+		{
+		case 72: return VK_UP;
+		case 75: return VK_LEFT;
+		case 77: return VK_RIGHT;
+		case 80: return VK_DOWN;
+		case 73: return VK_PRIOR;
+		case 81: return VK_NEXT;
+		case 71: return VK_HOME;
+		case 79: return VK_END;
+		}
+		return 0;
+	}
+	return ch;
+}
+
 #else
 
-FILE* _popen(const char* command, const char* type)
-{
-	return popen(command, type);
-}
-
-int _pclose(FILE* stream)
-{
-	return pclose(stream);
-}
-
-int _getch(void)
-{
-	static bool firstCall = true;
-
-	if (firstCall)
-	{
-		setTermios(false);
-		firstCall = false;
-	}
-
-	return getchar();
-}
-
 //https://stackoverflow.com/a/7469410/18214530
-void setTermios(bool deinit)
+static void setTermios(bool deinit)
 {
 	static struct termios current, old;
 	static int termiosInitialized = 0;
@@ -261,6 +317,74 @@ void setTermios(bool deinit)
 
 		termiosInitialized = 1;
 	}
+}
+
+int getChar(bool wasdAsArrows)
+{
+	static bool firstCall = true;
+
+	if (firstCall)
+	{
+		setTermios(false);
+		firstCall = false;
+	}
+
+	int ch = getchar();
+
+	if (wasdAsArrows)
+	{
+		switch (ch)
+		{
+		case 'w': return VK_UP;
+		case 'a': return VK_LEFT;
+		case 's': return VK_DOWN;
+		case 'd': return VK_RIGHT;
+		case 'q': return VK_PRIOR;
+		case 'e': return VK_NEXT;
+		case 'r': return VK_HOME;
+		case 'f': return VK_END;
+		}
+	}
+
+	//https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-PC-Style-Function-Keys
+	if (ch == 0x1B)
+	{
+		if (getchar() == '[')
+		{
+			switch (getchar())
+			{
+			case 'A': return VK_UP;
+			case 'B': return VK_DOWN;
+			case 'C': return VK_RIGHT;
+			case 'D': return VK_LEFT;
+			case '5': if (getchar() == '~') { return VK_PRIOR; }
+			case '6': if (getchar() == '~') { return VK_NEXT; }
+			case 'H': return VK_HOME;
+			case 'F': return VK_END;
+			case 'O':
+				int chSS3 = getchar();
+				if (chSS3 == 'H') { return VK_HOME; }
+				if (chSS3 == 'F') { return VK_END; }
+				if (chSS3 == 'M') { return VK_RETURN; }
+			}
+		}
+		return 0;
+	}
+	else if (ch == '\n')
+	{
+		return VK_RETURN;
+	}
+	return ch;
+}
+
+FILE* _popen(const char* command, const char* type)
+{
+	return popen(command, type);
+}
+
+int _pclose(FILE* stream)
+{
+	return pclose(stream);
 }
 
 void Sleep(DWORD ms)

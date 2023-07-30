@@ -1,13 +1,13 @@
 #include "conplayer.h"
 
-static const char* CHARSET_LONG = " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B$@";
-static const char* CHARSET_SHORT = " .-+*?#M&%@";
-static const char* CHARSET_2 = " *";
-static const char* CHARSET_BLOCKS = " \xB0\xB1\xB2\xDB";
-static const char* CHARSET_OUTLINE = " @@@@@@@@@@@@@@@@ ";
-static const char* CHARSET_BOLD_OUTLINE = " @@@@@@@@@@@@@@@@.";
+const char* CHARSET_LONG = " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B$@";
+const char* CHARSET_SHORT = " .-+*?#M&%@";
+const char* CHARSET_2 = " *";
+const char* CHARSET_BLOCKS = " \xB0\xB1\xB2\xDB";
+const char* CHARSET_OUTLINE = " @@@@@@@@@@@@@@@@ ";
+const char* CHARSET_BOLD_OUTLINE = " @@@@@@@@@@@@@@@@.";
 
-static const char* INPUT_GET_URLS = "yt-dlp --get-url";
+static const char* INPUT_GET_URLS = "yt-dlp -f \"bestvideo[height<=480]+bestaudio\" --no-warnings --get-url";
 static const char* STDERR_REDIRECT = "2>&1";
 static const int INPUT_MAX_URL = 16384;
 static const int MAX_LINE_COUNT = 128;
@@ -500,10 +500,10 @@ static int opScalingMode(int argc, char** argv)
 	if (argc < 1 || argv[0][0] == '-') { notEnoughArguments(argv, __LINE__); }
 
 	strToLower(argv[0]);
-	if (!strcmp(argv[0], "nearest")) { settings.scalingMode = SWS_POINT; }
-	else if (!strcmp(argv[0], "fast-bilinear")) { settings.scalingMode = SWS_FAST_BILINEAR; }
-	else if (!strcmp(argv[0], "bilinear")) { settings.scalingMode = SWS_BILINEAR; }
-	else if (!strcmp(argv[0], "bicubic")) { settings.scalingMode = SWS_BICUBIC; }
+	if (!strcmp(argv[0], "nearest")) { settings.scalingMode = SM_NEAREST; }
+	else if (!strcmp(argv[0], "fast-bilinear")) { settings.scalingMode = SM_FAST_BILINEAR; }
+	else if (!strcmp(argv[0], "bilinear")) { settings.scalingMode = SM_BILINEAR; }
+	else if (!strcmp(argv[0], "bicubic")) { settings.scalingMode = SM_BICUBIC; }
 	else { invalidInput("Invalid scaling mode", argv[0], __LINE__); }
 
 	return 1;
@@ -522,9 +522,9 @@ static int opSync(int argc, char** argv)
 	if (argc < 1 || argv[0][0] == '-') { notEnoughArguments(argv, __LINE__); }
 
 	strToLower(argv[0]);
-	if (!strcmp(argv[0], "disabled")) { settings.syncMode = SM_DISABLED; }
-	else if (!strcmp(argv[0], "draw-all")) { settings.syncMode = SM_DRAW_ALL; }
-	else if (!strcmp(argv[0], "enabled")) { settings.syncMode = SM_ENABLED; }
+	if (!strcmp(argv[0], "disabled")) { settings.syncMode = SYNC_DISABLED; }
+	else if (!strcmp(argv[0], "draw-all")) { settings.syncMode = SYNC_DRAW_ALL; }
+	else if (!strcmp(argv[0], "enabled")) { settings.syncMode = SYNC_ENABLED; }
 	else { invalidInput("Invalid synchronization mode", argv[0], __LINE__); }
 
 	return 1;
@@ -561,7 +561,7 @@ static int opFakeConsole(int argc, char** argv)
 {
 	#ifdef CP_DISABLE_OPENGL
 	#ifndef _WIN32
-	puts("OpenGL options are currently only available on Windows!");
+	puts("Fake console is currently only available on Windows!");
 	#endif
 	error("ConPlayer compiled with disabled OpenGL!", "argParser.c", __LINE__);
 	#endif
@@ -573,13 +573,15 @@ static int opFakeConsole(int argc, char** argv)
 static int opOpenGlSettings(int argc, char** argv)
 {
 	#ifdef CP_DISABLE_OPENGL
+
 	#ifndef _WIN32
 	puts("OpenGL options are currently only available on Windows!");
 	#endif
 	error("ConPlayer compiled with disabled OpenGL!", "argParser.c", __LINE__);
-	#endif
 
+	#else
 	return parseGlOptions(argc, argv);
+	#endif
 }
 
 static int opDisableCLS(int argc, char** argv)

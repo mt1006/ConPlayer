@@ -1,5 +1,12 @@
 #include "conplayer.h"
 
+const char* INFO_MESSAGE =
+"ConPlayer " CP_VERSION " [" CP_CPU "/" CP_OS "]\n"
+"Author: https://github.com/mt1006\n"
+"Version: " CP_VERSION "\n"
+"Architecture: " CP_CPU "\n"
+"Platform: " CP_OS;
+
 static void helpBasicOptions(void);
 static void helpAdvancedOptions(void);
 static void helpModes(void);
@@ -16,19 +23,12 @@ void showHelp(bool basic, bool advanced, bool modes, bool keyboard)
 
 void showInfo(void)
 {
-	puts(
-		"ConPlayer - Information\n"
-		"ConPlayer " CP_VERSION " [" CP_CPU "/" CP_OS "]\n"
-		"Author: https://github.com/mt1006\n"
-		"Version: " CP_VERSION "\n"
-		"Architecture: " CP_CPU "\n"
-		"Platform: " CP_OS);
+	puts(INFO_MESSAGE);
 }
 
 void showFullInfo(void)
 {
 	puts(
-		"ConPlayer - Full info\n"
 		"ConPlayer " CP_VERSION " [" CP_CPU "/" CP_OS "]\n"
 		"Author: https://github.com/mt1006\n"
 		"Version: " CP_VERSION "\n"
@@ -48,23 +48,15 @@ void showFullInfo(void)
 
 void showVersion(void)
 {
-	puts("ConPlayer " CP_VERSION " [" CP_CPU "/" CP_OS "]");
-}
-
-void showNoArgsInfo(void)
-{
-	showVersion();
-	puts("\nNo arguments were given!\n"
-		"To start playing give the video filename as the first argument.\n"
-		"To get list of basic options use \"conpl -h\".\n"
-		"To get list of all options use \"conpl -h full\".");
+	puts(CP_VERSION_STRING);
 }
 
 static void helpBasicOptions(void)
 {
 	puts(
 		"Basic options:\n"
-		" [none] / -i         Just input file - audio or video.\n"
+		" [none] / -i         Input file - audio or video.\n"
+		"                     Put \"$\" before link to extract stream URL with yt-dlp (if in path)."
 		"                     Examples:\n"
 		"                      conpl video.mp4\n"
 		" -c [mode]           Sets color mode. By default \"cstd-256\".\n"
@@ -159,6 +151,13 @@ static void helpAdvancedOptions(void)
 		"                     Works properly only in \"cstd\" color mode and it breaks interlacing.\n"
 		"                     Examples:\n"
 		"                      conpl video.mp4 -c cstd-gray -s 80 30 -fr 0.5 -sy disabled -dcls > output.txt\n"
+		" -fc                 Creates child window on top of the console that looks like console but\n"
+		"  (--fake-console)   renders text much faster using OpenGL. Currently works only on Windows\n"
+		"                     and may be unstable! Recommended to use with raster font.\n"
+		" -gls                Settings for \"fake console\" mode. Experimental!\n"
+		"  (--opengl-settings)Examples:\n"
+		"                      conpl video.mp4 -c cstd-rgb -cp char-only -r 60 -fc -gls :s3:fsh:add predef dither :s3:set lerp_a 0.5\n"
+		" -pl (--preload)     Loads and unload entire input file (in hope that system will cache it into RAM).\n"
 		" -da(--disable-audio)Disables audio.\n"
 		" -dk (--disable-keys)Disables keyboard control.\n"
 		" -avl (--libav-logs) Enables printing Libav logs. Helpful with FFmpeg filters problems.\n"
@@ -201,10 +200,10 @@ static void helpKeyboard(void)
 {
 	puts(
 		"Keyboard control:\n"
-		" Space      Pause/Play\n"
-		" \"[\" / \"]\"  Go back / Skip forward (10 second)\n"
-		" \"-\" / \"+\"  Go back / Skip forward (30 second)\n"
-		" \"L\" / \"O\"  Turn down/up the volume\n"
-		" \"M\"        Mute the audio\n"
-		" ESC        Exit\n");
+		" Space       Pause/Play\n"
+		" L/R arrows  Go back / Skip forward (10 second)\n"
+		" -/+ keys    Go back / Skip forward (30 second)\n"
+		" U/D arrows  Turn down/up the volume\n"
+		" M           Mute the audio\n"
+		" ESC         Exit\n");
 }

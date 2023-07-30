@@ -27,6 +27,9 @@ static float* texCoordArray = NULL;
 static int textureW = 0, textureH = 0;
 static float ratioW = 0.0f, ratioH = 0.0f;
 static HFONT textFont = NULL;
+static ENUMLOGFONTW enumLogFont;
+static int settingFontW, settingFontH;
+static int minFontDiff = INT_MAX;
 static bool charsetLoaded = false;
 static int fontW, fontH;
 static volatile bool reqRefreshFont = false;
@@ -54,14 +57,10 @@ void initOpenGlConsole(void)
 
 void refreshFont(void)
 {
-	static int oldFontW = -1, oldFontH = -1;
+	static CONSOLE_FONT_INFOEX oldCF = { 0 };
 
-	CONSOLE_SCREEN_BUFFER_INFOEX consoleBufferInfo;
-	consoleBufferInfo.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
-	GetConsoleScreenBufferInfoEx(outputHandle, &consoleBufferInfo);
-
-	int realConW = consoleBufferInfo.srWindow.Right - consoleBufferInfo.srWindow.Left + 1;
-	int realConH = consoleBufferInfo.srWindow.Bottom - consoleBufferInfo.srWindow.Top + 1;
+	int realConW, realConH;
+	getConsoleSize(&realConW, &realConH);
 
 	RECT clientRect = { 0 };
 	GetClientRect(conHWND, &clientRect);
@@ -69,14 +68,29 @@ void refreshFont(void)
 	fontW = (int)round((double)clientRect.right / (double)realConW);
 	fontH = (int)round((double)clientRect.bottom / (double)realConH);
 
-	if (fontW != oldFontW || fontH != oldFontH)
+	CONSOLE_FONT_INFOEX cf;
+	cf.cbSize = sizeof(CONSOLE_FONT_INFOEX);
+	GetCurrentConsoleFontEx(outputHandle, FALSE, &cf);
+
+	if (oldCF.dwFontSize.X != cf.dwFontSize.X || oldCF.dwFontSize.Y != cf.dwFontSize.Y ||
+		oldCF.FontWeight != cf.FontWeight || oldCF.nFont != cf.nFont)
 	{
-		EnumFontFamiliesA(glw.hdc, "Terminal", &enumFontFamProc, 0);
+		minFontDiff = INT_MAX;
+		settingFontW = cf.dwFontSize.X;
+		settingFontH = cf.dwFontSize.Y;
+
+		EnumFontFamiliesW(glw.hdc, cf.FaceName, &enumFontFamProc, 0);
+		enumLogFont.elfLogFont.lfItalic = FALSE;
+		enumLogFont.elfLogFont.lfUnderline = FALSE;
+		enumLogFont.elfLogFont.lfStrikeOut = FALSE;
+		enumLogFont.elfLogFont.lfWidth = fontW;
+		enumLogFont.elfLogFont.lfHeight = fontH;
+		textFont = CreateFontIndirectW(&enumLogFont);
+
 		if (glCharW == 0.0f) { loadCharsetSize(); }
 		reqRefreshFont = true;
-
-		oldFontW = fontW;
-		oldFontH = fontH;
+		
+		oldCF = cf;
 	}
 }
 
@@ -98,7 +112,7 @@ void drawWithOpenGL(GlConsoleChar* output, int w, int h)
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glEnableClientState(GL_COLOR_ARRAY);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		initShaders();
+		shStage3_init();
 		drawCalled = true;
 	}
 
@@ -238,26 +252,26 @@ static void initCharset(void)
 
 	bgBrush = CreateSolidBrush(RGB(12, 12, 12));
 
-	EnumFontFamiliesA(glw.hdc, NULL, &enumFontsProc, 0);
+	//EnumFontFamiliesA(glw.hdc, NULL, &enumFontsProc, 0);
 }
 
 static int CALLBACK enumFontsProc(ENUMLOGFONT* lpelf, NEWTEXTMETRIC* lpntm, DWORD FontType, LPARAM lParam)
 {
 	char aaa[256];
-
 	sprintf(aaa, "%s - %d x %d (%d)\n", lpelf->elfLogFont.lfFaceName, lpelf->elfLogFont.lfWidth,
 		lpelf->elfLogFont.lfHeight, lpelf->elfLogFont.lfPitchAndFamily);
-
 	OutputDebugStringA(aaa);
 	return TRUE;
 }
 
-static int CALLBACK enumFontFamProc(ENUMLOGFONT* lpelf, NEWTEXTMETRIC* lpntm, DWORD FontType, LPARAM lParam)
+static int CALLBACK enumFontFamProc(ENUMLOGFONTW* lpelf, NEWTEXTMETRICW* lpntm, DWORD FontType, LPARAM lParam)
 {
-	if (lpelf->elfLogFont.lfWidth == fontW &&
-		lpelf->elfLogFont.lfHeight == fontH)
+	int fontDiff = abs(lpelf->elfLogFont.lfWidth - settingFontW) + abs(lpelf->elfLogFont.lfHeight - settingFontH);
+	if (fontDiff < minFontDiff)
 	{
-		textFont = CreateFontIndirectA(lpelf);
+		minFontDiff = fontDiff;
+		enumLogFont = *lpelf;
+		if (fontDiff == 0) { return FALSE; }
 	}
 	return TRUE;
 }
@@ -311,7 +325,7 @@ static void loadCharset(void)
 		if (recalcTextureSize)
 		{
 			calcTextureSize((int)glCharW, (int)glCharH,
-				&textureW, &textureH, &ratioW, &ratioH);
+				&textureW, &textureH, &ratioW, &ratioH, true);
 		}
 	}
 
@@ -404,17 +418,9 @@ static void setMatrix(void)
 	if (consoleRect.right != oldConsoleRect.right ||
 		consoleRect.bottom != oldConsoleRect.bottom)
 	{
-		SetWindowPos(glw.hwnd, HWND_TOP, 0, 0,
-			consoleRect.right, consoleRect.bottom, SWP_SHOWWINDOW);
-
-		glViewport(0, 0, consoleRect.right, consoleRect.bottom);
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		gluOrtho2D(0.0f, (double)consoleRect.right, (double)consoleRect.bottom, 0.0f);
-		glTranslatef(0.375f, 0.375f, 0.0f);
-
-		shSetSize(consoleRect.right, consoleRect.bottom);
-
+		SetWindowPos(glw.hwnd, HWND_TOP, 0, 0, consoleRect.right, consoleRect.bottom, SWP_SHOWWINDOW);
+		setPixelMatrix(consoleRect.right, consoleRect.bottom);
+		shStage3_setSize(consoleRect.right, consoleRect.bottom);
 		oldConsoleRect = consoleRect;
 	}
 }
@@ -496,14 +502,5 @@ static void makeArraysAvailable(GlCharType* charType, int w, int h)
 		charType->available = true;
 	}
 }
-
-#else
-
-volatile float volGlCharW = 0.0f, volGlCharH = 0.0f;
-
-void initOpenGlConsole(void) {}
-void refreshFont(void) {}
-void drawWithOpenGL(GlConsoleChar* output, int w, int h) {}
-void peekMainMessages(void) {}
 
 #endif

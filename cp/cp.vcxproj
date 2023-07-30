@@ -31,6 +31,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
+    <EnableASAN>false</EnableASAN>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -38,12 +39,14 @@
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <EnableASAN>false</EnableASAN>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
+    <EnableASAN>false</EnableASAN>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -51,6 +54,7 @@
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <EnableASAN>false</EnableASAN>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -137,15 +141,20 @@
     <ClCompile Include="src\gl\glUtils.c" />
     <ClCompile Include="src\gl\shaders\glShaders.c" />
     <ClCompile Include="src\gl\shaders\glShStage1.c" />
+    <ClCompile Include="src\gl\shaders\glShStage3.c" />
     <ClCompile Include="src\help.c" />
     <ClCompile Include="src\main.c" />
     <ClCompile Include="src\processFrame.c" />
     <ClCompile Include="src\queue.c" />
     <ClCompile Include="src\threads.c" />
+    <ClCompile Include="src\ui\menu.c" />
+    <ClCompile Include="src\ui\ui.c" />
     <ClCompile Include="src\utils.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\conplayer.h" />
+    <ClInclude Include="src\dependencies\atomic.h" />
+    <ClInclude Include="src\dependencies\win_dirent.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.gitignore" />

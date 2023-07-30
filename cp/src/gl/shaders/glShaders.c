@@ -25,70 +25,48 @@ typedef struct
 } PredefinedShader;
 
 
+
 // OpenGL 2.0 functions
 
-// https://registry.khronos.org/OpenGL/api/GL/glext.h
-#define CP_GL_FRAGMENT_SHADER     0x8B30
-#define CP_GL_VERTEX_SHADER       0x8B31
-#define CP_GL_COMPILE_STATUS      0x8B81
-#define CP_GL_LINK_STATUS         0x8B82
-#define CP_GL_INFO_LOG_LENGTH     0x8B84
 
-typedef GLuint(APIENTRY T_glCreateShader)(GLenum type);
-typedef void(APIENTRY T_glShaderSource)(GLuint shader, GLsizei count, const char* const* string, const GLint* length);
-typedef void(APIENTRY T_glCompileShader)(GLuint shader);
-typedef GLuint(APIENTRY T_glCreateProgram)(void);
-typedef void(APIENTRY T_glAttachShader)(GLuint program, GLuint shader);
-typedef void(APIENTRY T_glLinkProgram)(GLuint program);
-typedef void(APIENTRY T_glUseProgram)(GLuint program);
-typedef GLint(APIENTRY T_glGetUniformLocation)(GLuint program, const char* name);
-typedef void(APIENTRY T_glUniform1f)(GLint location, GLfloat v0);
-typedef void(APIENTRY T_glUniform2i)(GLint location, GLint v0, GLint v1);
-typedef void(APIENTRY T_glGetShaderiv)(GLuint shader, GLenum pname, GLint* params);
-typedef void(APIENTRY T_glGetProgramiv)(GLuint program, GLenum pname, GLint* params);
-typedef void(APIENTRY T_glGetShaderInfoLog)(GLuint shader, GLsizei bufSize, GLsizei* length, char* infoLog);
-typedef void(APIENTRY T_glGetProgramInfoLog)(GLuint program, GLsizei bufSize, GLsizei* length, char* infoLog);
+GlFunctions glf[4];
 
-static T_glCreateShader* f_glCreateShader;
-static T_glShaderSource* f_glShaderSource;
-static T_glCompileShader* f_glCompileShader;
-static T_glCreateProgram* f_glCreateProgram;
-static T_glAttachShader* f_glAttachShader;
-static T_glLinkProgram* f_glLinkProgram;
-static T_glUseProgram* f_glUseProgram;
-static T_glGetUniformLocation* f_glGetUniformLocation;
-static T_glUniform1f* f_glUniform1f;
-static T_glUniform2i* f_glUniform2i;
-static T_glGetShaderiv* f_glGetShaderiv;
-static T_glGetProgramiv* f_glGetProgramiv;
-static T_glGetShaderInfoLog* f_glGetShaderInfoLog;
-static T_glGetProgramInfoLog* f_glGetProgramInfoLog;
 
-static void loadGlFunctions(void);
+static void loadGlFunctions(int stage);
 static void* loadGlFunction(const char* name);
 
-static void loadGlFunctions(void)
+
+static void loadGlFunctions(int stage)
 {
-	f_glCreateShader = loadGlFunction("glCreateShader");
-	f_glShaderSource = loadGlFunction("glShaderSource");
-	f_glCompileShader = loadGlFunction("glCompileShader");
-	f_glCreateProgram = loadGlFunction("glCreateProgram");
-	f_glAttachShader = loadGlFunction("glAttachShader");
-	f_glLinkProgram = loadGlFunction("glLinkProgram");
-	f_glUseProgram = loadGlFunction("glUseProgram");
-	f_glGetUniformLocation = loadGlFunction("glGetUniformLocation");
-	f_glUniform1f = loadGlFunction("glUniform1f");
-	f_glUniform2i = loadGlFunction("glUniform2i");
-	f_glGetShaderiv = loadGlFunction("glGetShaderiv");
-	f_glGetProgramiv = loadGlFunction("glGetProgramiv");
-	f_glGetShaderInfoLog = loadGlFunction("glGetShaderInfoLog");
-	f_glGetProgramInfoLog = loadGlFunction("glGetProgramInfoLog");
+	GlFunctions* f = &glf[stage - 1];
+	f->createShader = loadGlFunction("glCreateShader");
+	f->shaderSource = loadGlFunction("glShaderSource");
+	f->compileShader = loadGlFunction("glCompileShader");
+	f->createProgram = loadGlFunction("glCreateProgram");
+	f->attachShader = loadGlFunction("glAttachShader");
+	f->linkProgram = loadGlFunction("glLinkProgram");
+	f->useProgram = loadGlFunction("glUseProgram");
+	f->getUniformLocation = loadGlFunction("glGetUniformLocation");
+	f->uniform1f = loadGlFunction("glUniform1f");
+	f->uniform2i = loadGlFunction("glUniform2i");
+	f->getShaderiv = loadGlFunction("glGetShaderiv");
+	f->getProgramiv = loadGlFunction("glGetProgramiv");
+	f->getShaderInfoLog = loadGlFunction("glGetShaderInfoLog");
+	f->getProgramInfoLog = loadGlFunction("glGetProgramInfoLog");
+
+	f->genFramebuffers = loadGlFunction("glGenFramebuffers");
+	f->bindFramebuffer = loadGlFunction("glBindFramebuffer");
+	f->genRenderbuffers = loadGlFunction("glGenRenderbuffers");
+	f->bindRenderbuffer = loadGlFunction("glBindRenderbuffer");
+	f->renderbufferStorage = loadGlFunction("glRenderbufferStorage");
+	f->framebufferRenderbuffer = loadGlFunction("glFramebufferRenderbuffer");
 }
 
 // https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions
 static void* loadGlFunction(const char* name)
 {
 	void* p = (void*)wglGetProcAddress(name);
+	DWORD aaa = GetLastError();
 
 	if (p == NULL || (p == (void*)0x1) || (p == (void*)0x2) ||
 		(p == (void*)0x3) || (p == (void*)-1))
@@ -107,114 +85,7 @@ static void* loadGlFunction(const char* name)
 
 
 
-// Shader code
-
-const char* vshBegin[3] =
-{
-	NULL,
-
-
-	NULL,
-
-
-	"#version 330 compatibility\n\n"
-
-	"out vec4 cp_color;\n"
-	"out vec2 cp_pixelPos;\n"
-	"uniform ivec2 cp_charPos;\n"
-	"vec2 cp_texCoord;\n\n"
-
-	"uniform float uni_lerp_a = 0.0;\n"
-	"uniform float uni_lerp_b = 1.0;\n\n"
-};
-
-const char* vshMainBegin[3] =
-{
-	NULL,
-
-	NULL,
-
-
-	"void main()\n"
-	"{\n"
-	"	cp_color = gl_Color;\n"
-	"	gl_Position = ftransform();\n"
-	"	cp_pixelPos = vec2((gl_Position.x + 1.0) / 2.0, ((-gl_Position.y + 1.0) / 2.0));\n"
-	"	gl_TexCoord[0] = gl_MultiTexCoord0;\n"
-	"	cp_texCoord = gl_TexCoord[0].xy;\n\n"
-};
-
-const char* vshMainEnd[3] =
-{
-	NULL,
-
-
-	NULL,
-
-
-	"	gl_Position.x = (cp_pixelPos.x * 2.0) - 1.0;\n"
-	"	gl_Position.y = -((cp_pixelPos.y * 2.0) - 1.0);\n"
-	"	gl_TexCoord[0].xy = cp_texCoord;\n"
-	"}"
-};
-
-const char* fshBegin[3] =
-{
-	NULL,
-
-	NULL,
-
-
-	"#version 330 compatibility\n\n"
-
-	"uniform sampler2D cp_colorMap;\n\n"
-	"out vec4 cp_fragColor;\n"
-
-	"in vec4 cp_color;\n"
-	"in vec2 cp_pixelPos;\n"
-	"uniform ivec2 cp_charPos;\n"
-	"vec4 cp_texColor;\n\n"
-
-	"uniform float uni_lerp_a = 0.0;\n"
-	"uniform float uni_lerp_b = 1.0;\n\n"
-};
-
-const char* fshMainBegin[3] =
-{
-	NULL,
-
-
-	NULL,
-
-
-	"void main()\n"
-	"{\n"
-	"	cp_texColor = texture2D(cp_colorMap, gl_TexCoord[0].xy);\n"
-};
-
-const char* fshMainMiddle[3] =
-{
-	NULL,
-
-
-	NULL,
-
-
-	"	cp_fragColor = vec4(mix(uni_lerp_a, uni_lerp_b, cp_texColor.r) * cp_color.r,\n"
-	"						mix(uni_lerp_a, uni_lerp_b, cp_texColor.g) * cp_color.g,\n"
-	"						mix(uni_lerp_a, uni_lerp_b, cp_texColor.b) * cp_color.b, 1.0f);\n"
-};
-
-const char* fshMainEnd[3] =
-{
-	NULL,
-
-
-	NULL,
-
-
-	"}"
-};
+// Predefs code 
 
 const PredefinedShader PREDEFS[] =
 {
@@ -280,89 +151,67 @@ const int PREDEF_COUNT = sizeof(PREDEFS) / sizeof(PredefinedShader);
 
 // Shader functions
 
-static GLuint program = 0;
-
-static bool initialize = false;
-static bool vshInit[3] = { false, false, false };
-static bool fshInit[3] = { false, false, false };
+bool shStageEnabled[4] = { false, false, false, false };
 
 static ShaderPart* shaderParts = NULL;
 static int shaderPartCount = 0;
 static UniformValue* uniformValues = NULL;
 static int uniformValueCount = 0;
 
-static GLuint uniformCharPos = -1;
 
-
-static char* buildShader(int stage, ShaderType type);
-static void appendString(char** str, int* len, char* strToAppend);
+static char* buildShader(int stage, ShaderType type, ShadersStructure* structure);
+static void appendPart(char** str, int* len, ShaderPart* part, bool inMain);
+static void appendString(char** str, int* len, const char* strToAppend);
 static bool areSameType(ShaderType type1, ShaderType type2);
-static GLint getUniformLocation(GLuint program, const char* prefix, const char* name);
-static void checkShaderError(GLuint shader, const char* stage, const char* type);
-static void checkProgramError(GLuint program, const char* stage);
+static void checkShaderError(GlFunctions* f, GLuint shader, int stage, const char* type);
+static void checkProgramError(GlFunctions* f, GLuint program, int stage);
 
 
-void initShaders(void)
+GLuint shLoadStageShaders(int stage, ShadersStructure* structure)
 {
-	if (!initialize) { return; }
+	loadGlFunctions(stage);
+	GlFunctions* f = &glf[stage - 1];
 
-	loadGlFunctions();
+	GLuint program = f->createProgram();
 
-	program = f_glCreateProgram();
+	char* vshCode = buildShader(stage, ST_VERTEX_SHADER, structure);
+	char* fshCode = buildShader(stage, ST_FRAGMENT_SHADER, structure);
+	printf(fshCode);
 
-	if (vshInit[2] || fshInit[2])
-	{
-		char* vshCode = buildShader(3, ST_VERTEX_SHADER);
-		char* fshCode = buildShader(3, ST_FRAGMENT_SHADER);
-		printf(fshCode);
+	GLuint vertexShader = f->createShader(CP_GL_VERTEX_SHADER);
+	f->shaderSource(vertexShader, 1, &vshCode, NULL);
+	f->compileShader(vertexShader);
+	checkShaderError(f, vertexShader, stage, "vsh");
 
-		GLuint vertexShader = f_glCreateShader(CP_GL_VERTEX_SHADER);
-		f_glShaderSource(vertexShader, 1, &vshCode, NULL);
-		f_glCompileShader(vertexShader);
-		checkShaderError(vertexShader, "s3", "vsh");
+	GLuint fragmentShader = f->createShader(CP_GL_FRAGMENT_SHADER);
+	f->shaderSource(fragmentShader, 1, &fshCode, NULL);
+	f->compileShader(fragmentShader);
+	checkShaderError(f, fragmentShader, stage, "fsh");
 
-		GLuint fragmentShader = f_glCreateShader(CP_GL_FRAGMENT_SHADER);
-		f_glShaderSource(fragmentShader, 1, &fshCode, NULL);
-		f_glCompileShader(fragmentShader);
-		checkShaderError(fragmentShader, "s3", "fsh");
+	f->attachShader(program, vertexShader);
+	f->attachShader(program, fragmentShader);
 
-		f_glAttachShader(program, vertexShader);
-		f_glAttachShader(program, fragmentShader);
+	f->linkProgram(program);
+	checkProgramError(f, program, stage);
 
-		f_glLinkProgram(program);
-		checkProgramError(program, "s3");
+	free(fshCode);
+	free(vshCode);
 
-		free(fshCode);
-		free(vshCode);
-	}
+	f->useProgram(program);
 
-	uniformCharPos = getUniformLocation(program, "cp_", "charPos");
-
-	f_glUseProgram(program);
-
-	//TODO: check stage
 	for (int i = 0; i < uniformValueCount; i++)
 	{
-		f_glUniform1f(getUniformLocation(program, "uni_", uniformValues[i].name), uniformValues[i].value);
+		if (uniformValues[i].stage == stage)
+		{
+			f->uniform1f(shGetUniformLocation(f, program, "uni_", uniformValues[i].name), uniformValues[i].value);
+		}
 	}
+	return program;
 }
 
 void shAddShader(int stage, ShaderType type, ShaderPartType partType, char* shader, ShaderSource source, char* data)
 {
-	initialize = true;
-	if (stage != 0)
-	{
-		if (type == ST_VERTEX_SHADER)
-		{
-			vshInit[stage - 1] = true;
-		}
-		else if (type == ST_FRAGMENT_SHADER ||
-				 type == ST_FRAGMENT_SHADER_PRE ||
-				 type == ST_FRAGMENT_SHADER_POST)
-		{
-			fshInit[stage - 1] = true;
-		}
-	}
+	shStageEnabled[stage - 1] = true;
 
 	shaderPartCount++;
 	shaderParts = realloc(shaderParts, shaderPartCount * sizeof(ShaderPart));
@@ -439,17 +288,21 @@ void shAddUniform(int stage, char* name, float val)
 	newUniformValue->stage = stage;
 }
 
-
-
-void shSetSize(int w, int h)
+GLint shGetUniformLocation(GlFunctions* f, GLuint program, const char* prefix, const char* name)
 {
-	if (uniformCharPos != -1)
-	{
-		f_glUniform2i(uniformCharPos, w, h);
-	}
+	int len = strlen(prefix) + strlen(name) + 1;
+	char* fullName = (char*)malloc(len);
+	strcpy(fullName, prefix);
+	strcat(fullName, name);
+
+	GLint location = f->getUniformLocation(program, fullName);
+	// If not used, uniform can be removed so it isn't checking for error (-1)
+
+	free(fullName);
+	return location;
 }
 
-static char* buildShader(int stage, ShaderType type)
+static char* buildShader(int stage, ShaderType type, ShadersStructure* structure)
 {
 	bool found = false;
 	ShaderPart* fullShader = NULL;
@@ -473,91 +326,82 @@ static char* buildShader(int stage, ShaderType type)
 	char* str = strdup("");
 	int len = 0;
 
-	if (type == ST_VERTEX_SHADER) { appendString(&str, &len, vshBegin[stage - 1]); }
-	else { appendString(&str, &len, fshBegin[stage - 1]); }
+	if (type == ST_VERTEX_SHADER) { appendString(&str, &len, structure->vshBegin); }
+	else { appendString(&str, &len, structure->fshBegin); }
 
 	for (int i = 0; i < shaderPartCount; i++)
 	{
-		if (shaderParts[i].stage == stage && areSameType(shaderParts[i].shaderType, type) &&
-			(shaderParts[i].partType == SPT_COMPLEX || shaderParts[i].partType == SPT_UTILS))
+		if (shaderParts[i].stage == stage && areSameType(shaderParts[i].shaderType, type))
 		{
-			appendString(&str, &len, shaderParts[i].code);
-			appendString(&str, &len, "\n\n");
+			appendPart(&str, &len, &shaderParts[i], false);
 		}
 	}
 
 	if (type == ST_VERTEX_SHADER)
 	{
-		appendString(&str, &len, vshMainBegin[stage - 1]);
+		appendString(&str, &len, structure->vshMainBegin);
 
 		for (int i = 0; i < shaderPartCount; i++)
 		{
 			if (shaderParts[i].stage == stage && shaderParts[i].shaderType == ST_VERTEX_SHADER)
 			{
-				if (shaderParts[i].partType == SPT_SIMPLE)
-				{
-					appendString(&str, &len, shaderParts[i].code);
-					appendString(&str, &len, "\n\n");
-				}
-				else if (shaderParts[i].partType == SPT_COMPLEX)
-				{
-					appendString(&str, &len, shaderParts[i].data);
-					appendString(&str, &len, "();\n\n");
-				}
+				appendPart(&str, &len, &shaderParts[i], true);
 			}
 		}
 
-		appendString(&str, &len, vshMainEnd[stage - 1]);
+		appendString(&str, &len, structure->vshMainEnd);
 	}
 	else
 	{
-		appendString(&str, &len, fshMainBegin[stage - 1]);
+		appendString(&str, &len, structure->fshMainBegin);
 
 		for (int i = 0; i < shaderPartCount; i++)
 		{
-			if (shaderParts[i].stage == stage && shaderParts[i].shaderType == ST_FRAGMENT_SHADER_PRE)
+			if (shaderParts[i].stage == stage && shaderParts[i].shaderType == ST_FRAGMENT_SHADER)
 			{
-				if (shaderParts[i].partType == SPT_SIMPLE)
-				{
-					appendString(&str, &len, shaderParts[i].code);
-					appendString(&str, &len, "\n\n");
-				}
-				else if (shaderParts[i].partType == SPT_COMPLEX)
-				{
-					appendString(&str, &len, shaderParts[i].data);
-					appendString(&str, &len, "();\n\n");
-				}
+				appendPart(&str, &len, &shaderParts[i], true);
 			}
 		}
 
-		appendString(&str, &len, fshMainMiddle[stage - 1]);
+		if (structure->fshMainMiddle) { appendString(&str, &len, structure->fshMainMiddle); }
 
 		for (int i = 0; i < shaderPartCount; i++)
 		{
-			if (shaderParts[i].stage == stage &&
-				(shaderParts[i].shaderType == ST_FRAGMENT_SHADER_POST ||
-					shaderParts[i].shaderType == ST_FRAGMENT_SHADER))
+			if (shaderParts[i].stage == stage && shaderParts[i].shaderType == ST_FRAGMENT_SHADER_POST)
 			{
-				if (shaderParts[i].partType == SPT_SIMPLE)
-				{
-					appendString(&str, &len, shaderParts[i].code);
-					appendString(&str, &len, "\n\n");
-				}
-				else if (shaderParts[i].partType == SPT_COMPLEX)
-				{
-					appendString(&str, &len, shaderParts[i].data);
-					appendString(&str, &len, "();\n\n");
-				}
+				appendPart(&str, &len, &shaderParts[i], true);
 			}
 		}
 
-		appendString(&str, &len, fshMainEnd[stage - 1]);
+		appendString(&str, &len, structure->fshMainEnd);
 	}
 
 	return str;
 }
 
-static void appendString(char** str, int* len, char* strToAppend)
+static void appendPart(char** str, int* len, ShaderPart* part, bool inMain)
+{
+	if (inMain)
+	{
+		if (part->partType == SPT_SIMPLE)
+		{
+			appendString(str, len, part->code);
+			appendString(str, len, "\n\n");
+		}
+		else if (part->partType == SPT_COMPLEX)
+		{
+			appendString(str, len, part->data);
+			appendString(str, len, "();\n\n");
+		}
+	}
+	else if (part->partType == SPT_COMPLEX || part->partType == SPT_UTILS)
+	{
+		appendString(str, len, part->code);
+		appendString(str, len, "\n\n");
+	}
+}
+
+static void appendString(char** str, int* len, const char* strToAppend)
 {
 	*len = *len + strlen(strToAppend);
 	*str = realloc(*str, (*len) + 1);
@@ -567,77 +411,52 @@ static void appendString(char** str, int* len, char* strToAppend)
 static bool areSameType(ShaderType type1, ShaderType type2)
 {
 	if (type1 == ST_FRAGMENT_SHADER_POST) { type1 = ST_FRAGMENT_SHADER; }
-	if (type1 == ST_FRAGMENT_SHADER_PRE) { type1 = ST_FRAGMENT_SHADER; }
-
 	if (type2 == ST_FRAGMENT_SHADER_POST) { type2 = ST_FRAGMENT_SHADER; }
-	if (type2 == ST_FRAGMENT_SHADER_PRE) { type2 = ST_FRAGMENT_SHADER; }
-
 	return type1 == type2;
 }
 
-static GLint getUniformLocation(GLuint program, const char* prefix, const char* name)
-{
-	int len = strlen(prefix) + strlen(name) + 1;
-	char* fullName = (char*)malloc(len * sizeof(char));
-	strcpy(fullName, prefix);
-	strcat(fullName, name);
-
-	GLint location = f_glGetUniformLocation(program, fullName);
-	// If not used, uniform can be removed so it isn't checking for error (-1)
-
-	free(fullName);
-	return location;
-}
-
-static void checkShaderError(GLuint shader, const char* stage, const char* type)
+static void checkShaderError(GlFunctions* f, GLuint shader, int stage, const char* type)
 {
 	GLint isCompiled = 0;
-	f_glGetShaderiv(shader, CP_GL_COMPILE_STATUS, &isCompiled);
+	f->getShaderiv(shader, CP_GL_COMPILE_STATUS, &isCompiled);
 
 	if (isCompiled == GL_FALSE)
 	{
 		GLint len = 0;
-		f_glGetShaderiv(shader, CP_GL_INFO_LOG_LENGTH, &len);
+		f->getShaderiv(shader, CP_GL_INFO_LOG_LENGTH, &len);
 
 		if (len != 0)
 		{
 			char* infoLog = (char*)malloc(len * sizeof(char));
-			f_glGetShaderInfoLog(shader, len, &len, infoLog);
-			printf("\nShader compilation error [%s:%s]:\n", stage, type);
-			puts(infoLog, stdout);
+			f->getShaderInfoLog(shader, len, &len, infoLog);
+			printf("\nShader compilation error [s%d:%s]:\n", stage, type);
+			fputs(infoLog, stdout);
 		}
 
 		error("Failed to compile shader!", "gl/glShaders.c", __LINE__);
 	}
 }
 
-static void checkProgramError(GLuint program, const char* stage)
+static void checkProgramError(GlFunctions* f, GLuint program, int stage)
 {
 	GLint isLinked = 0;
-	f_glGetProgramiv(program, CP_GL_LINK_STATUS, &isLinked);
+	f->getProgramiv(program, CP_GL_LINK_STATUS, &isLinked);
 
 	if (isLinked == GL_FALSE)
 	{
 		GLint len = 0;
-		f_glGetProgramiv(program, CP_GL_INFO_LOG_LENGTH, &len);
+		f->getProgramiv(program, CP_GL_INFO_LOG_LENGTH, &len);
 
 		if (len != 0)
 		{
 			char* infoLog = (char*)malloc(len * sizeof(char));
-			f_glGetProgramInfoLog(program, len, &len, infoLog);
-			printf("\nProgram linking error [%s]:\n", stage);
-			puts(infoLog, stdout);
+			f->getProgramInfoLog(program, len, &len, infoLog);
+			printf("\nProgram linking error [s%d]:\n", stage);
+			fputs(infoLog, stdout);
 		}
 
 		error("Failed to link program!", "gl/glShaders.c", __LINE__);
 	}
 }
-
-#else
-
-void initShaders(void) {}
-void shAddShader(int stage, ShaderType type, ShaderPartType partType, char* shader, ShaderSource source, char* data) {}
-void shAddUniform(int stage, char* name, float val) {}
-void shSetSize(int w, int h) {}
 
 #endif

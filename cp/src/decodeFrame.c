@@ -156,7 +156,9 @@ void initDecodeFrame(const char* file, const char* secondFile, Stream** outAudio
 	filterFrame = av_frame_alloc();
 	scaledFrame = av_frame_alloc();
 
-	//shStage1_init();
+	#ifndef CP_DISABLE_OPENGL
+	shStage1_init();
+	#endif
 }
 
 void readFrames(void)
@@ -169,12 +171,18 @@ void readFrames(void)
 
 	while (true)
 	{
+		#ifndef CP_DISABLE_OPENGL
 		if (settings.useFakeConsole) { peekMainMessages(); }
+		#endif
 
 		while (freezeThreads)
 		{
 			mainFreezed = true;
+
+			#ifndef CP_DISABLE_OPENGL
 			if (settings.useFakeConsole) { peekMainMessages(); }
+			#endif
+
 			Sleep(SLEEP_ON_FREEZE);
 		}
 
@@ -188,7 +196,10 @@ void readFrames(void)
 		double curTime = getTime();
 		if (curTime > lastConRefresh + CONSOLE_REFRESH_PERIOD)
 		{
+			#ifndef CP_DISABLE_OPENGL
 			if (settings.useFakeConsole) { refreshFont(); }
+			#endif
+
 			refreshSize();
 			lastConRefresh = curTime;
 		}
@@ -260,11 +271,13 @@ void readFrames(void)
 
 	av_packet_free(&packet);
 
-	printf("%d (%d) / %d (%d)\n", (-err1) & 0xFF, err1, (-err2) & 0xFF, err2);
+	//printf("%d (%d) / %d (%d)\n", (-err1) & 0xFF, err1, (-err2) & 0xFF, err2);
 	decodeEnd = true;
 	while (true)
 	{
+		#ifndef CP_DISABLE_OPENGL
 		if (settings.useFakeConsole) { peekMainMessages(); }
+		#endif
 		Sleep(30);
 	}
 }
@@ -343,13 +356,15 @@ static void decodeVideoPacket(AVPacket* packet)
 	{
 		AVFrame* inputFrame = decodedFrame;
 
-		/*if (shStage1_enabled)
+		#ifndef CP_DISABLE_OPENGL
+		if (shStageEnabled[0])
 		{
 			refeshRgbFrame(decodedFrame);
 			scaleFrame(rgbContext, decodedFrame, rgbFrame);
 			shStage1_apply(rgbFrame);
 			inputFrame = rgbFrame;
-		}*/
+		}
+		#endif
 
 		if (settings.videoFilters && settings.scaledVideoFilters)
 		{
@@ -523,8 +538,18 @@ static void refreshScaledFrame(AVFrame* inputFrame)
 
 		if (scalingContext) { sws_freeContext(scalingContext); }
 		if (scaledFrameBuffer) { av_free(scaledFrameBuffer); }
+		
+		int flags;
+		switch (settings.scalingMode)
+		{
+		case SM_NEAREST: flags = SWS_POINT; break;
+		case SM_FAST_BILINEAR: flags = SWS_FAST_BILINEAR; break;
+		case SM_BILINEAR: flags = SWS_BILINEAR; break;
+		case SM_BICUBIC: flags = SWS_BICUBIC; break;
+		default: error("Undefined scaling mode!", "decodeFrame.c", __LINE__);
+		}
 
-		scalingContext = sws_getContext(w, h, format, conW, conH, destFormat, settings.scalingMode, NULL, NULL, NULL);
+		scalingContext = sws_getContext(w, h, format, conW, conH, destFormat, flags, NULL, NULL, NULL);
 		scaledFrameBuffer = (uint8_t*)av_malloc(av_image_get_buffer_size(destFormat, conW, conH, 1) * sizeof(uint8_t));
 		
 		av_image_fill_arrays(scaledFrame->data, scaledFrame->linesize, scaledFrameBuffer, destFormat, conW, conH, 1);
@@ -543,5 +568,5 @@ static scaleFrame(struct SwsContext* context, AVFrame* inputFrame, AVFrame* outp
 {
 	sws_scale(context, inputFrame->data, inputFrame->linesize, 0,
 		inputFrame->height, outputFrame->data, outputFrame->linesize);
-	//av_frame_copy_props(outputFrame, inputFrame);
+	av_frame_copy_props(outputFrame, inputFrame);
 }

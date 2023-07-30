@@ -1,3 +1,5 @@
+===Version 1.5===
+-Replaced message with UI when running without any arguments.
 -Added "--color-proc" option with 3 modes: "both" (default), "char-only" and "none".
 -Added "--preload" option.
 -Added "--fake-console" option.
@@ -6,7 +8,12 @@
 -You can now provide two filenames or stream URLs as input, one for video and one for audio.
 -Putting "$" before link as the "--input" argument now extracts stream URLs with yt-dlp.
 -Input errors are now more descriptive.
--Changes to "--help" option parameters.
+-Changes to "--help", "--information" and "--full-info" options.
+-Playback and volume is now controlled with arrows or WASD.
+-Updated to FFmpeg 5.
+
+===Version 1.4.1===
+-Fixed FFmpeg filters on WinXP version.
 
 ===Version 1.4===
 -Added options to apply FFmpeg filters - "--video-filters", "--scaled-video-filters", "--audio-filters".

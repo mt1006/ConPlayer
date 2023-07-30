@@ -80,19 +80,25 @@ Frame* dequeueFrame(Stage fromStage, bool* threadFreezedFlag)
 			while (freezeThreads)
 			{
 				*threadFreezedFlag = true;
+
+				#ifndef CP_DISABLE_OPENGL
 				if (settings.useFakeConsole && threadFreezedFlag == &mainFreezed)
 				{
 					peekMainMessages();
 				}
+				#endif
+
 				Sleep(SLEEP_ON_FREEZE);
 			}
 			return dequeueFrame(fromStage, threadFreezedFlag);
 		}
 
+		#ifndef CP_DISABLE_OPENGL
 		if (settings.useFakeConsole && threadFreezedFlag == &mainFreezed)
 		{
 			peekMainMessages();
 		}
+		#endif
 		Sleep(TIME_TO_WAIT);
 	}
 

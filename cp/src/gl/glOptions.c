@@ -71,14 +71,9 @@ static int opStageShaderAdd(int argc, char** argv, int stage, ShaderType type, b
 
 	if (type == ST_FRAGMENT_SHADER)
 	{
-		if (!strcmp(str, "simple") || !strcmp(str, "complex"))
+		if (!strcmp(str, "simple"))
 		{
-			invalidInput("Specify \":pre\" or \":post\" at the end of the type name", str, __LINE__);
-		}
-
-		if (!strcmp(str, "simple:pre"))
-		{
-			shAddShader(stage, ST_FRAGMENT_SHADER_PRE, SPT_SIMPLE, argv[2], source, NULL);
+			shAddShader(stage, ST_FRAGMENT_SHADER, SPT_SIMPLE, argv[2], source, NULL);
 			return 2;
 		}
 		else if (!strcmp(str, "simple:post"))
@@ -86,10 +81,10 @@ static int opStageShaderAdd(int argc, char** argv, int stage, ShaderType type, b
 			shAddShader(stage, ST_FRAGMENT_SHADER_POST, SPT_SIMPLE, argv[2], source, NULL);
 			return 2;
 		}
-		else if (!strcmp(str, "complex:pre"))
+		else if (!strcmp(str, "complex"))
 		{
 			checkArgs(argc, argv, 3);
-			shAddShader(stage, ST_FRAGMENT_SHADER_PRE, SPT_COMPLEX, argv[3], source, argv[2]);
+			shAddShader(stage, ST_FRAGMENT_SHADER, SPT_COMPLEX, argv[3], source, argv[2]);
 			return 3;
 		}
 		else if (!strcmp(str, "complex:post"))
@@ -101,10 +96,9 @@ static int opStageShaderAdd(int argc, char** argv, int stage, ShaderType type, b
 	}
 	else
 	{
-		if (!strcmp(str, "simple:pre") || !strcmp(str, "simple:post") ||
-			!strcmp(str, "complex:post") || !strcmp(str, "complex:post"))
+		if (!strcmp(str, "complex:post") || !strcmp(str, "complex:post"))
 		{
-			invalidInput("Specifying subtype is not necessary", str, __LINE__);
+			invalidInput("Specifying subtype is not allowed for vertex shaders", str, __LINE__);
 		}
 
 		if (!strcmp(str, "simple"))
@@ -183,9 +177,5 @@ static void unknownOption(char** argv, int line)
 {
 	invalidInput("Unknown option", argv[0], line);
 }
-
-#else
-
-int parseGlOptions(int argc, char** argv) { return 0; }
 
 #endif
