@@ -146,10 +146,13 @@ static void draw(void)
 		}
 	}
 
-	setCursorPos(0, h - 2);
-	fputs("Use arrows/enter to navigate UI", stdout);
-	setCursorPos(0, h - 1);
-	fputs("Instead of UI you can also use command line", stdout);
+	if (CP_IS_WINDOWS)
+	{
+		setCursorPos(0, h - 2);
+		fputs("Use arrows/enter to navigate UI", stdout);
+		setCursorPos(0, h - 1);
+		fputs("Instead of UI you can also use command line", stdout);
+	}
 
 	setCursorPos(0, 0);
 }

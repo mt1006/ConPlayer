@@ -347,6 +347,7 @@ int getChar(bool wasdAsArrows)
 	}
 
 	//https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-PC-Style-Function-Keys
+	int chSS3;
 	if (ch == 0x1B)
 	{
 		if (getchar() == '[')
@@ -362,7 +363,7 @@ int getChar(bool wasdAsArrows)
 			case 'H': return VK_HOME;
 			case 'F': return VK_END;
 			case 'O':
-				int chSS3 = getchar();
+				chSS3 = getchar();
 				if (chSS3 == 'H') { return VK_HOME; }
 				if (chSS3 == 'F') { return VK_END; }
 				if (chSS3 == 'M') { return VK_RETURN; }
