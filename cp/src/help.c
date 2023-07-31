@@ -1,36 +1,34 @@
 #include "conplayer.h"
 
+const char* INFO_MESSAGE =
+"ConPlayer " CP_VERSION " [" CP_CPU "/" CP_OS "]\n"
+"Author: https://github.com/mt1006\n"
+"Version: " CP_VERSION "\n"
+"Architecture: " CP_CPU "\n"
+"Platform: " CP_OS;
+
 static void helpBasicOptions(void);
 static void helpAdvancedOptions(void);
-static void helpColorModes(void);
-static void helpScalingModes(void);
+static void helpModes(void);
 static void helpKeyboard(void);
 
-void showHelp(bool basic, bool advanced, bool colorModes, bool scalingModes, bool keyboard)
+void showHelp(bool basic, bool advanced, bool modes, bool keyboard)
 {
 	puts("ConPlayer - Help\n");
 	if (basic) { helpBasicOptions(); }
 	if (advanced) { helpAdvancedOptions(); }
-	if (colorModes) { helpColorModes(); }
-	if (scalingModes) { helpScalingModes(); }
+	if (modes) { helpModes(); }
 	if (keyboard) { helpKeyboard(); }
 }
 
 void showInfo(void)
 {
-	puts(
-		"ConPlayer - Information\n"
-		"ConPlayer " CP_VERSION " [" CP_CPU "/" CP_OS "]\n"
-		"Author: https://github.com/mt1006\n"
-		"Version: " CP_VERSION "\n"
-		"Architecture: " CP_CPU "\n"
-		"Platform: " CP_OS);
+	puts(INFO_MESSAGE);
 }
 
 void showFullInfo(void)
 {
 	puts(
-		"ConPlayer - Full info\n"
 		"ConPlayer " CP_VERSION " [" CP_CPU "/" CP_OS "]\n"
 		"Author: https://github.com/mt1006\n"
 		"Version: " CP_VERSION "\n"
@@ -50,27 +48,19 @@ void showFullInfo(void)
 
 void showVersion(void)
 {
-	puts("ConPlayer " CP_VERSION " [" CP_CPU "/" CP_OS "]");
-}
-
-void showNoArgsInfo(void)
-{
-	showVersion();
-	puts("\nNo arguments were given!\n"
-		"To start playing give the video filename as the first argument.\n"
-		"To get list of basic options use \"conpl -h\".\n"
-		"To get list of all options use \"conpl -h full\".");
+	puts(CP_VERSION_STRING);
 }
 
 static void helpBasicOptions(void)
 {
 	puts(
 		"Basic options:\n"
-		" [none] / -i         Just input file - audio or video.\n"
+		" [none] / -i         Input file - audio or video.\n"
+		"                     Put \"$\" before link to extract stream URL with yt-dlp (if in path)."
 		"                     Examples:\n"
 		"                      conpl video.mp4\n"
 		" -c [mode]           Sets color mode. By default \"cstd-256\".\n"
-		"  (--colors)         To get list of all avaible color modes use \"conpl -h color-modes\".\n"
+		"  (--colors)         To get list of all available modes use \"conpl -h modes\".\n"
 		"                     Examples:\n"
 		"                      conpl video.mp4 -c winapi-16\n"
 		" -vol [volume]       Sets audio volume. By default \"0.5\".\n"
@@ -86,7 +76,7 @@ static void helpBasicOptions(void)
 		" -inf(--information) Information about ConPlayer.\n"
 		" -v  (--version)     Information about ConPlayer version.\n"
 		" -h <topic>          Displays help message.\n"
-		"  (--help)           Topics: basic, advanced, color-modes, scaling-modes, keyboard, full\n");
+		"  (--help)           Topics: basic, advanced, modes, keyboard, full\n");
 }
 
 static void helpAdvancedOptions(void)
@@ -101,6 +91,10 @@ static void helpAdvancedOptions(void)
 		"                     Examples:\n"
 		"                      conpl video.mp4 -int 2\n"
 		"                      conpl video.mp4 -int 4 3\n"
+		" -cp [mode]          Sets color processing mode\n"
+		"  (--color-proc)     To get list of all available modes use \"conpl -h modes\".\n"
+		"                     Examples:\n"
+		"                      conpl video.mp4 -c cstd-rgb -cp none\n"
 		" -sc [value]         Sets constant color in grayscale mode.\n"
 		"  (--set-color)      Only number - sets text attribute using WinAPI.\n"
 		"                     \"@color\" - sets color from ANSI 256 palette (only with cstd-gray).\n"
@@ -118,20 +112,16 @@ static void helpAdvancedOptions(void)
 		"                     Examples:\n"
 		"                      conpl video.mp4 -ch #blocks\n"
 		"                      conpl video.mp4 -ch my_charset.txt\n"
-		" -sch                Uses single character to draw image and sets it's color to original\n"
-		"  (--single-char)    instead of recalculated. Requires colors!\n"
-		"                     Examples:\n"
-		"                      conpl video.mp4 -c cstd-rgb -sch\n"
 		" -r [val]            Randomly increases or decreases pixel brightness by a random value\n"
-		"  (--rand)           between 0 and val/2. When \"single char\" mode is enabled or \"@\" sign\n"
-		"                     is placed before the number, brightness is decreased by a random value\n"
-		"                     between 0 and val.\n"
+		"  (--rand)           between 0 and val/2. When color processing mode is set to \"none\" or\n"
+		"                     \"@\" sign is placed before the number, brightness is decreased by\n"
+		"                     a random value between 0 and val.\n"
 		"                     Examples:\n"
 		"                      conpl video.mp4 -r 20\n"
 		"                      conpl video.mp4 -r @40\n"
-		"                      conpl video.mp4 -c cstd-rgb -sch -r 56\n"
+		"                      conpl video.mp4 -c cstd-rgb -cp char-only -r 56\n"
 		" -sm [mode]          Sets scaling mode. Default scaling mode is \"bicubic\".\n"
-		"  (--scaling-mode)   To get list of all avaible scaling modes use \"conpl -h scaling-modes\".\n"
+		"  (--scaling-mode)   To get list of all available modes use \"conpl -h modes\".\n"
 		"                     Examples:\n"
 		"                      conpl video.mp4 -sm nearest\n"
 		" -fr [ratio]         Sets constant font ratio (x/y).\n"
@@ -140,10 +130,7 @@ static void helpAdvancedOptions(void)
 		"                     Examples:\n"
 		"                      conpl video.mp4 -ft 0.5\n"
 		" -sy [mode]          Sets synchronization mode.\n"
-		"  (--sync)           Available modes:\n"
-		"                     \"disabled\" - prints the output as fast as possible.\n"
-		"                     \"draw-all\" - synchronization enabled, but tries to draw all frames.\n"
-		"                     \"enabled\" - synchronization enabled, skips frames if necessary [default].\n"
+		"  (--sync)           To get list of all available modes use \"conpl -h modes\".\n"
 		"                     Examples:\n"
 		"                      conpl video.mp4 -sy draw-all\n"
 		" -vf [filter]        Applies FFmpeg filters to the video.\n"
@@ -164,13 +151,20 @@ static void helpAdvancedOptions(void)
 		"                     Works properly only in \"cstd\" color mode and it breaks interlacing.\n"
 		"                     Examples:\n"
 		"                      conpl video.mp4 -c cstd-gray -s 80 30 -fr 0.5 -sy disabled -dcls > output.txt\n"
+		" -fc                 Creates child window on top of the console that looks like console but\n"
+		"  (--fake-console)   renders text much faster using OpenGL. Currently works only on Windows\n"
+		"                     and may be unstable! Recommended to use with raster font.\n"
+		" -gls                Settings for \"fake console\" mode. Experimental!\n"
+		"  (--opengl-settings)Examples:\n"
+		"                      conpl video.mp4 -c cstd-rgb -cp char-only -r 60 -fc -gls :s3:fsh:add predef dither :s3:set lerp_a 0.5\n"
+		" -pl (--preload)     Loads and unload entire input file (in hope that system will cache it into RAM).\n"
 		" -da(--disable-audio)Disables audio.\n"
 		" -dk (--disable-keys)Disables keyboard control.\n"
 		" -avl (--libav-logs) Enables printing Libav logs. Helpful with FFmpeg filters problems.\n"
 		" -fi (--full-info)   Full info about ConPlayer.\n");
 }
 
-static void helpColorModes(void)
+static void helpModes(void)
 {
 	puts(
 		"Color modes:\n"
@@ -180,26 +174,36 @@ static void helpColorModes(void)
 		" >cstd-16\n"
 		" >cstd-256 [default]\n"
 		" >cstd-rgb\n");
-}
 
-static void helpScalingModes(void)
-{
+	puts(
+		"Color processing modes:\n"
+		" >none - keeps original color and uses single character.\n"
+		" >char-only - uses character according to luminance but doesn't change color.\n"
+		" >both - uses character according to luminance and changes color so that\n"
+		"         its largest component is equal to 255. [default]");
+
 	puts(
 		"Scaling modes:\n"
 		" >nearest\n"
 		" >fast-bilinear\n"
 		" >bilinear\n"
 		" >bicubic [default]\n");
+
+	puts(
+		"Synchronization modes:\n"
+		" >disabled - prints the output as fast as possible.\n"
+		" >draw-all - synchronization enabled, but tries to draw all frames.\n"
+		" >enabled - synchronization enabled, skips frames if necessary. [default]\n");
 }
 
 static void helpKeyboard(void)
 {
 	puts(
 		"Keyboard control:\n"
-		" Space      Pause/Play\n"
-		" \"[\" / \"]\"  Go back / Skip forward (10 second)\n"
-		" \"-\" / \"+\"  Go back / Skip forward (30 second)\n"
-		" \"L\" / \"O\"  Turn down/up the volume\n"
-		" \"M\"        Mute the audio\n"
-		" ESC        Exit\n");
+		" Space       Pause/Play\n"
+		" L/R arrows  Go back / Skip forward (10 second)\n"
+		" -/+ keys    Go back / Skip forward (30 second)\n"
+		" U/D arrows  Turn down/up the volume\n"
+		" M           Mute the audio\n"
+		" ESC         Exit\n");
 }

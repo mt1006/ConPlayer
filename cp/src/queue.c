@@ -8,7 +8,7 @@ typedef struct
 } Queue;
 
 static const int TIME_TO_WAIT = 16;
-static Queue queue;
+static volatile Queue queue;
 
 static Frame* queueNextElement(int currentPos);
 
@@ -39,16 +39,20 @@ void initQueue(void)
 	{
 		queue.array[i].stage = STAGE_FREE;
 		queue.array[i].isAudio = false;
-		queue.array[i].audioSamplesNum = 0;
+		queue.array[i].time = 0;
+
+		queue.array[i].w = -1;
+		queue.array[i].h = -1;
+
 		queue.array[i].videoFrame = NULL;
-		queue.array[i].audioFrame = NULL;
 		queue.array[i].videoLinesize = 0;
+
 		queue.array[i].output = NULL;
 		queue.array[i].outputLineOffsets = NULL;
+
+		queue.array[i].audioFrame = NULL;
 		queue.array[i].audioFrameSize = -1;
-		queue.array[i].frameW = -1;
-		queue.array[i].frameH = -1;
-		queue.array[i].time = 0;
+		queue.array[i].audioSamplesNum = 0;
 	}
 
 	queueExists = true;
@@ -76,11 +80,25 @@ Frame* dequeueFrame(Stage fromStage, bool* threadFreezedFlag)
 			while (freezeThreads)
 			{
 				*threadFreezedFlag = true;
+
+				#ifndef CP_DISABLE_OPENGL
+				if (settings.useFakeConsole && threadFreezedFlag == &mainFreezed)
+				{
+					peekMainMessages();
+				}
+				#endif
+
 				Sleep(SLEEP_ON_FREEZE);
 			}
 			return dequeueFrame(fromStage, threadFreezedFlag);
 		}
 
+		#ifndef CP_DISABLE_OPENGL
+		if (settings.useFakeConsole && threadFreezedFlag == &mainFreezed)
+		{
+			peekMainMessages();
+		}
+		#endif
 		Sleep(TIME_TO_WAIT);
 	}
 

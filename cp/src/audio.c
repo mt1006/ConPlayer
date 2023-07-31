@@ -8,35 +8,47 @@ typedef struct
 	int* audioFramesSize;
 } AudioQueue;
 
+#ifdef _WIN32
+
 static const enum AVSampleFormat SAMPLE_FORMAT_AV = AV_SAMPLE_FMT_S32;
 static const int SAMPLE_BITS = 32;
 static const int CHANNELS = 2;
 static const int SAMPLE_SIZE = 8; // (32 bits * 2 channels) / 8 bits
 static const int SAMPLE_RATE = 48000;
 
-static ao_sample_format aoSampleFormat;
-static ao_device* aoDevice = NULL;
+#else
 
-static int initialized = 0;
-static int libInitialized = 0;
+static const enum AVSampleFormat SAMPLE_FORMAT_AV = AV_SAMPLE_FMT_S16;
+static const int SAMPLE_BITS = 16;
+static const int CHANNELS = 2;
+static const int SAMPLE_SIZE = 4; // (16 bits * 2 channels) / 8 bits
+static const int SAMPLE_RATE = 48000;
+
+#endif
+
+static bool initialized = 0;
 static SwrContext* resampleContext = NULL;
 
 static const int AUDIO_QUEUE_SIZE = 128;
-static AudioQueue audioQueue;
+static volatile AudioQueue audioQueue;
+
+static ao_sample_format aoSampleFormat;
+static ao_device* aoDevice = NULL;
 
 static bool initAudioLib(void);
 
 void initAudio(Stream* avAudioStream)
 {
+	if (!avAudioStream) { return; }
 	if (!initAudioLib()) { return; }
 
 	resampleContext = swr_alloc_set_opts(NULL,
-		av_get_default_channel_layout(CHANNELS),                              //out_channel_layout
-		SAMPLE_FORMAT_AV,                                                     //out_sample_fmt
-		SAMPLE_RATE,                                                          //out_sample_rate
-		av_get_default_channel_layout(avAudioStream->codecContext->channels), //in_channel_layout
-		avAudioStream->codecContext->sample_fmt,                              //in_sample_fmt
-		avAudioStream->codecContext->sample_rate,                             //in_sample_rate
+		av_get_default_channel_layout(CHANNELS),                               //out_channel_layout
+		SAMPLE_FORMAT_AV,                                                      //out_sample_fmt
+		SAMPLE_RATE,                                                           //out_sample_rate
+		av_get_default_channel_layout(avAudioStream->codecContext->channels),  //in_channel_layout
+		avAudioStream->codecContext->sample_fmt,                               //in_sample_fmt
+		avAudioStream->codecContext->sample_rate,                              //in_sample_rate
 		0, NULL);
 	int swrRetVal = swr_init(resampleContext);
 	if (swrRetVal < 0) { return; }
@@ -47,7 +59,7 @@ void initAudio(Stream* avAudioStream)
 	audioQueue.audioSamplesNum = (int*)malloc(AUDIO_QUEUE_SIZE * sizeof(int));
 	audioQueue.audioFramesSize = (int*)calloc(AUDIO_QUEUE_SIZE, sizeof(int));
 
-	initialized = 1;
+	initialized = true;
 }
 
 void addAudioFrame(AVFrame* frame)
@@ -69,13 +81,6 @@ void addAudioFrame(AVFrame* frame)
 		frame->extended_data, frame->nb_samples);
 	if (outSamples < 0) { return; }
 
-	int* fullSamples = (int*)queueFrame->audioFrame;
-	for (int i = 0; i < outSamples; i++)
-	{
-		fullSamples[i * 2] = (int)((double)fullSamples[i * 2] * settings.volume);
-		fullSamples[i * 2 + 1] = (int)((double)fullSamples[i * 2 + 1] * settings.volume);
-	}
-
 	queueFrame->audioSamplesNum = outSamples;
 	queueFrame->isAudio = true;
 
@@ -85,17 +90,31 @@ void addAudioFrame(AVFrame* frame)
 void audioLoop(void)
 {
 	const int TIME_TO_SLEEP = 8;
+	if (!initialized) { return; }
 
-	while (1)
+	while (true)
 	{
 		if (audioQueue.front != audioQueue.back)
 		{
+			#ifdef _WIN32
+
 			int* fullSamples = (int*)audioQueue.audioFrames[audioQueue.front];
 			for (int i = 0; i < audioQueue.audioSamplesNum[audioQueue.front]; i++)
 			{
 				fullSamples[i * 2] = (int)((double)fullSamples[i * 2] * settings.volume);
 				fullSamples[i * 2 + 1] = (int)((double)fullSamples[i * 2 + 1] * settings.volume);
 			}
+
+			#else
+
+			short* fullSamples = (short*)audioQueue.audioFrames[audioQueue.front];
+			for (int i = 0; i < audioQueue.audioSamplesNum[audioQueue.front]; i++)
+			{
+				fullSamples[i * 2] = (short)((double)fullSamples[i * 2] * settings.volume);
+				fullSamples[i * 2 + 1] = (short)((double)fullSamples[i * 2 + 1] * settings.volume);
+			}
+
+			#endif
 
 			ao_play(aoDevice, audioQueue.audioFrames[audioQueue.front],
 				audioQueue.audioSamplesNum[audioQueue.front] * SAMPLE_SIZE);

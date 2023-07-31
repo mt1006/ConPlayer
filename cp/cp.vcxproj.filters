@@ -5,6 +5,18 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="src\gl">
+      <UniqueIdentifier>{12db2855-2db4-4803-99aa-e2bae6e38135}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\gl\shaders">
+      <UniqueIdentifier>{ab2a874a-ecda-4823-a44e-eaf0d2988ba7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ui">
+      <UniqueIdentifier>{dda2bbc0-185f-4cac-bf23-f8174fdf19ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\dependencies">
+      <UniqueIdentifier>{3ad4b62c-26fd-4820-913d-20fc0f8874be}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\audio.c">
@@ -28,9 +40,6 @@
     <ClCompile Include="src\threads.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils.c">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\processFrame.c">
       <Filter>src</Filter>
     </ClCompile>
@@ -40,10 +49,43 @@
     <ClCompile Include="src\avFilters.c">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gl\glConsole.c">
+      <Filter>src\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gl\glOptions.c">
+      <Filter>src\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gl\glUtils.c">
+      <Filter>src\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gl\shaders\glShaders.c">
+      <Filter>src\gl\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gl\shaders\glShStage1.c">
+      <Filter>src\gl\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gl\shaders\glShStage3.c">
+      <Filter>src\gl\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui\ui.c">
+      <Filter>src\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui\menu.c">
+      <Filter>src\ui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\conplayer.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dependencies\atomic.h">
+      <Filter>src\dependencies</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dependencies\win_dirent.h">
+      <Filter>src\dependencies</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
