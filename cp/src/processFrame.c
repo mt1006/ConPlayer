@@ -279,6 +279,21 @@ static void processForGlConsole(Frame* frame)
 				valG = CMD_COLORS_16[7][1];
 				valB = CMD_COLORS_16[7][2];
 			}
+			else if (settings.colorMode == CM_WINAPI_16 || settings.colorMode == CM_CSTD_16)
+			{
+				valR = frame->videoFrame[(j * 3) + (i * frame->videoLinesize)];
+				valG = frame->videoFrame[(j * 3) + (i * frame->videoLinesize) + 1];
+				valB = frame->videoFrame[(j * 3) + (i * frame->videoLinesize) + 2];
+
+				if (settings.colorProcMode == CPM_NONE) { val = 255; }
+				else { val = procColor(&valR, &valG, &valB); }
+
+				uint8_t color = findNearestColor16(valR, valG, valB);
+				
+				valR = CMD_COLORS_16[color][0];
+				valG = CMD_COLORS_16[color][1];
+				valB = CMD_COLORS_16[color][2];
+			}
 			else
 			{
 				valR = frame->videoFrame[(j * 3) + (i * frame->videoLinesize)];
