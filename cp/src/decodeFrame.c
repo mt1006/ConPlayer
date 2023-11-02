@@ -31,13 +31,13 @@ static void decodeAudioPacket(AVPacket* packet);
 static void addVideoFrame(AVFrame* frame);
 static void refeshRgbFrame(AVFrame* inputFrame);
 static void refreshScaledFrame(AVFrame* swsInputFrame);
-static scaleFrame(struct SwsContext* context, AVFrame* inputFrame, AVFrame* outputFrame);
+static void scaleFrame(struct SwsContext* context, AVFrame* inputFrame, AVFrame* outputFrame);
 
 
 uint8_t* buffer;
 size_t bufferSize, bufferSizeOld;
 int64_t pos;
-
+ 
 //=========
 // Temp code:
 static int read_packet(void* opaque, uint8_t* buf, int buf_size)
@@ -78,7 +78,7 @@ static int64_t io_seek(void* opaque, int64_t offset, int whence)
 		pos = offset;
 	}
 
-	printf("%lld %d\n", offset, whence);
+	printf("%" PRId64 " %d\n", offset, whence);
 	return 0;
 }
 //=========
@@ -564,7 +564,7 @@ static void refreshScaledFrame(AVFrame* inputFrame)
 	}
 }
 
-static scaleFrame(struct SwsContext* context, AVFrame* inputFrame, AVFrame* outputFrame)
+static void scaleFrame(struct SwsContext* context, AVFrame* inputFrame, AVFrame* outputFrame)
 {
 	sws_scale(context, inputFrame->data, inputFrame->linesize, 0,
 		inputFrame->height, outputFrame->data, outputFrame->linesize);

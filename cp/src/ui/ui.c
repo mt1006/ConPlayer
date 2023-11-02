@@ -156,17 +156,17 @@ static void action_exit(void)
 
 static void* selector_colorMode(UISelectorAction action, void* arg)
 {
-	int pos = (int)arg;
+	int pos = (int)(int64_t)arg;
 	switch (action)
 	{
 	case UI_SELECTOR_GET_COUNT:
-		return 6;
+		return (void*)6;
 
 	case UI_SELECTOR_GET_POS:
-		return (int)settings.colorMode;
+		return (void*)(int64_t)settings.colorMode;
 
 	case UI_SELECTOR_GET_NAME:
-		switch ((ColorMode)(int)arg)
+		switch ((ColorMode)(int64_t)arg)
 		{
 		case CM_WINAPI_GRAY: return "winapi-gray";
 		case CM_WINAPI_16: return "winapi-16";
@@ -176,6 +176,7 @@ static void* selector_colorMode(UISelectorAction action, void* arg)
 		case CM_CSTD_RGB: return "cstd-rgb";
 		default: selectorError(__LINE__);
 		}
+		break;
 		
 	case UI_SELECTOR_GET_SELECTED_NAME:
 		return selector_colorMode(UI_SELECTOR_GET_NAME, selector_colorMode(UI_SELECTOR_GET_POS, NULL));
@@ -195,23 +196,24 @@ static void* selector_colorMode(UISelectorAction action, void* arg)
 
 static void* selector_colorProcessingMode(UISelectorAction action, void* arg)
 {
-	int pos = (int)arg;
+	int pos = (int)(int64_t)arg;
 	switch (action)
 	{
 	case UI_SELECTOR_GET_COUNT:
-		return 3;
+		return (void*)3;
 
 	case UI_SELECTOR_GET_POS:
-		return (int)settings.colorProcMode;
+		return (void*)(int64_t)settings.colorProcMode;
 
 	case UI_SELECTOR_GET_NAME:
-		switch ((ColorProcMode)(int)arg)
+		switch ((ColorProcMode)(int64_t)arg)
 		{
 		case CPM_NONE: return "none";
 		case CPM_CHAR_ONLY: return "char-only";
 		case CPM_BOTH: return "both";
 		default: selectorError(__LINE__);
 		}
+		break;
 
 	case UI_SELECTOR_GET_SELECTED_NAME:
 		return selector_colorProcessingMode(UI_SELECTOR_GET_NAME,
@@ -228,18 +230,18 @@ static void* selector_colorProcessingMode(UISelectorAction action, void* arg)
 static void* selector_charset(UISelectorAction action, void* arg)
 {
 	static int charsetPos = 0;
-	int pos = (int)arg;
+	int pos = (int)(int64_t)arg;
 
 	switch (action)
 	{
 	case UI_SELECTOR_GET_COUNT:
-		return 6;
+		return (void*)6;
 
 	case UI_SELECTOR_GET_POS:
-		return charsetPos;
+		return (void*)(int64_t)charsetPos;
 
 	case UI_SELECTOR_GET_NAME:
-		switch ((int)arg)
+		switch ((int64_t)arg)
 		{
 		case 0: return "long";
 		case 1: return "short";
@@ -249,6 +251,7 @@ static void* selector_charset(UISelectorAction action, void* arg)
 		case 5: return "bold-outline";
 		default: selectorError(__LINE__);
 		}
+		break;
 
 	case UI_SELECTOR_GET_SELECTED_NAME:
 		return selector_charset(UI_SELECTOR_GET_NAME,
@@ -274,17 +277,17 @@ static void* selector_charset(UISelectorAction action, void* arg)
 
 static void* selector_constantColor(UISelectorAction action, void* arg)
 {
-	int pos = (int)arg;
+	int pos = (int)(int64_t)arg;
 	switch (action)
 	{
 	case UI_SELECTOR_GET_COUNT:
-		return 4;
+		return (void*)4;
 
 	case UI_SELECTOR_GET_POS:
-		return (int)settings.setColorMode;
+		return (void*)(int64_t)settings.setColorMode;
 
 	case UI_SELECTOR_GET_NAME:
-		switch ((SetColorMode)(int)arg)
+		switch ((SetColorMode)(int64_t)arg)
 		{
 		case SCM_DISABLED: return "disabled";
 		case SCM_WINAPI: return "winapi";
@@ -292,6 +295,7 @@ static void* selector_constantColor(UISelectorAction action, void* arg)
 		case SCM_CSTD_RGB: return "cstd-rgb";
 		default: selectorError(__LINE__);
 		}
+		break;
 
 	case UI_SELECTOR_GET_SELECTED_NAME:
 		return selector_constantColor(UI_SELECTOR_GET_NAME,
@@ -340,17 +344,17 @@ static void* selector_constantColor(UISelectorAction action, void* arg)
 
 static void* selector_scalingMode(UISelectorAction action, void* arg)
 {
-	int pos = (int)arg;
+	int pos = (int)(int64_t)arg;
 	switch (action)
 	{
 	case UI_SELECTOR_GET_COUNT:
-		return 4;
+		return (void*)4;
 
 	case UI_SELECTOR_GET_POS:
-		return (int)settings.scalingMode;
+		return (void*)(int64_t)settings.scalingMode;
 
 	case UI_SELECTOR_GET_NAME:
-		switch ((ScalingMode)(int)arg)
+		switch ((ScalingMode)(int64_t)arg)
 		{
 		case SM_NEAREST: return "nearest";
 		case SM_FAST_BILINEAR: return "fast-bilinear";
@@ -358,6 +362,7 @@ static void* selector_scalingMode(UISelectorAction action, void* arg)
 		case SM_BICUBIC: return "bicubic";
 		default: selectorError(__LINE__);
 		}
+		break;
 
 	case UI_SELECTOR_GET_SELECTED_NAME:
 		return selector_scalingMode(UI_SELECTOR_GET_NAME, selector_scalingMode(UI_SELECTOR_GET_POS, NULL));
@@ -372,23 +377,24 @@ static void* selector_scalingMode(UISelectorAction action, void* arg)
 
 static void* selector_syncMode(UISelectorAction action, void* arg)
 {
-	int pos = (int)arg;
+	int pos = (int)(int64_t)arg;
 	switch (action)
 	{
 	case UI_SELECTOR_GET_COUNT:
-		return 3;
+		return (void*)3;
 
 	case UI_SELECTOR_GET_POS:
-		return (int)settings.syncMode;
+		return (void*)(int64_t)settings.syncMode;
 
 	case UI_SELECTOR_GET_NAME:
-		switch ((SyncMode)(int)arg)
+		switch ((SyncMode)(int64_t)arg)
 		{
 		case SYNC_DISABLED: return "disabled";
 		case SYNC_DRAW_ALL: return "draw-all";
 		case SYNC_ENABLED: return "enabled";
 		default: selectorError(__LINE__);
 		}
+		break;
 
 	case UI_SELECTOR_GET_SELECTED_NAME:
 		return selector_syncMode(UI_SELECTOR_GET_NAME, selector_syncMode(UI_SELECTOR_GET_POS, NULL));

@@ -25,6 +25,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <float.h>
+#include <ctype.h>
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavfilter/avfilter.h>
@@ -308,7 +309,7 @@ extern void beginThreads(void);
 
 //queue.c
 extern void initQueue(void);
-extern Frame* dequeueFrame(Stage fromStage, bool* threadFreezedFlag);
+extern Frame* dequeueFrame(Stage fromStage, volatile bool* threadFreezedFlag);
 extern void enqueueFrame(Stage toStage);
 
 //help.c

@@ -40,7 +40,7 @@ ThreadIDType startThread(ThreadFuncPtr threadFunc, void* args)
 
 void strToLower(char* str)
 {
-	for (int i = 0; i < strlen(str); i++)
+	for (size_t i = 0; i < strlen(str); i++)
 	{
 		str[i] = (char)tolower((int)str[i]);
 	}
@@ -358,10 +358,14 @@ int getChar(bool wasdAsArrows)
 			case 'B': return VK_DOWN;
 			case 'C': return VK_RIGHT;
 			case 'D': return VK_LEFT;
-			case '5': if (getchar() == '~') { return VK_PRIOR; }
-			case '6': if (getchar() == '~') { return VK_NEXT; }
 			case 'H': return VK_HOME;
 			case 'F': return VK_END;
+			case '5':
+				if (getchar() == '~') { return VK_PRIOR; }
+				break;
+			case '6':
+				if (getchar() == '~') { return VK_NEXT; }
+				break;
 			case 'O':
 				chSS3 = getchar();
 				if (chSS3 == 'H') { return VK_HOME; }

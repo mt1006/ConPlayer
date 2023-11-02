@@ -339,13 +339,13 @@ static void buildMenuFromSelector(UIMenuElement* element, UIMenu* out)
 	SelectorFunc func = element->ptr;
 
 	uiAddElement(out, UI_TEXT, element->text, NULL);
-	for (int i = 0; i < func(UI_SELECTOR_GET_COUNT, NULL); i++)
+	for (int i = 0; i < (int64_t)func(UI_SELECTOR_GET_COUNT, NULL); i++)
 	{
-		uiAddElement(out, UI_ACTION, func(UI_SELECTOR_GET_NAME, i), &selectorAction);
+		uiAddElement(out, UI_ACTION, func(UI_SELECTOR_GET_NAME, (void*)(int64_t)i), &selectorAction);
 	}
 	uiAddElement(out, UI_ACTION, "[Cancel]", &uiPopMenu);
 
-	out->selected = (int)func(UI_SELECTOR_GET_POS, NULL) + 1;
+	out->selected = (int)(int64_t)func(UI_SELECTOR_GET_POS, NULL) + 1;
 }
 
 static void buildFileSelector(UIMenuElement* element, UIMenu* out)
@@ -428,7 +428,7 @@ static void selectorAction(void)
 {
 	int pos = menuStack[menuStackSize - 1]->selected - 1;
 	UIMenu* menu = menuStack[menuStackSize - 2];
-	((SelectorFunc)menu->elements[menu->selected].ptr)(UI_SELECTOR_SELECT, pos);
+	((SelectorFunc)menu->elements[menu->selected].ptr)(UI_SELECTOR_SELECT, (void*)(int64_t)pos);
 }
 
 static void inputSelectorAction(void)
