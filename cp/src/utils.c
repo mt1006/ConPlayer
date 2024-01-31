@@ -8,6 +8,23 @@
 static void setTermios(bool deinit);
 #endif
 
+int cp_min(int a, int b)
+{
+	return a < b ? a : b;
+}
+
+int cp_max(int a, int b)
+{
+	return a > b ? a : b;
+}
+
+int cp_clamp(int val, int min, int max)
+{
+	if (val > max) { return max; }
+	else if (val < min) { return min; }
+	else { return val; }
+}
+
 double getTime(void)
 {
 	#ifdef _WIN32
@@ -40,7 +57,7 @@ ThreadIDType startThread(ThreadFuncPtr threadFunc, void* args)
 
 void strToLower(char* str)
 {
-	for (size_t i = 0; i < strlen(str); i++)
+	for (int i = 0; i < strlen(str); i++)
 	{
 		str[i] = (char)tolower((int)str[i]);
 	}
@@ -61,8 +78,7 @@ void getConsoleWindow(void)
 		char newConTitle[CP_MAX_NEW_TITLE_LEN];
 
 		GetConsoleTitleW(oldConTitle, CP_MAX_OLD_TITLE_LEN);
-		sprintf(newConTitle, "ConPlayer-(%d/%d)",
-			(int)clock(), (int)GetCurrentProcessId());
+		sprintf(newConTitle, "ConPlayer-(%d/%d)", (int)clock(), (int)GetCurrentProcessId());
 		SetConsoleTitleA(newConTitle);
 		Sleep(CP_WAIT_FOR_SET_TITLE);
 		HWND newConHWND = FindWindowA(NULL, newConTitle);
@@ -118,8 +134,7 @@ void clearScreen(void)
 void setDefaultColor(void)
 {
 	#ifdef _WIN32
-	SetConsoleTextAttribute(outputHandle,
-		FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+	SetConsoleTextAttribute(outputHandle, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 	#else
 	puts("\x1B[39");
 	#endif
@@ -358,14 +373,10 @@ int getChar(bool wasdAsArrows)
 			case 'B': return VK_DOWN;
 			case 'C': return VK_RIGHT;
 			case 'D': return VK_LEFT;
+			case '5': if (getchar() == '~') { return VK_PRIOR; }
+			case '6': if (getchar() == '~') { return VK_NEXT; }
 			case 'H': return VK_HOME;
 			case 'F': return VK_END;
-			case '5':
-				if (getchar() == '~') { return VK_PRIOR; }
-				break;
-			case '6':
-				if (getchar() == '~') { return VK_NEXT; }
-				break;
 			case 'O':
 				chSS3 = getchar();
 				if (chSS3 == 'H') { return VK_HOME; }

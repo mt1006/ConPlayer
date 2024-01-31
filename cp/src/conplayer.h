@@ -86,6 +86,10 @@
 #define CP_CPU "AMD64"
 #elif defined(__i386__) || defined(_M_IX86)
 #define CP_CPU "IA-32"
+#elif defined(__aarch64__) || defined(_M_ARM64)
+#define CP_CPU "ARM64"
+#elif defined(__arm__) || defined(_M_ARM)
+#define CP_CPU "ARM32"
 #else
 #define CP_CPU "[unknown]"
 #endif
@@ -319,6 +323,9 @@ extern void showFullInfo(void);
 extern void showVersion(void);
 
 //utils.c
+extern int cp_min(int a, int b);
+extern int cp_max(int a, int b);
+extern int cp_clamp(int val, int min, int max);
 extern double getTime(void);
 extern ThreadIDType startThread(ThreadFuncPtr threadFunc, void* args);
 extern void strToLower(char* str);

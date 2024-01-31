@@ -181,7 +181,7 @@ void drawFrame(void* output, int* lineOffsets, int w, int h)
 	if (settings.scanlineCount == 1)
 	{
 		if (!settings.disableCLS) { setCursorPos(0, 0); }
-		fwrite((char*)output, 1, lineOffsets[h], stdout);
+		fwrite(output, 1, lineOffsets[h], stdout);
 	}
 	else
 	{

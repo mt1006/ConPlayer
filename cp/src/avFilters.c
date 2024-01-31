@@ -165,8 +165,7 @@ static void initFilters(const char* args, char* srcFilterName, const char* sinkF
 
 static bool applyFilters(AVFrame* frame, AVFilterContext* buffersrc)
 {
-	return (bool)(av_buffersrc_add_frame_flags(buffersrc,
-		frame, AV_BUFFERSRC_FLAG_KEEP_REF) >= 0);
+	return av_buffersrc_add_frame_flags(buffersrc, frame, AV_BUFFERSRC_FLAG_KEEP_REF) >= 0;
 }
 
 static bool getFilteredFrame(AVFrame* filterFrame, AVFilterContext* buffersink)

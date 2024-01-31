@@ -120,7 +120,6 @@ void argumentParser(int argc, char** argv)
 					if (OPTIONS[j].isOperation)
 					{
 						if (i != argc - 1) { invalidInput("Executing operation with options", argv[i], __LINE__); }
-						return;
 					}
 
 					optionsUsed[j] = true;

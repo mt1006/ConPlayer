@@ -26,7 +26,7 @@ static const int SAMPLE_RATE = 48000;
 
 #endif
 
-static bool initialized = 0;
+static bool initialized = false;
 static SwrContext* resampleContext = NULL;
 
 static const int AUDIO_QUEUE_SIZE = 128;
@@ -168,6 +168,5 @@ static bool initAudioLib(void)
 	aoSampleFormat.matrix = 0;
 	aoDevice = ao_open_live(driver, &aoSampleFormat, NULL);
 
-	if (aoDevice) { return true; }
-	else { return false; }
+	return aoDevice != NULL;
 }

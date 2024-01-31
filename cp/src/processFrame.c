@@ -61,10 +61,8 @@ static void processImage(Frame* frame, int x, int y, int w, int h, uint8_t* outp
 				uint8_t valG = frame->videoFrame[(xPos * 3) + (yPos * frame->videoLinesize) + 1];
 				uint8_t valB = frame->videoFrame[(xPos * 3) + (yPos * frame->videoLinesize) + 2];
 
-				uint8_t val, color;
-
-				if (settings.colorProcMode == CPM_NONE) { val = 255; }
-				else { val = procColor(&valR, &valG, &valB); }
+				uint8_t color;
+				uint8_t val = settings.colorProcMode == CPM_NONE ? 255 : procColor(&valR, &valG, &valB);
 
 				if (settings.brightnessRand) { procRand(&val); }
 
@@ -73,8 +71,7 @@ static void processImage(Frame* frame, int x, int y, int w, int h, uint8_t* outp
 				case CM_CSTD_16:
 					color = findNearestColor16(valR, valG, valB);
 					color = (color & 0b1010) | ((color & 4) >> 2) | ((color & 1) << 2);
-					if (color > 7) { color += 82; }
-					else { color += 30; }
+					color += color > 7 ? 82 : 30;
 
 					if (color == oldColor && !isFirstChar)
 					{
@@ -285,9 +282,7 @@ static void processForGlConsole(Frame* frame)
 				valG = frame->videoFrame[(j * 3) + (i * frame->videoLinesize) + 1];
 				valB = frame->videoFrame[(j * 3) + (i * frame->videoLinesize) + 2];
 
-				if (settings.colorProcMode == CPM_NONE) { val = 255; }
-				else { val = procColor(&valR, &valG, &valB); }
-
+				val = settings.colorProcMode == CPM_NONE ? 255 : procColor(&valR, &valG, &valB);
 				uint8_t color = findNearestColor16(valR, valG, valB);
 				
 				valR = CMD_COLORS_16[color][0];
@@ -369,21 +364,15 @@ static void procRand(uint8_t* val)
 	{
 		if (settings.brightnessRand > 0)
 		{
-			int tempVal = (int)(*val) +
+			int newVal = (int)(*val) +
 				(rand() % (settings.brightnessRand + 1)) -
 				(settings.brightnessRand / 2);
-
-			if (tempVal >= 255) { *val = 255; }
-			else if (tempVal <= 0) { *val = 0; }
-			else { *val = (uint8_t)tempVal; }
+			*val = (uint8_t)cp_clamp(newVal, 0, 255);
 		}
 		else
 		{
-			int tempVal = (int)(*val) -
-				(rand() % (-settings.brightnessRand + 1));
-
-			if (tempVal <= 0) { *val = 0; }
-			else { *val = (uint8_t)tempVal; }
+			int newVal = (int)(*val) - (rand() % (-settings.brightnessRand + 1));
+			*val = (uint8_t)cp_max(newVal, 0);
 		}
 	}
 }

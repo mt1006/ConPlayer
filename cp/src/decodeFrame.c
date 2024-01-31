@@ -37,7 +37,7 @@ static void scaleFrame(struct SwsContext* context, AVFrame* inputFrame, AVFrame*
 uint8_t* buffer;
 size_t bufferSize, bufferSizeOld;
 int64_t pos;
- 
+
 //=========
 // Temp code:
 static int read_packet(void* opaque, uint8_t* buf, int buf_size)
@@ -271,7 +271,6 @@ void readFrames(void)
 
 	av_packet_free(&packet);
 
-	//printf("%d (%d) / %d (%d)\n", (-err1) & 0xFF, err1, (-err2) & 0xFF, err2);
 	decodeEnd = true;
 	while (true)
 	{
@@ -489,9 +488,7 @@ static void refeshRgbFrame(AVFrame* inputFrame)
 	int h = inputFrame->height;
 	int format = inputFrame->format;
 
-	if (lastFrameW != w ||
-		lastFrameH != h ||
-		lastPixelFormat != format)
+	if (lastFrameW != w || lastFrameH != h || lastPixelFormat != format)
 	{
 		lastFrameW = w;
 		lastFrameH = h;
@@ -501,7 +498,7 @@ static void refeshRgbFrame(AVFrame* inputFrame)
 		if (rgbFrameBuffer) { av_free(rgbFrameBuffer); }
 
 		rgbContext = sws_getContext(w, h, format, w, h, RGB_PIXEL_FORMAT, SWS_POINT, NULL, NULL, NULL);
-		rgbFrameBuffer = (uint8_t*)av_malloc(av_image_get_buffer_size(RGB_PIXEL_FORMAT, w, h, 1) * sizeof(uint8_t));
+		rgbFrameBuffer = av_malloc(av_image_get_buffer_size(RGB_PIXEL_FORMAT, w, h, 1) * sizeof(uint8_t));
 
 		av_image_fill_arrays(rgbFrame->data, rgbFrame->linesize, rgbFrameBuffer, RGB_PIXEL_FORMAT, w, h, 1);
 		av_frame_copy_props(rgbFrame, inputFrame);
@@ -524,11 +521,8 @@ static void refreshScaledFrame(AVFrame* inputFrame)
 	int h = inputFrame->height;
 	int format = inputFrame->format;
 
-	if (lastW != w ||
-		lastH != h ||
-		lastPixelFormat != format ||
-		lastConW != conW ||
-		lastConH != conH)
+	if (lastW != w || lastH != h || lastPixelFormat != format ||
+		lastConW != conW || lastConH != conH)
 	{
 		lastW = w;
 		lastH = h;
@@ -550,7 +544,7 @@ static void refreshScaledFrame(AVFrame* inputFrame)
 		}
 
 		scalingContext = sws_getContext(w, h, format, conW, conH, destFormat, flags, NULL, NULL, NULL);
-		scaledFrameBuffer = (uint8_t*)av_malloc(av_image_get_buffer_size(destFormat, conW, conH, 1) * sizeof(uint8_t));
+		scaledFrameBuffer = av_malloc(av_image_get_buffer_size(destFormat, conW, conH, 1) * sizeof(uint8_t));
 		
 		av_image_fill_arrays(scaledFrame->data, scaledFrame->linesize, scaledFrameBuffer, destFormat, conW, conH, 1);
 		av_frame_copy_props(scaledFrame, inputFrame);

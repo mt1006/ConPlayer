@@ -56,7 +56,7 @@ static void helpBasicOptions(void)
 	puts(
 		"Basic options:\n"
 		" [none] / -i         Input file - audio or video.\n"
-		"                     Put \"$\" before link to extract stream URL with yt-dlp (if in path)."
+		"                     Put \"$\" before link to extract stream URL with yt-dlp (if in path).\n"
 		"                     Examples:\n"
 		"                      conpl video.mp4\n"
 		" -c [mode]           Sets color mode. By default \"cstd-256\".\n"
