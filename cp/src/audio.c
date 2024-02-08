@@ -165,8 +165,26 @@ static bool initAudioLib(void)
 	aoSampleFormat.channels = CHANNELS;
 	aoSampleFormat.rate = SAMPLE_RATE;
 	aoSampleFormat.byte_format = AO_FMT_LITTLE;
-	aoSampleFormat.matrix = 0;
+	aoSampleFormat.matrix = NULL;
 	aoDevice = ao_open_live(driver, &aoSampleFormat, NULL);
+
+	#ifndef _WIN32
+	if (aoDevice == NULL && errno == AO_EOPENDEVICE)
+	{
+		//Credits: https://github.com/juhovh/shairplay/issues/72#issuecomment-569171793
+		puts(
+			"Failed to open audio device!\n"
+			"                               \n"
+			"Try setting /etc/libao.conf to:\n"
+			"                               \n"
+			"default_driver=pulse\n"
+			"quiet\n"
+			"                               \n"
+			"and restart ConPlayer,\n"
+			"or press any key to continue anyway...");
+		getchar();
+	}
+	#endif
 
 	return aoDevice != NULL;
 }

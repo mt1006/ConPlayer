@@ -140,6 +140,7 @@ static void action_run(void)
 
 			#endif
 		}
+		clearScreen();
 		uiKeepLoop = false;
 	}
 	else
