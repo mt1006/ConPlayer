@@ -26,6 +26,7 @@
 #include <stdbool.h>
 #include <float.h>
 #include <ctype.h>
+#include <time.h>
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavfilter/avfilter.h>
