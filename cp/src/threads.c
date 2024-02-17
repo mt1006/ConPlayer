@@ -50,7 +50,7 @@ void beginThreads(void)
 
 static ThreadRetType CP_CALL_CONV procThread(void* ptr)
 {
-	while (1)
+	while (true)
 	{
 		while (freezeThreads && !decodeEnd)
 		{
@@ -73,7 +73,7 @@ static ThreadRetType CP_CALL_CONV drawThread(void* ptr)
 {
 	const int SLEEP_ON_PAUSE = 10;
 
-	while (1)
+	while (true)
 	{
 		while (freezeThreads && !decodeEnd)
 		{
@@ -159,7 +159,7 @@ static ThreadRetType CP_CALL_CONV drawThread(void* ptr)
 
 static ThreadRetType CP_CALL_CONV consoleThread(void* ptr)
 {
-	while (1)
+	while (true)
 	{
 		waitingForFrame = true;
 		while (waitingForFrame) { Sleep(0); }

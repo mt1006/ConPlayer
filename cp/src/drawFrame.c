@@ -251,7 +251,7 @@ static void getConsoleInfo(ConsoleInfo* consoleInfo)
 		while (volGlCharW == 0.0f) { Sleep(0); }
 
 		RECT clientRect = { 0 };
-		GetClientRect(conHWND, &clientRect);
+		GetClientRect(glConsoleHWND, &clientRect);
 
 		fullW = (int)round((double)clientRect.right / (double)volGlCharW);
 		fullH = (int)round((double)clientRect.bottom / (double)volGlCharH);

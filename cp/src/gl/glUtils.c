@@ -2,7 +2,8 @@
 
 #ifndef CP_DISABLE_OPENGL
 
-static bool mainWindowExists = false, isMainWindow = false;
+static bool mainWindowExists = false;
+static GlWindowType initWindowType = GLWT_DUMMY;
 
 static HWND createGlWindow(int stage);
 static void createGlContext(HDC hdc, HGLRC* hglrc);
@@ -18,13 +19,15 @@ GlWindow initGlWindow(GlWindowType type, int stage)
 	{
 		if (mainWindowExists) { error("Main window already created!", "gl/glUtils.c", __LINE__); }
 		mainWindowExists = true;
-		isMainWindow = true;
 	}
+
+	initWindowType = type;
 
 	glw.hwnd = createGlWindow(stage);
 	glw.hdc = GetDC(glw.hwnd);
+	glw.type = type;
 
-	isMainWindow = false;
+	initWindowType = GLWT_DUMMY;
 
 	if (type == GLWT_MAIN_CHILD) { SetWindowLongA(glw.hwnd, GWL_STYLE, WS_CHILD); }
 	else if (type == GLWT_DUMMY) { ShowWindow(glw.hwnd, SW_HIDE); }
@@ -159,7 +162,7 @@ static HWND createGlWindow(int stage)
 	RegisterClassExA(&wcs);
 
 	return CreateWindowExA(WS_EX_TRANSPARENT, className, className,
-		WS_BORDER, 0, 0, 320, 240, NULL, NULL, GetModuleHandleA(NULL), NULL);
+		WS_OVERLAPPEDWINDOW, 0, 0, 320, 240, NULL, NULL, GetModuleHandleA(NULL), NULL);
 }
 
 static void createGlContext(HDC hdc, HGLRC* hglrc)
@@ -183,10 +186,15 @@ static void createGlContext(HDC hdc, HGLRC* hglrc)
 
 static LRESULT CALLBACK windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	if (isMainWindow)
+	if (msg == WM_CREATE)
 	{
-		if (msg == WM_CREATE) { SetParent(hwnd, conHWND); }
-		else if (msg == WM_SIZE) { ShowWindow(hwnd, SW_SHOWMAXIMIZED); }
+		if (initWindowType == GLWT_MAIN_CHILD) { SetParent(hwnd, conHWND); }
+		else if (initWindowType == GLWT_MAIN) { ShowWindow(hwnd, SW_SHOW); }
+	}
+	if (msg == WM_SIZE)
+	{
+		if (initWindowType == GLWT_MAIN_CHILD) { ShowWindow(hwnd, SW_SHOWMAXIMIZED); }
+		else if (initWindowType == GLWT_MAIN) { ShowWindow(hwnd, SW_SHOW); }
 	}
 	return DefWindowProcA(hwnd, msg, wParam, lParam);
 }

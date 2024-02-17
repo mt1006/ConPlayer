@@ -174,12 +174,12 @@ static bool initAudioLib(void)
 		//Credits: https://github.com/juhovh/shairplay/issues/72#issuecomment-569171793
 		puts(
 			"Failed to open audio device!\n"
-			"                               \n"
+			"\n"
 			"Try setting /etc/libao.conf to:\n"
-			"                               \n"
+			"\n"
 			"default_driver=pulse\n"
 			"quiet\n"
-			"                               \n"
+			"\n"
 			"and restart ConPlayer,\n"
 			"or press any key to continue anyway...");
 		getchar();

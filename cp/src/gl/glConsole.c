@@ -14,11 +14,12 @@ typedef struct
 
 const int CHARACTER_COUNT = 256;
 
+volatile GlWindowType glWindowSetType = GLWT_DUMMY; //TODO: create -gls settings struct
 volatile float volGlCharW = 0.0f, volGlCharH = 0.0f;
+volatile HWND glConsoleHWND = NULL;
 
 static float glCharW = 0.0f, glCharH = 0.0f;
 static GlWindow glw;
-static HWND conhostWindow;
 static HDC textDC = NULL;
 static BITMAPINFO bmpInfo = { 0 };
 static HBRUSH bgBrush;
@@ -34,7 +35,7 @@ static bool charsetLoaded = false;
 static int fontW, fontH;
 static volatile bool reqRefreshFont = false;
 
-static HWND getConhostWindow(void);
+static bool checkIfConhost(void);
 static void initCharset(void);
 static int CALLBACK enumFontsProc(ENUMLOGFONT* lpelf, NEWTEXTMETRIC* lpntm, DWORD FontType, LPARAM lParam);
 static int CALLBACK enumFontFamProc(ENUMLOGFONT* lpelf, NEWTEXTMETRIC* lpntm, DWORD FontType, LPARAM lParam);
@@ -48,10 +49,31 @@ static void makeArraysAvailable(GlCharType* charType, int w, int h);
 void initOpenGlConsole(void)
 {
 	getConsoleWindow();
-	conhostWindow = getConhostWindow();
-	if (!conhostWindow) { error("The current console process is not \"conhost.exe\"!", "gl/glConsole.c", __LINE__); }
+	GlWindowType type = glWindowSetType;
 
-	glw = initGlWindow(GLWT_MAIN_CHILD, 3);
+	if (type == GLWT_DUMMY)
+	{
+		if (!checkIfConhost())
+		{
+			fputs(
+				"\nThe current console process is not \"conhost.exe\"!\n"
+				"OpenGL window type will be switched from \"child\" to \"normal\".\n"
+				"Use \"-gls :win:type normal\" to hide this message,\n"
+				"or use \"-gls :win:type child\" to set type to \"child\" anyway.\n\n"
+				"Press any key to continue...", stdout);
+			getchar();
+
+			type = GLWT_MAIN;
+		}
+		else
+		{
+			type = GLWT_MAIN_CHILD;
+		}
+	}
+
+	glw = initGlWindow(type, 3);
+	glConsoleHWND = (glw.type == GLWT_MAIN) ? glw.hwnd : conHWND;
+
 	initCharset();
 }
 
@@ -224,20 +246,14 @@ void peekMainMessages(void)
 	peekWindowMessages(&glw);
 }
 
-static HWND getConhostWindow(void)
+static bool checkIfConhost(void)
 {
 	HWND consoleHWND = GetConsoleWindow();
+	if (!consoleHWND) { return NULL; }
 
-	if (consoleHWND)
-	{
-		char className[32];
-		GetClassNameA(consoleHWND, className, 32);
-
-		if (!strcmp(className, "ConsoleWindowClass")) { return consoleHWND; }
-		else { return NULL; }
-	}
-
-	return NULL;
+	char className[32];
+	GetClassNameA(consoleHWND, className, 32);
+	return !strcmp(className, "ConsoleWindowClass");
 }
 
 static void initCharset(void)
@@ -413,12 +429,16 @@ static void setMatrix(void)
 	static RECT oldConsoleRect = { 0 };
 	RECT consoleRect;
 
-	GetClientRect(conHWND, &consoleRect);
+	HWND hwnd = (glw.type == GLWT_MAIN) ? glw.hwnd : conHWND;
+	GetClientRect(hwnd, &consoleRect);
 
 	if (consoleRect.right != oldConsoleRect.right ||
 		consoleRect.bottom != oldConsoleRect.bottom)
 	{
-		SetWindowPos(glw.hwnd, HWND_TOP, 0, 0, consoleRect.right, consoleRect.bottom, SWP_SHOWWINDOW);
+		if (glw.type == GLWT_MAIN_CHILD)
+		{
+			SetWindowPos(glw.hwnd, HWND_TOP, 0, 0, consoleRect.right, consoleRect.bottom, SWP_SHOWWINDOW);
+		}
 		setPixelMatrix(consoleRect.right, consoleRect.bottom);
 		shStage3_setSize(consoleRect.right, consoleRect.bottom);
 		oldConsoleRect = consoleRect;

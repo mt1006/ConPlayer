@@ -62,6 +62,8 @@
 
 #define CP_OS "Windows"
 
+#pragma warning(disable : 4996)
+
 #else
 
 #include <unistd.h>
@@ -80,8 +82,6 @@
 #endif
 
 #endif
-
-#pragma warning(disable : 4996)
 
 #if defined(__x86_64__) || defined(_M_AMD64)
 #define CP_CPU "AMD64"
@@ -513,6 +513,7 @@ typedef struct
 {
 	HWND hwnd;
 	HDC hdc;
+	GlWindowType type;
 	MSG msg;
 	HGLRC hglrc;
 	uint8_t* bitmap;
@@ -539,7 +540,9 @@ typedef struct
 
 
 //gl/glConsole.c
+extern volatile GlWindowType glWindowSetType;
 extern volatile float volGlCharW, volGlCharH;
+extern volatile HWND glConsoleHWND;
 
 //gl/glUtils.c
 extern GlFunctions glf[4];
