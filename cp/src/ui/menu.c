@@ -48,7 +48,7 @@ void uiMenuLoop(UIMenu* mainMenu)
 	double keyTime = 0.0;
 	double mutedVolume = 0.0;
 
-	while (uiKeepLoop)
+	while (uiEnabled)
 	{
 		menu = menuStack[menuStackSize - 1];
 		unsigned char key = getChar(true);

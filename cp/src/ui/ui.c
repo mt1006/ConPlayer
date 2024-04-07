@@ -1,6 +1,6 @@
 #include "../conplayer.h"
 
-bool uiKeepLoop = true;
+bool uiEnabled = false;
 
 static UIMenu mainMenu = { 0 };
 static UIMenu settingsMenu = { 0 };
@@ -38,6 +38,7 @@ static char* readString(const char* str);
 
 void uiShowRunScreen(void)
 {
+	uiEnabled = true;
 	initUI();
 	uiMenuLoop(&mainMenu);
 }
@@ -141,7 +142,7 @@ static void action_run(void)
 			#endif
 		}
 		clearScreen();
-		uiKeepLoop = false;
+		uiEnabled = false;
 	}
 	else
 	{

@@ -8,15 +8,14 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 /*
-*  vcpkg (Windows):
+* Requirements:
+*  Windows (vcpkg):
 *    vcpkg install ffmpeg[gpl,freetype,fontconfig,fribidi,ass,opencl,dav1d]:x64-windows
 *    vcpkg install libao:x64-windows
-*  apt-get (Linux):
-*    sudo apt-get install libavcodec-dev
-*    sudo apt-get install libavformat-dev
-*    sudo apt-get install libavfilter-dev
-*    sudo apt-get install libswscale-dev
-*    sudo apt-get install libao-dev
+*  Linux (dpkg):
+*    sudo apt install build-essential libavcodec-dev libavformat-dev libavfilter-dev libswscale-dev libao-dev
+*  Linux (pacman):
+*    sudo pacman -S --needed base-devel ffmpeg libao
 */
 
 #include <stdio.h>
@@ -404,7 +403,7 @@ typedef struct
 
 
 //ui/ui.c
-extern bool uiKeepLoop;
+extern bool uiEnabled;
 
 
 //ui/ui.c
@@ -541,6 +540,10 @@ typedef struct
 
 //gl/glConsole.c
 extern volatile GlWindowType glWindowSetType;
+extern volatile LPCWSTR glCustomFontName;
+extern volatile int glCustomFontW, glCustomFontH;
+extern volatile bool glEnumFonts;
+extern volatile char* glEnumFontFamily;
 extern volatile float volGlCharW, volGlCharH;
 extern volatile HWND glConsoleHWND;
 

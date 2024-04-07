@@ -193,7 +193,7 @@ static ThreadRetType CP_CALL_CONV keyboardThread(void* ptr)
 
 	while (true)
 	{
-		unsigned char key = getChar(true);
+		unsigned char key = getChar(uiEnabled);
 
 		double newKeyTime = getTime();
 		if (newKeyTime < keyTime + KEYBOARD_DELAY) { continue; }
@@ -204,6 +204,7 @@ static ThreadRetType CP_CALL_CONV keyboardThread(void* ptr)
 		switch (key)
 		{
 		case VK_ESCAPE:
+		case 'q':
 			cpExit(0);
 			break;
 

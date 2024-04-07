@@ -166,21 +166,49 @@ Demonstration: https://www.youtube.com/watch?v=nbUKhalJATk
 
 ## Windows
 
-To compile ConPlayer on Windows you need Visual Studio. First, install vcpkg and integrate it with Visual Studio. Here is how to do it: https://vcpkg.io/en/getting-started.html. Then you need to install libav (FFmpeg's library) and libao.
+To compile ConPlayer on Windows you first need to have the Visual Studio. Then install vcpkg and integrate it with Visual Studio. Then you need to install libav (FFmpeg's library) and libao.
+
+Installation and configuration of vcpkg:
+```
+git clone https://github.com/microsoft/vcpkg.git
+cd vcpkg && bootstrap-vcpkg.bat -disableMetrics
+vcpkg integrate install
+```
+
+Installation of required libraries (on x86-64):
 ```
 vcpkg install ffmpeg[gpl,freetype,fontconfig,fribidi,ass,opencl,dav1d]:x64-windows
 vcpkg install libao:x64-windows
 ```
-Now you can just open .sln file and everything should work (at least in theory).\
 
-## Linux
+Now you can just open .sln file and everything should work (at least in theory).
 
-To compile ConPlayer on Linux you first need to have GCC. You also need ffmpeg (libav) and libao libraries. If you're using apt package manager, you can install them with these commands:
+## Linux (dpkg)
+
+Installation of required packages:
 ```
-sudo apt-get install libavcodec-dev
-sudo apt-get install libavformat-dev
-sudo apt-get install libavfilter-dev
-sudo apt-get install libswscale-dev
-sudo apt-get install libao-dev
+sudo apt install build-essential libavcodec-dev libavformat-dev libavfilter-dev libswscale-dev libao-dev
 ```
-Then you can just use ```make```.
+
+Use `make` to compile.
+
+## Linux (pacman)
+
+Installation of required packages:
+```
+sudo pacman -S --needed base-devel ffmpeg libao
+```
+
+Use `make` to compile.
+
+## Termux
+
+Full list of steps to build and run:
+```
+pkg upgrade
+pkg install git build-essential ffmpeg libao
+git clone https://github.com/mt1006/ConPlayer.git
+cd ConPlayer
+make
+./conpl
+```

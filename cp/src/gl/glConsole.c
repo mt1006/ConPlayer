@@ -15,6 +15,10 @@ typedef struct
 const int CHARACTER_COUNT = 256;
 
 volatile GlWindowType glWindowSetType = GLWT_DUMMY; //TODO: create -gls settings struct
+volatile LPCWSTR glCustomFontName = NULL;
+volatile int glCustomFontW = 0, glCustomFontH = 0;
+volatile bool glEnumFonts = false;
+volatile char* glEnumFontFamily = NULL;
 volatile float volGlCharW = 0.0f, volGlCharH = 0.0f;
 volatile HWND glConsoleHWND = NULL;
 
@@ -81,14 +85,22 @@ void refreshFont(void)
 {
 	static CONSOLE_FONT_INFOEX oldCF = { 0 };
 
-	int realConW, realConH;
-	getConsoleSize(&realConW, &realConH);
+	if (glCustomFontName == NULL)
+	{
+		int realConW, realConH;
+		RECT clientRect = { 0 };
 
-	RECT clientRect = { 0 };
-	GetClientRect(conHWND, &clientRect);
+		getConsoleSize(&realConW, &realConH);
+		GetClientRect(conHWND, &clientRect);
 
-	fontW = (int)round((double)clientRect.right / (double)realConW);
-	fontH = (int)round((double)clientRect.bottom / (double)realConH);
+		fontW = (int)round((double)clientRect.right / (double)realConW);
+		fontH = (int)round((double)clientRect.bottom / (double)realConH);
+	}
+	else
+	{
+		fontW = glCustomFontW;
+		fontH = glCustomFontH;
+	}
 
 	CONSOLE_FONT_INFOEX cf;
 	cf.cbSize = sizeof(CONSOLE_FONT_INFOEX);
@@ -98,10 +110,11 @@ void refreshFont(void)
 		oldCF.FontWeight != cf.FontWeight || oldCF.nFont != cf.nFont)
 	{
 		minFontDiff = INT_MAX;
-		settingFontW = cf.dwFontSize.X;
-		settingFontH = cf.dwFontSize.Y;
+		settingFontW = (glCustomFontName == NULL) ? cf.dwFontSize.X : glCustomFontW;
+		settingFontH = (glCustomFontName == NULL) ? cf.dwFontSize.Y : glCustomFontH;
+		LPCWSTR fontName = (glCustomFontName == NULL) ? cf.FaceName : glCustomFontName;
 
-		EnumFontFamiliesW(glw.hdc, cf.FaceName, &enumFontFamProc, 0);
+		EnumFontFamiliesW(glw.hdc, fontName, &enumFontFamProc, 0);
 		enumLogFont.elfLogFont.lfItalic = FALSE;
 		enumLogFont.elfLogFont.lfUnderline = FALSE;
 		enumLogFont.elfLogFont.lfStrikeOut = FALSE;
@@ -268,15 +281,13 @@ static void initCharset(void)
 
 	bgBrush = CreateSolidBrush(RGB(12, 12, 12));
 
-	//EnumFontFamiliesA(glw.hdc, NULL, &enumFontsProc, 0);
+	if (glEnumFonts) { EnumFontFamiliesA(glw.hdc, glEnumFontFamily, &enumFontsProc, 0); }
 }
 
 static int CALLBACK enumFontsProc(ENUMLOGFONT* lpelf, NEWTEXTMETRIC* lpntm, DWORD FontType, LPARAM lParam)
 {
-	char aaa[256];
-	sprintf(aaa, "%s - %d x %d (%d)\n", lpelf->elfLogFont.lfFaceName, lpelf->elfLogFont.lfWidth,
+	printf("%s - %d x %d (%d)\n", lpelf->elfLogFont.lfFaceName, lpelf->elfLogFont.lfWidth,
 		lpelf->elfLogFont.lfHeight, lpelf->elfLogFont.lfPitchAndFamily);
-	OutputDebugStringA(aaa);
 	return TRUE;
 }
 

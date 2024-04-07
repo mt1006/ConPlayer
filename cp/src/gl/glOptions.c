@@ -9,6 +9,9 @@ static int opStageShaderAdd(int argc, char** argv, int stage, ShaderType type, b
 static int opStageSet(int argc, char** argv, int stage);
 static int opWindow(int argc, char** argv);
 static int opWindowType(int argc, char** argv);
+static int opFont(int argc, char** argv);
+static int opEnumFonts(int argc, char** argv);
+static int opEnumFont(int argc, char** argv);
 static void checkArgs(int argc, char** argv, int required, int line);
 static void invalidInput(char* description, char* input, int line);
 static void notEnoughArguments(char** argv, int line);
@@ -28,6 +31,9 @@ int parseGlOptions(int argc, char** argv)
 		else if (!strncmp(str, ":s2", 3)) { retVal = opStage(argc, argv, 2); }
 		else if (!strncmp(str, ":s3", 3)) { retVal = opStage(argc, argv, 3); }
 		else if (!strncmp(str, ":win", 4)) { retVal = opWindow(argc, argv); }
+		else if (!strncmp(str, ":font", 5)) { retVal = opFont(argc, argv); }
+		else if (!strncmp(str, ":enum-fonts", 11)) { retVal = opEnumFonts(argc, argv); }
+		else if (!strncmp(str, ":enum-font", 10)) { retVal = opEnumFont(argc, argv); }
 		else { unknownOption(argv, __LINE__); }
 
 		argc -= retVal + 1;
@@ -170,6 +176,38 @@ static int opWindowType(int argc, char** argv)
 	else if (!strcmp(str, "child")) { glWindowSetType = GLWT_MAIN_CHILD; }
 	else if (!strcmp(str, "normal")) { glWindowSetType = GLWT_MAIN; }
 	else { unknownOption(argv, __LINE__); }
+
+	return 1;
+}
+
+static int opFont(int argc, char** argv)
+{
+	checkArgs(argc, argv, 3, __LINE__);
+
+	int wideLen = MultiByteToWideChar(CP_UTF8, 0, argv[1], -1, NULL, 0);
+	LPCWSTR wstr = (char*)malloc(wideLen * sizeof(wchar_t));
+	MultiByteToWideChar(CP_UTF8, 0, argv[1], -1, wstr, wideLen);
+
+	glCustomFontName = wstr;
+	glCustomFontW = atoi(argv[2]);
+	glCustomFontH = atoi(argv[3]);
+	return 3;
+}
+
+static int opEnumFonts(int argc, char** argv)
+{
+	if (glEnumFonts) { error("Font enumeration already enabled!", "glOptions.c", __LINE__); }
+	glEnumFonts = true;
+	return 0;
+}
+
+static int opEnumFont(int argc, char** argv)
+{
+	checkArgs(argc, argv, 1, __LINE__);
+	if (glEnumFonts) { error("Font enumeration already enabled!", "glOptions.c", __LINE__); }
+
+	glEnumFonts = true;
+	glEnumFontFamily = strdup(argv[1]);
 
 	return 1;
 }

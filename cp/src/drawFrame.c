@@ -1,4 +1,4 @@
-﻿#include "conplayer.h"
+#include "conplayer.h"
 
 typedef struct 
 {
