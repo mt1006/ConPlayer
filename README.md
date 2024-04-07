@@ -8,7 +8,7 @@ Inspired by [mariiaan/CmdPlay](https://github.com/mariiaan/CmdPlay) with signifi
 - you can go back and skip forward video
 - it has multiple advanced options like enabling interlacing, changing charset or applying FFmpeg filters
 
-[Download Version 1.5](https://github.com/mt1006/ConPlayer/releases/tag/ConPlayer-1.5)
+[Download Version 1.5.1](https://github.com/mt1006/ConPlayer/releases/tag/ConPlayer-1.5.1)
 
 Demonstration: https://www.youtube.com/watch?v=nbUKhalJATk
 
