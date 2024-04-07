@@ -1,4 +1,6 @@
 #include "conplayer.h"
+#include <libavcodec/avcodec.h>
+#include <libavutil/channel_layout.h>
 
 #define CP_FILTER_ARGS_MAX_SIZE 512
 
@@ -64,16 +66,17 @@ void initFiltersSV(Stream* videoStream, AVFrame* scaledFrame)
 void initFiltersA(Stream* audioStream)
 {
 	char args[CP_FILTER_ARGS_MAX_SIZE];
+	AVCodecContext* ctx = audioStream->codecContext;
 
 	// https://www.ffmpeg.org/ffmpeg-filters.html#buffer
 	snprintf(args, CP_FILTER_ARGS_MAX_SIZE,
 		"time_base=%d/%d:sample_rate=%d:sample_fmt=%d:channel_layout=%"PRIu64":channels=%d",
-		audioStream->codecContext->time_base.num,
-		audioStream->codecContext->time_base.den,
-		audioStream->codecContext->sample_rate,
-		audioStream->codecContext->sample_fmt,
-		audioStream->codecContext->channel_layout,
-		audioStream->codecContext->channels);
+		ctx->time_base.num,
+		ctx->time_base.den,
+		ctx->sample_rate,
+		ctx->sample_fmt,
+		(uint64_t)(ctx->ch_layout.order == AV_CHANNEL_ORDER_NATIVE ? ctx->ch_layout.u.mask : 0),
+		ctx->ch_layout.nb_channels);
 
 	initFilters(args, "abuffer", "abuffersink", settings.audioFilters,
 		AV_PIX_FMT_NONE, &filterGraphA, &buffersrcA, &buffersinkA);
@@ -115,16 +118,14 @@ static void initFilters(const char* args, char* srcFilterName, const char* sinkF
 	avfilter_graph_free(filterGraph);
 	*filterGraph = avfilter_graph_alloc();
 
-	if (avfilter_graph_create_filter(buffersrc,
-		avfilter_get_by_name(srcFilterName),
-		"in", args, NULL, *filterGraph) < 0)
+	if (avfilter_graph_create_filter(buffersrc, avfilter_get_by_name(srcFilterName),
+			"in", args, NULL, *filterGraph) < 0)
 	{
 		error("Failed to create filter buffer source", "avFilters.c", __LINE__);
 	}
 
-	if (avfilter_graph_create_filter(buffersink,
-		avfilter_get_by_name(sinkFilterName),
-		"out", NULL, NULL, *filterGraph) < 0)
+	if (avfilter_graph_create_filter(buffersink, avfilter_get_by_name(sinkFilterName),
+			"out", NULL, NULL, *filterGraph) < 0)
 	{
 		error("Failed to create filter buffer sink", "avFilters.c", __LINE__);
 	}
@@ -150,9 +151,8 @@ static void initFilters(const char* args, char* srcFilterName, const char* sinkF
 	inputs->next = NULL;
 	//(*buffersink)->outputs[0]
 
-	if (avfilter_graph_parse_ptr(*filterGraph,
-		filters, &inputs, &outputs, NULL) < 0 ||
-		avfilter_graph_config(*filterGraph, NULL) < 0)
+	if (avfilter_graph_parse_ptr(*filterGraph, filters, &inputs, &outputs, NULL) < 0
+			|| avfilter_graph_config(*filterGraph, NULL) < 0)
 	{
 		puts("\nError while initializing filters!");
 		if (!settings.libavLogs) { puts("Use \"-avl\" option to get more details."); }

@@ -138,7 +138,11 @@ void argumentParser(int argc, char** argv)
 					if (OPTIONS[j].isOperation && i != 0) { invalidInput("Executing operation with options", argv[i], __LINE__); }
 
 					i += OPTIONS[j].parserFunction(argc - i - 1, argv + i + 1);
-					if (OPTIONS[j].isOperation && i != argc - 1) { invalidInput("Executing operation with options", argv[i], __LINE__); }
+					if (OPTIONS[j].isOperation)
+					{
+						if (i != argc - 1) { invalidInput("Executing operation with options", argv[i], __LINE__); }
+						return;
+					}
 
 					optionsUsed[j] = true;
 					optionFound = true;

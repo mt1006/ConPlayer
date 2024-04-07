@@ -1,4 +1,5 @@
 #include "conplayer.h"
+#include <libavutil/channel_layout.h>
 
 typedef struct
 {
@@ -42,16 +43,20 @@ void initAudio(Stream* avAudioStream)
 	if (!avAudioStream) { return; }
 	if (!initAudioLib()) { return; }
 
-	resampleContext = swr_alloc_set_opts(NULL,
-		av_get_default_channel_layout(CHANNELS),                               //out_channel_layout
+	AVChannelLayout outChannelLayout;
+	av_channel_layout_default(&outChannelLayout, CHANNELS);
+
+	int retVal = swr_alloc_set_opts2(&resampleContext,
+		&outChannelLayout,                                                     //out_ch_layout
 		SAMPLE_FORMAT_AV,                                                      //out_sample_fmt
 		SAMPLE_RATE,                                                           //out_sample_rate
-		av_get_default_channel_layout(avAudioStream->codecContext->channels),  //in_channel_layout
+		&avAudioStream->codecContext->ch_layout,                               //in_ch_layout
 		avAudioStream->codecContext->sample_fmt,                               //in_sample_fmt
 		avAudioStream->codecContext->sample_rate,                              //in_sample_rate
 		0, NULL);
-	int swrRetVal = swr_init(resampleContext);
-	if (swrRetVal < 0) { return; }
+		
+	retVal = swr_init(resampleContext);
+	if (retVal < 0) { return; }
 
 	audioQueue.front = 0;
 	audioQueue.back = 0;

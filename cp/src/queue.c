@@ -60,7 +60,7 @@ void initQueue(void)
 
 Frame* dequeueFrame(Stage fromStage, volatile bool* threadFreezedFlag)
 {
-	int* pos;
+	volatile int* pos;
 	if (fromStage == STAGE_LOADED_FRAME) { pos = &queue.processingPos; }
 	else if (fromStage == STAGE_PROCESSED_FRAME) { pos = &queue.drawingPos; }
 	else { pos = &queue.loadingPos; }
@@ -107,7 +107,7 @@ Frame* dequeueFrame(Stage fromStage, volatile bool* threadFreezedFlag)
 
 void enqueueFrame(Stage toStage)
 {
-	int* pos;
+	volatile int* pos;
 	if (toStage == STAGE_LOADED_FRAME) { pos = &queue.loadingPos; }
 	else if (toStage == STAGE_PROCESSED_FRAME) { pos = &queue.processingPos; }
 	else { pos = &queue.drawingPos; }

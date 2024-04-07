@@ -21,3 +21,6 @@ $(OUTPUT_NAME)_32: $(FILES) $(HEADERS)
 
 $(OUTPUT_NAME)_dbg: $(FILES) $(HEADERS)
 	$(C_COMPILER) $(DEBUG_FLAGS) $(FILES) $(LIBRARIES) -o $(OUTPUT_NAME)_dbg
+
+$(OUTPUT_NAME)_libav_test: $(FILES) $(HEADERS)
+	$(C_COMPILER) -L/usr/local/lib $(RELEASE_FLAGS) $(FILES) $(LIBRARIES) -o $(OUTPUT_NAME)_libav_test
