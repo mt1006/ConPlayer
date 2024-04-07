@@ -7,8 +7,10 @@ const char* CHARSET_BLOCKS = " \xB0\xB1\xB2\xDB";
 const char* CHARSET_OUTLINE = " @@@@@@@@@@@@@@@@ ";
 const char* CHARSET_BOLD_OUTLINE = " @@@@@@@@@@@@@@@@.";
 
-static const char* INPUT_GET_URLS = "yt-dlp -f \"bestvideo[height<=480]+bestaudio\" --no-warnings --get-url";
-static const char* STDERR_REDIRECT = "2>&1";
+static const char* EXTRACTOR_PREFIX_DEFAULT = "yt-dlp -f \"bv*[height<=%d]+ba/bv*[height<=%d]/wv*+ba/w\" --no-warnings --get-url";
+static const char* EXTRACTOR_PREFIX_NO_MAX_H = "yt-dlp --no-warnings --get-url";
+static const int EXTRACTOR_PREFIX_DEFAULT_MAX_H = 480;
+static const char* EXTRACTOR_SUFFIX_DEFAULT = "2>&1";
 static const int INPUT_MAX_URL = 16384;
 static const int MAX_LINE_COUNT = 128;
 
@@ -26,6 +28,14 @@ typedef struct
 	bool isOperation;
 } Option;
 
+typedef enum
+{
+	EPM_DEFAULT,
+	EPM_MAX_H,
+	EPM_CUSTOM
+} ExtractorPrefixMode;
+
+static void extractUrl(void);
 static void checkSettings(void);
 static int opHelp(int argc, char** argv);
 static int opInput(int argc, char** argv);
@@ -49,6 +59,9 @@ static int opAudioFilters(int argc, char** argv);
 static int opPreload(int argc, char** argv);
 static int opFakeConsole(int argc, char** argv);
 static int opOpenGlSettings(int argc, char** argv);
+static int opExtractorMaxHeight(int argc, char** argv);
+static int opExtractorPrefix(int argc, char** argv);
+static int opExtractorSuffix(int argc, char** argv);
 static int opDisableCLS(int argc, char** argv);
 static int opDisableAudio(int argc, char** argv);
 static int opDisableKeys(int argc, char** argv);
@@ -57,6 +70,7 @@ static int opFullInfo(int argc, char** argv);
 static void invalidInput(char* description, char* input, int line);
 static void tooManyArguments(char** argv, int line);
 static void notEnoughArguments(char** argv, int line);
+static void extractorModeCollision(int line);
 
 static const Option OPTIONS[] = {
 	{"-h","--help",&opHelp,true},
@@ -81,6 +95,9 @@ static const Option OPTIONS[] = {
 	{"-pl","--preload",&opPreload,false},
 	{"-fc","--fake-console",&opFakeConsole,false},
 	{"-gls","--opengl-settings",&opOpenGlSettings,false},
+	{"-xmh","--extractor-max-height",&opExtractorMaxHeight,false},
+	{"-xp","--extractor-prefix",&opExtractorPrefix,false},
+	{"-xs","--extractor-suffix",&opExtractorSuffix,false},
 	{"-dcls","--disable-cls",&opDisableCLS,false},
 	{"-da","--disable-audio",&opDisableAudio,false},
 	{"-dk","--disable-keys",&opDisableKeys,false},
@@ -91,6 +108,11 @@ char* inputFile = NULL;
 char* secondInputFile = NULL;
 static const int DEFAULT_OPTION = 1;
 static int OPTION_COUNT = sizeof(OPTIONS) / sizeof(Option);
+
+static ExtractorPrefixMode extractorPrefixMode = EPM_DEFAULT;
+static int extractorMaxH = 0;
+static const char* extractorPrefix = NULL;
+static const char* extractorSuffix = NULL;
 
 void argumentParser(int argc, char** argv)
 {
@@ -116,11 +138,7 @@ void argumentParser(int argc, char** argv)
 					if (OPTIONS[j].isOperation && i != 0) { invalidInput("Executing operation with options", argv[i], __LINE__); }
 
 					i += OPTIONS[j].parserFunction(argc - i - 1, argv + i + 1);
-
-					if (OPTIONS[j].isOperation)
-					{
-						if (i != argc - 1) { invalidInput("Executing operation with options", argv[i], __LINE__); }
-					}
+					if (OPTIONS[j].isOperation && i != argc - 1) { invalidInput("Executing operation with options", argv[i], __LINE__); }
 
 					optionsUsed[j] = true;
 					optionFound = true;
@@ -154,7 +172,101 @@ void argumentParser(int argc, char** argv)
 	free(optionsUsed);
 
 	if (inputFile == NULL) { invalidInput("Input not specified", NULL, __LINE__); }
+	if (inputFile[0] == '$') { extractUrl(); }
 	checkSettings();
+}
+
+static void extractUrl(void)
+{
+	puts("Extracting URLs...");
+
+	if (extractorPrefixMode == EPM_DEFAULT)
+	{
+		extractorMaxH = EXTRACTOR_PREFIX_DEFAULT_MAX_H;
+		extractorPrefixMode = EPM_MAX_H;
+	}
+
+	if (extractorPrefixMode == EPM_MAX_H)
+	{
+		if (extractorMaxH != 0)
+		{
+			char* prefix = malloc(strlen(EXTRACTOR_PREFIX_DEFAULT) + 32);
+			sprintf(prefix, EXTRACTOR_PREFIX_DEFAULT, extractorMaxH, extractorMaxH);
+			extractorPrefix = prefix;
+		}
+		else
+		{
+			extractorPrefix = EXTRACTOR_PREFIX_NO_MAX_H;
+		}
+	}
+
+	if (extractorSuffix == NULL) { extractorSuffix = EXTRACTOR_SUFFIX_DEFAULT; }
+
+	int commandLen = strlen(extractorPrefix) + strlen(inputFile + 1) +
+		strlen(extractorSuffix) + (strlen(QUOTE_MARK) * 2) + 3; // 3 = 2 spaces + '\0'
+	char* command = (char*)malloc(commandLen);
+	snprintf(command, commandLen, "%s %s%s%s %s", extractorPrefix,
+		QUOTE_MARK, inputFile + 1, QUOTE_MARK, extractorSuffix);
+
+	FILE* proc = _popen(command, "r");
+
+	int lineCount = 0;
+	char** lines = NULL;
+
+	while (lineCount < MAX_LINE_COUNT)
+	{
+		lines = realloc(lines, (lineCount + 1) * sizeof(char*));
+		lines[lineCount] = malloc(INPUT_MAX_URL);
+
+		if (!fgets(lines[lineCount], INPUT_MAX_URL, proc)) { break; }
+
+		int lineLen = strlen(lines[lineCount]);
+		if (lineLen > 0 && lines[lineCount][lineLen - 1] == '\n') { lines[lineCount][lineLen - 1] = '\0'; }
+		lineCount++;
+	}
+
+	_pclose(proc);
+
+	bool correctOutput = true;
+	for (int i = 0; i < lineCount; i++)
+	{
+		if (strncmp(lines[i], "http://", 7) && strncmp(lines[i], "https://", 8))
+		{
+			correctOutput = false;
+			break;
+		}
+	}
+
+	if (correctOutput && lineCount > 0)
+	{
+		free(inputFile);
+		inputFile = av_strndup(lines[0], INPUT_MAX_URL - 1);
+		if (lineCount > 1) { secondInputFile = av_strndup(lines[1], INPUT_MAX_URL - 1); }
+
+		if (lineCount < MAX_LINE_COUNT) { lineCount++; }
+		for (int i = 0; i < lineCount; i++)
+		{
+			free(lines[i]);
+		}
+		free(lines);
+	}
+	else
+	{
+		puts("\nIncorrect output!");
+		printf("Executed procedure: \"%s\"\n", command);
+
+		puts("Output:");
+		for (int i = 0; i < lineCount; i++)
+		{
+			fputs(lines[i], stdout);
+		}
+
+		if (lineCount == MAX_LINE_COUNT) { puts("\n[REACHED LINE COUNT LIMIT]"); }
+
+		error("Incorrect URL extractor output!", "argParser.c", __LINE__);
+	}
+
+	free(command);
 }
 
 static void checkSettings(void)
@@ -205,85 +317,13 @@ static int opInput(int argc, char** argv)
 {
 	if (argc < 1) { notEnoughArguments(NULL, __LINE__); }
 
-	if (argv[0][0] == '$')
+	inputFile = strdup(argv[0]);
+	if (argc > 1 && argv[1][0] != '-')
 	{
-		puts("Extracting URLs...");
-
-		int commandLen = strlen(INPUT_GET_URLS) + strlen(argv[0] + 1) +
-			strlen(STDERR_REDIRECT) + (strlen(QUOTE_MARK) * 2) + 3;
-		char* command = (char*)malloc(commandLen);
-		snprintf(command, commandLen, "%s %s%s%s %s", INPUT_GET_URLS,
-			QUOTE_MARK, argv[0] + 1, QUOTE_MARK, STDERR_REDIRECT);
-
-		FILE* proc = _popen(command, "r");
-
-		int lineCount = 0;
-		char** lines = NULL;
-
-		while (lineCount < MAX_LINE_COUNT)
-		{
-			lines = realloc(lines, (lineCount + 1) * sizeof(char*));
-			lines[lineCount] = malloc(INPUT_MAX_URL);
-
-			if (!fgets(lines[lineCount], INPUT_MAX_URL, proc)) { break; }
-
-			int lineLen = strlen(lines[lineCount]);
-			if (lineLen > 0 && lines[lineCount][lineLen - 1] == '\n') { lines[lineCount][lineLen - 1] = '\0'; }
-			lineCount++;
-		}
-
-		_pclose(proc);
-
-		bool correctOutput = true;
-		for (int i = 0; i < lineCount; i++)
-		{
-			if (strncmp(lines[i], "http://", 7) && strncmp(lines[i], "https://", 8))
-			{
-				correctOutput = false;
-				break;
-			}
-		}
-
-		if (correctOutput && lineCount > 0)
-		{
-			inputFile = av_strndup(lines[0], INPUT_MAX_URL - 1);
-			if (lineCount > 1) { secondInputFile = av_strndup(lines[1], INPUT_MAX_URL - 1); }
-
-			if (lineCount < MAX_LINE_COUNT) { lineCount++; }
-			for (int i = 0; i < lineCount; i++)
-			{
-				free(lines[i]);
-			}
-			free(lines);
-		}
-		else
-		{
-			puts("\nIncorrect output!");
-			printf("Executed procedure: \"%s\"\n", command);
-
-			puts("Output:");
-			for (int i = 0; i < lineCount; i++)
-			{
-				fputs(lines[i], stdout);
-			}
-
-			if (lineCount == MAX_LINE_COUNT) { puts("\n[REACHED LINE COUNT LIMIT]"); }
-
-			error("Incorrect URL extractor output!", "argParser.c", __LINE__);
-		}
-
-		free(command);
+		if (argv[0][0] == '$' || argv[1][0] == '$') { invalidInput("Trying to pass two inputs with URL!", NULL, __LINE__); }
+		secondInputFile = strdup(argv[1]);
+		return 2;
 	}
-	else
-	{
-		inputFile = strdup(argv[0]);
-		if (argc > 1 && argv[1][0] != '-')
-		{
-			secondInputFile = strdup(argv[1]);
-			return 2;
-		}
-	}
-	
 	return 1;
 }
 
@@ -583,6 +623,34 @@ static int opOpenGlSettings(int argc, char** argv)
 	#endif
 }
 
+static int opExtractorMaxHeight(int argc, char** argv)
+{
+	if (argc < 1 || argv[0][0] == '-') { notEnoughArguments(argv, __LINE__); }
+	if (extractorPrefixMode != EPM_DEFAULT) { extractorModeCollision(__LINE__); }
+
+	extractorMaxH = atoi(argv[0]);
+	extractorPrefixMode = EPM_MAX_H;
+	if (extractorMaxH < 0) { invalidInput("Maximum extractor video height cannot be negative", argv[0], __LINE__); }
+	return 1;
+}
+
+static int opExtractorPrefix(int argc, char** argv)
+{
+	if (argc < 1 || argv[0][0] == '-') { notEnoughArguments(argv, __LINE__); }
+	if (extractorPrefixMode != EPM_DEFAULT) { extractorModeCollision(__LINE__); }
+
+	extractorPrefix = argv[0];
+	extractorPrefixMode = EPM_CUSTOM;
+	return 1;
+}
+
+static int opExtractorSuffix(int argc, char** argv)
+{
+	if (argc < 1 || argv[0][0] == '-') { notEnoughArguments(argv, __LINE__); }
+	extractorSuffix = argv[0];
+	return 1;
+}
+
 static int opDisableCLS(int argc, char** argv)
 {
 	settings.disableCLS = true;
@@ -632,4 +700,9 @@ static void tooManyArguments(char** argv, int line)
 static void notEnoughArguments(char** argv, int line)
 {
 	invalidInput("Not enough arguments for the operation", argv ? argv[-1] : NULL, line);
+}
+
+static void extractorModeCollision(int line)
+{
+	invalidInput("Extractor max height and extractor prefix options are not compatible", NULL, line);
 }
