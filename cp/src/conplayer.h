@@ -1,6 +1,6 @@
 /*
 * Project: ConPlayer
-* Version: 1.5
+* Version: 1.5.1
 * Author: https://github.com/mt1006
 */
 
@@ -94,7 +94,7 @@
 #define CP_CPU "[unknown]"
 #endif
 
-#define CP_VERSION "1.5"
+#define CP_VERSION "1.5.1"
 #define CP_VERSION_STRING "ConPlayer " CP_VERSION " [" CP_CPU "/" CP_OS "]"
 
 #ifdef _WIN32

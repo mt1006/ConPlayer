@@ -20,13 +20,21 @@ Demonstration: https://www.youtube.com/watch?v=nbUKhalJATk
 
 ### Also "Bad Apple!!" in cmd but with FFmpeg filters
 
-```conpl ba.mp4 -vf "curves=m=0/0 .8/.8 1/0" -svf "noise=alls=8:allf=t,rgbashift=rh=-2:bh=2"```
+`conpl ba.mp4 -vf "curves=m=0/0 .8/.8 1/0" -svf "noise=alls=8:allf=t,rgbashift=rh=-2:bh=2"`
 
 ![Bad Apple!!](screenshots/bad_apple2.png "Bad Apple!!")
 
 ### Some random 4K test video with colors in Windows Terminal (https://www.youtube.com/watch?v=xcJtL7QggTI&t=96)
 
 ![Colors](screenshots/colors.png "Colors")
+
+### "Bad Apple!!" in "fake console" mode with Windows console raster font in Wine
+
+`wine conpl.exe ba.mp4 -fc -gls :win:type normal :font Terminal 8 12`
+
+It requires of course ConPlayer binaries for Windows. To use "Terminal" you need to also copy Windows 10 or 11 fonts (C:\\Windows\\Fonts) to corresponding location in Wine. It's also possible to use `:enum-fonts` and `:enum-font (font name)` flags to list available fonts.
+
+![wine](screenshots/bad_apple3.png "Wine")
 
 # Options
 
@@ -145,8 +153,8 @@ Demonstration: https://www.youtube.com/watch?v=nbUKhalJATk
                      Examples:
                       conpl $https://www.youtube.com/watch?v=FtutLA63Cp8 -xp "yt-dlpppx --no-warnings --get-url"
  -xs                 Sets extractor command suffix. By default: "2>&1".
-                     Examples:
-                      conpl $https://www.youtube.com/watch?v=FtutLA63Cp8 -xs ""
+  (--extractor-      Examples:
+   suffix)            conpl $https://www.youtube.com/watch?v=FtutLA63Cp8 -xs ""
  -pl (--preload)     Loads and unload entire input file (in hope that system will cache it into RAM).
  -da(--disable-audio)Disables audio.
  -dk (--disable-keys)Disables keyboard control.

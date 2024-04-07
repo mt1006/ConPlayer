@@ -1,3 +1,13 @@
+===Version 1.5.1===
+-Added options to modify URL extraction command - "-extractor-max-height", "-extractor-prefix", "-extractor-suffix".
+-Fixed URL extraction not being able to extract URLs from most sites other than YouTube.
+-Improvements to the "-fc" option.
+-Added "Q" as second exit key.
+-Added support for Termux.
+-Added warning for potential libao issue on Linux.
+-Minor fixes.
+-Updated to FFmpeg 7.
+
 ===Version 1.5===
 -Replaced message with UI when running without any arguments.
 -Added "--color-proc" option with 3 modes: "both" (default), "char-only" and "none".
