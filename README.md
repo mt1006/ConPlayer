@@ -8,7 +8,7 @@ Inspired by [mariiaan/CmdPlay](https://github.com/mariiaan/CmdPlay) with signifi
 - you can go back and skip forward video
 - it has multiple advanced options like enabling interlacing, changing charset or applying FFmpeg filters
 
-[Download Version 1.4](https://github.com/mt1006/ConPlayer/releases/tag/ConPlayer-1.4)
+[Download Version 1.5](https://github.com/mt1006/ConPlayer/releases/tag/ConPlayer-1.5)
 
 Demonstration: https://www.youtube.com/watch?v=nbUKhalJATk
 
@@ -32,11 +32,13 @@ Demonstration: https://www.youtube.com/watch?v=nbUKhalJATk
 
 ## Basic options
 ```
- [none] / -i         Just input file - audio or video.
+ [none] / -i         Input file - audio or video.
+                     Put "$" before link to extract stream URL with yt-dlp (if in path).
                      Examples:
                       conpl video.mp4
+                      conpl $https://www.youtube.com/watch?v=FtutLA63Cp8
  -c [mode]           Sets color mode. By default "cstd-256".
-  (--colors)         To get list of all available color modes use "conpl -h color-modes".
+  (--colors)         To get list of all available modes use "conpl -h modes".
                      Examples:
                       conpl video.mp4 -c winapi-16
  -vol [volume]       Sets audio volume. By default "0.5".
@@ -52,7 +54,7 @@ Demonstration: https://www.youtube.com/watch?v=nbUKhalJATk
  -inf(--information) Information about ConPlayer.
  -v  (--version)     Information about ConPlayer version.
  -h <topic>          Displays help message.
-  (--help)           Topics: basic, advanced, color-modes, scaling-modes, keyboard, full
+  (--help)           Topics: basic, advanced, modes, keyboard, full
  ```
 
 ## Advanced options
@@ -65,6 +67,10 @@ Demonstration: https://www.youtube.com/watch?v=nbUKhalJATk
                      Examples:
                       conpl video.mp4 -int 2
                       conpl video.mp4 -int 4 3
+ -cp [mode]          Sets color processing mode
+  (--color-proc)     To get list of all available modes use "conpl -h modes".
+                     Examples:
+                      conpl video.mp4 -c cstd-rgb -cp none
  -sc [value]         Sets constant color in grayscale mode.
   (--set-color)      Only number - sets text attribute using WinAPI.
                      "@color" - sets color from ANSI 256 palette (only with cstd-gray).
@@ -82,20 +88,16 @@ Demonstration: https://www.youtube.com/watch?v=nbUKhalJATk
                      Examples:
                       conpl video.mp4 -ch #blocks
                       conpl video.mp4 -ch my_charset.txt
- -sch                Uses single character to draw image and sets it's color to original
-  (--single-char)    instead of recalculated. Requires colors!
-                     Examples:
-                      conpl video.mp4 -c cstd-rgb -sch
  -r [val]            Randomly increases or decreases pixel brightness by a random value
-  (--rand)           between 0 and val/2. When "single char" mode is enabled or "@" sign
-                     is placed before the number, brightness is decreased by a random value
-                     between 0 and val.
+  (--rand)           between 0 and val/2. When color processing mode is set to "none" or
+                     "@" sign is placed before the number, brightness is decreased by
+                     a random value between 0 and val.
                      Examples:
                       conpl video.mp4 -r 20
                       conpl video.mp4 -r @40
-                      conpl video.mp4 -c cstd-rgb -sch -r 56
+                      conpl video.mp4 -c cstd-rgb -cp char-only -r 56
  -sm [mode]          Sets scaling mode. Default scaling mode is "bicubic".
-  (--scaling-mode)   To get list of all available scaling modes use "conpl -h scaling-modes".
+  (--scaling-mode)   To get list of all available modes use "conpl -h modes".
                      Examples:
                       conpl video.mp4 -sm nearest
  -fr [ratio]         Sets constant font ratio (x/y).
@@ -104,10 +106,7 @@ Demonstration: https://www.youtube.com/watch?v=nbUKhalJATk
                      Examples:
                       conpl video.mp4 -ft 0.5
  -sy [mode]          Sets synchronization mode.
-  (--sync)           Available modes:
-                     "disabled" - prints the output as fast as possible.
-                     "draw-all" - synchronization enabled, but tries to draw all frames.
-                     "enabled" - synchronization enabled, skips frames if necessary [default].
+  (--sync)           To get list of all available modes use "conpl -h modes".
                      Examples:
                       conpl video.mp4 -sy draw-all
  -vf [filter]        Applies FFmpeg filters to the video.
@@ -128,6 +127,27 @@ Demonstration: https://www.youtube.com/watch?v=nbUKhalJATk
                      Works properly only in "cstd" color mode and it breaks interlacing.
                      Examples:
                       conpl video.mp4 -c cstd-gray -s 80 30 -fr 0.5 -sy disabled -dcls > output.txt
+ -fc                 Creates child window on top of the console that looks like console but
+  (--fake-console)   renders text much faster using OpenGL. Currently works only on Windows
+                     and may be unstable! Recommended to use with raster font.
+ -gls                Settings for "fake console" mode. Experimental!
+  (--opengl-settings)Examples:
+                      conpl video.mp4 -c cstd-rgb -cp char-only -r 60 -fc -gls :s3:fsh:add predef dither :s3:set lerp_a 0.5
+ -xmh                Sets maximum video for video extracted from URL. By default 480.
+  (--extractor-max-  If such video format isn't available it will search for worst quality video.
+     height)         When set to 0 it will search only for format with best quality video.
+                     Examples:
+                      conpl $https://www.youtube.com/watch?v=FtutLA63Cp8 -xmh 144
+ -xp                 Sets extractor command prefix. Doesn't work with "-xmh" option.
+  (--extractor-      By default: "yt-dlp -f "bv*[height<=%%d]+ba/bv*[height<=%%d]/wv*+ba/w" --no-warnings --get-url",
+   prefix)           where %%d is maximum video height, 480 by default.
+                     When maximum video height is set to 0: "yt-dlp --no-warnings --get-url".
+                     Examples:
+                      conpl $https://www.youtube.com/watch?v=FtutLA63Cp8 -xp "yt-dlpppx --no-warnings --get-url"
+ -xs                 Sets extractor command suffix. By default: "2>&1".
+                     Examples:
+                      conpl $https://www.youtube.com/watch?v=FtutLA63Cp8 -xs ""
+ -pl (--preload)     Loads and unload entire input file (in hope that system will cache it into RAM).
  -da(--disable-audio)Disables audio.
  -dk (--disable-keys)Disables keyboard control.
  -avl (--libav-logs) Enables printing Libav logs. Helpful with FFmpeg filters problems.
@@ -144,6 +164,14 @@ Demonstration: https://www.youtube.com/watch?v=nbUKhalJATk
  >cstd-rgb
 ```
 
+## Color processing modes
+```
+ >none - keeps original color and uses single character.
+ >char-only - uses character according to luminance but doesn't change color.
+ >both - uses character according to luminance and changes color so that
+         its largest component is equal to 255. [default]
+```
+
 ## Scaling modes
 ```
  >nearest
@@ -152,14 +180,21 @@ Demonstration: https://www.youtube.com/watch?v=nbUKhalJATk
  >bicubic [default]
 ```
 
+## Synchronization modes
+```
+ >disabled - prints the output as fast as possible.
+ >draw-all - synchronization enabled, but tries to draw all frames.
+ >enabled - synchronization enabled, skips frames if necessary. [default]
+```
+
 ## Keyboard control
 ```
- Space      Pause/Play
- "[" / "]"  Go back / Skip forward (10 second)
- "-" / "+"  Go back / Skip forward (30 second)
- "L" / "O"  Turn down/up the volume
- "M"        Mute the audio
- ESC        Exit
+ Space       Pause/Play
+ L/R arrows  Go back / Skip forward (10 second)
+ -/+ keys    Go back / Skip forward (30 second)
+ U/D arrows  Turn down/up the volume
+ M           Mute the audio
+ ESC/Q       Exit
 ```
 
 # Compiling

@@ -195,7 +195,7 @@ static void helpModes(void)
 		" >none - keeps original color and uses single character.\n"
 		" >char-only - uses character according to luminance but doesn't change color.\n"
 		" >both - uses character according to luminance and changes color so that\n"
-		"         its largest component is equal to 255. [default]");
+		"         its largest component is equal to 255. [default]\n");
 
 	puts(
 		"Scaling modes:\n"
@@ -220,5 +220,5 @@ static void helpKeyboard(void)
 		" -/+ keys    Go back / Skip forward (30 second)\n"
 		" U/D arrows  Turn down/up the volume\n"
 		" M           Mute the audio\n"
-		" ESC         Exit\n");
+		" ESC/Q       Exit\n");
 }
