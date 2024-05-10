@@ -381,7 +381,7 @@ static void buildFileSelector(UIMenuElement* element, UIMenu* out)
 	{
 		if (dirElement->d_type == DT_DIR)
 		{
-			if (!strcmp(dirElement->d_name, ".") || !strcmp(dirElement->d_name, "..") != 0) { continue; }
+			if (!strcmp(dirElement->d_name, ".") || !strcmp(dirElement->d_name, "..")) { continue; }
 
 			int newStrSize = strlen(dirElement->d_name) + 3;
 			char* newStr = malloc(newStrSize);

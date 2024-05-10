@@ -37,6 +37,8 @@ void showFullInfo(void)
 
 	#if defined(_MSC_VER) 
 	printf("Compiler: MSC %d [%d]\n", _MSC_VER, _MSC_FULL_VER);
+	#elif defined(__clang__)
+	puts("Compiler: Clang " __clang_version__);
 	#elif defined(__GNUC__)
 	puts("Compiler: GCC " __VERSION__);
 	#else

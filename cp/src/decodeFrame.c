@@ -103,9 +103,8 @@ void initDecodeFrame(const char* file, const char* secondFile, Stream** outAudio
 		FILE* preloadFile = fopen(file, "rb");
 		if (!preloadFile) { error("Failed to preload file", "decodeFrame.c", __LINE__); }
 
-		char* tempBuffer = (char*)malloc(TEMP_BUFFER_SIZE);
+		char tempBuffer[TEMP_BUFFER_SIZE];
 		while (fread(tempBuffer, 1, TEMP_BUFFER_SIZE, preloadFile) == TEMP_BUFFER_SIZE);
-		free(tempBuffer);
 
 		fclose(preloadFile);
 	}
@@ -560,7 +559,7 @@ static void refreshScaledFrame(AVFrame* inputFrame)
 
 static void scaleFrame(struct SwsContext* context, AVFrame* inputFrame, AVFrame* outputFrame)
 {
-	sws_scale(context, inputFrame->data, inputFrame->linesize, 0,
+	sws_scale(context, (const uint8_t* const*)inputFrame->data, inputFrame->linesize, 0,
 		inputFrame->height, outputFrame->data, outputFrame->linesize);
 	av_frame_copy_props(outputFrame, inputFrame);
 }

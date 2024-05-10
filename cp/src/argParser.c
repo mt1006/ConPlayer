@@ -116,7 +116,8 @@ static const char* extractorSuffix = NULL;
 
 void argumentParser(int argc, char** argv)
 {
-	bool* optionsUsed = calloc(OPTION_COUNT, sizeof(bool));
+	bool optionsUsed[OPTION_COUNT];
+	memset(optionsUsed, 0, OPTION_COUNT * sizeof(bool));
 
 	settings.charset = CHARSET_LONG;
 	settings.charsetSize = (int)strlen(settings.charset);
@@ -172,8 +173,6 @@ void argumentParser(int argc, char** argv)
 			invalidInput("Expected option but received argument", argv[i], __LINE__);
 		}
 	}
-
-	free(optionsUsed);
 
 	if (inputFile == NULL) { invalidInput("Input not specified", NULL, __LINE__); }
 	if (inputFile[0] == '$') { extractUrl(); }

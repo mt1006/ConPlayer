@@ -408,13 +408,12 @@ void Sleep(DWORD ms)
 	if (ms == 0)
 	{
 		sched_yield();
+		return;
 	}
-	else
-	{
-		struct timespec timeSpec;
-		timeSpec.tv_sec = ms / 1000;
-		timeSpec.tv_nsec = (ms % 1000) * 1000000;
-		nanosleep(&timeSpec, NULL);
-	}
+
+	struct timespec timeSpec;
+	timeSpec.tv_sec = ms / 1000;
+	timeSpec.tv_nsec = (ms % 1000) * 1000000;
+	nanosleep(&timeSpec, NULL);
 }
 #endif

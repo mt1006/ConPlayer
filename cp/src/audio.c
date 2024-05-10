@@ -47,12 +47,12 @@ void initAudio(Stream* avAudioStream)
 	av_channel_layout_default(&outChannelLayout, CHANNELS);
 
 	int retVal = swr_alloc_set_opts2(&resampleContext,
-		&outChannelLayout,                                                     //out_ch_layout
-		SAMPLE_FORMAT_AV,                                                      //out_sample_fmt
-		SAMPLE_RATE,                                                           //out_sample_rate
-		&avAudioStream->codecContext->ch_layout,                               //in_ch_layout
-		avAudioStream->codecContext->sample_fmt,                               //in_sample_fmt
-		avAudioStream->codecContext->sample_rate,                              //in_sample_rate
+		&outChannelLayout,                                            //out_ch_layout
+		SAMPLE_FORMAT_AV,                                             //out_sample_fmt
+		SAMPLE_RATE,                                                  //out_sample_rate
+		&avAudioStream->codecContext->ch_layout,                      //in_ch_layout
+		avAudioStream->codecContext->sample_fmt,                      //in_sample_fmt
+		avAudioStream->codecContext->sample_rate,                     //in_sample_rate
 		0, NULL);
 		
 	retVal = swr_init(resampleContext);
@@ -83,7 +83,7 @@ void addAudioFrame(AVFrame* frame)
 	}
 
 	outSamples = swr_convert(resampleContext, &queueFrame->audioFrame, outSamples,
-		frame->extended_data, frame->nb_samples);
+		(const uint8_t**)frame->extended_data, frame->nb_samples);
 	if (outSamples < 0) { return; }
 
 	queueFrame->audioSamplesNum = outSamples;

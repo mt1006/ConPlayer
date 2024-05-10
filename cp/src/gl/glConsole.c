@@ -310,14 +310,13 @@ static void loadCharset(void)
 		glDeleteTextures(CHARACTER_COUNT, charset);
 	}
 
-	GLuint* textures = malloc(CHARACTER_COUNT * sizeof(GLuint));
+	GLuint textures[CHARACTER_COUNT];
 	glGenTextures(CHARACTER_COUNT, textures);
 
 	for (int i = 0; i < CHARACTER_COUNT; i++)
 	{
 		charset[i].texture = textures[i];
 	}
-	free(textures);
 
 	char charToUse[] = "-";
 
