@@ -230,7 +230,7 @@ Now you can just open .sln file and everything should work (at least in theory).
 
 Installation of required packages:
 ```
-sudo apt install build-essential libavcodec-dev libavformat-dev libavfilter-dev libswscale-dev libao-dev
+sudo apt install build-essential libavcodec-dev libavformat-dev libavfilter-dev libavdevice-dev libswscale-dev libao-dev
 ```
 
 Use `make` to compile.

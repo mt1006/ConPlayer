@@ -109,6 +109,7 @@ void initDecodeFrame(const char* file, const char* secondFile, Stream** outAudio
 		fclose(preloadFile);
 	}
 
+	avdevice_register_all();
 	formatContext = loadContextAndStreams(file);
 	if (secondFile) { secondFormatContext = loadContextAndStreams(secondFile); }
 

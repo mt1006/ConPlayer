@@ -13,7 +13,7 @@
 *    vcpkg install ffmpeg[gpl,freetype,fontconfig,fribidi,ass,opencl,dav1d]:x64-windows
 *    vcpkg install libao:x64-windows
 *  Linux (dpkg):
-*    sudo apt install build-essential libavcodec-dev libavformat-dev libavfilter-dev libswscale-dev libao-dev
+*    sudo apt install build-essential libavcodec-dev libavformat-dev libavfilter-dev libavdevice-dev libswscale-dev libao-dev
 *  Linux (pacman):
 *    sudo pacman -S --needed base-devel ffmpeg libao
 */
@@ -31,6 +31,7 @@
 #include <libavfilter/avfilter.h>
 #include <libavfilter/buffersrc.h>
 #include <libavfilter/buffersink.h>
+#include <libavdevice/avdevice.h>
 #include <libavutil/imgutils.h>
 #include <libavutil/file.h>
 #include <libavutil/opt.h>
